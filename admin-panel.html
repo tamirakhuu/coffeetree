@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUPPA — ADMIN</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#241C15;--ink-soft:#5C4E3E;--paper:#EFE3CF;--card:#FBF5E9;--line:#D9C9A8;
+  --cherry:#7A2E2E;--cherry-dark:#5C2222;--moss:#48583A;--gold:#B8862E;--cream:#F6EFE0;
+  --red:#B3261E;--red-light:#FBE9E7;--green-light:#E7EEDF;
+  --radius:12px;--sh:0 1px 3px rgba(36,28,20,.08),0 1px 2px rgba(36,28,20,.05);
+}
+body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace}
+.login-screen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:500}
+.login-card{background:var(--paper);border-radius:16px;padding:38px 34px;width:360px;max-width:90vw}
+.login-logo{font-family:'Fraunces',serif;font-weight:700;font-size:28px;color:var(--ink);margin-bottom:2px}
+.login-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.12em;margin-bottom:26px}
+.login-card input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);font-size:14px;background:var(--card);color:var(--ink);outline:none;margin-bottom:10px;font-family:'Inter',sans-serif}
+.login-card input:focus{border-color:var(--cherry)}
+.login-btn{width:100%;background:var(--cherry);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:600;font-size:14px;cursor:pointer;margin-top:6px}
+.login-btn:disabled{opacity:.6;cursor:not-allowed}
+.login-err{color:var(--red);font-size:12.5px;margin-top:8px;min-height:16px}
+.login-hint{font-size:11.5px;color:var(--ink-soft);margin-top:18px;line-height:1.6}
+.sidebar{width:220px;background:var(--ink);color:var(--cream);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-logo{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo .a{font-family:'Fraunces',serif;font-weight:700;font-size:20px}
+.sidebar-logo .b{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.12em}
+.sidebar-body{flex:1;padding:14px 10px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;color:var(--cream);opacity:.8;font-size:13.5px;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.06);opacity:1}
+.nav-item.active{background:var(--cherry);opacity:1;font-weight:600}
+.nav-item .badge{margin-left:auto;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;font-family:'IBM Plex Mono',monospace}
+.sidebar-foot{padding:12px 10px;border-top:1px solid rgba(255,255,255,.1)}
+.main{margin-left:220px;flex:1;padding:28px 32px;min-height:100vh}
+.page{display:none}
+.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.page-header h1{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink)}
+.page-header p{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh)}
+.card-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Fraunces',serif;font-size:15px;font-weight:700;color:var(--ink)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;font-weight:600;color:var(--ink-soft);padding:10px 16px;border-bottom:1px solid var(--line);letter-spacing:.06em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid rgba(217,201,168,.4);font-size:13px;color:var(--ink);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.4)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+@media(max-width:1000px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--sh)}
+.stat-val{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.stat-label{font-size:12px;color:var(--ink-soft)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.03em}
+.badge.pending{background:#FDF0D5;color:#92600A}
+.badge.processing{background:#DCE8FB;color:#1D4ED8}
+.badge.shipped{background:#E3E1FB;color:#4338CA}
+.badge.done{background:var(--green-light);color:#2F4A22}
+.badge.cancelled{background:var(--red-light);color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;white-space:nowrap}
+.btn-primary{background:var(--cherry);color:#fff}
+.btn-primary:hover{background:var(--cherry-dark)}
+.btn-outline{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn-outline:hover{background:var(--paper)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.form-grid{display:grid;gap:12px}
+.form-grid-2{grid-template-columns:1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10.5px;font-weight:600;color:var(--moss);letter-spacing:.05em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.fg input,.fg select,.fg textarea{padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Inter',sans-serif}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--cherry)}
+.fg textarea{resize:vertical;min-height:60px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:1px solid rgba(0,0,0,.15)}
+.swatch.active{border:2px solid var(--ink)}
+.img-thumbs{display:flex;gap:10px;flex-wrap:wrap}
+.img-thumb{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-thumb .rm-btn{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(36,28,20,.75);color:#fff;font-size:11px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+.img-add-tile{width:88px;height:88px;border-radius:10px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--ink-soft);font-size:11px;cursor:pointer;background:var(--card);text-align:center}
+.img-add-tile:hover{border-color:var(--cherry);color:var(--cherry)}
+.img-add-tile span{font-size:20px}
+.img-hint{font-size:11px;color:var(--ink-soft)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(36,28,20,.5);z-index:300;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--paper);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--ink)}
+.modal-close{width:30px;height:30px;border-radius:8px;background:var(--card);border:none;cursor:pointer;font-size:15px}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;transform:translateX(20px);opacity:0;transition:all .25s;min-width:240px}
+.toast.show{transform:translateX(0);opacity:1}
+.toast.success{border-left:3px solid var(--moss)}
+.toast.err{border-left:3px solid var(--red)}
+.chip{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--ink-soft);margin:2px 4px 2px 0}
+.empty{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px}
+.icon-emoji{font-size:16px}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">CUPPA</div>
+    <div class="login-sub">ADMIN PANEL</div>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Админ имэйл" required>
+      <input type="password" id="loginPassword" placeholder="Нууц үг" required>
+      <button type="submit" class="login-btn" id="loginBtn">Нэвтрэх</button>
+      <div class="login-err" id="loginErr"></div>
+    </form>
+    <div class="login-hint">Supabase Dashboard → Authentication → Users хэсэгт admin эрхтэй имэйл/нууц үг үүсгэсэн байх шаардлагатай.</div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">–</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="a">CUPPA</div>
+    <div class="b">ADMIN PANEL</div>
+  </div>
+  <div class="sidebar-body">
+    <button class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">📊 Нүүр хуудас</button>
+    <button class="nav-item" data-page="products" onclick="navTo('products')">📦 Бараа <span class="badge" id="nb-products" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="categories" onclick="navTo('categories')">🏷️ Ангилал</button>
+    <button class="nav-item" data-page="brands" onclick="navTo('brands')">🏪 Брэнд</button>
+    <button class="nav-item" data-page="orders" onclick="navTo('orders')">🧾 Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
+  </div>
+  <div class="sidebar-foot">
+    <button class="nav-item" onclick="doLogout()">🚪 Гарах</button>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="page active" id="page-dashboard">
+    <div class="page-header"><div><h1>Нүүр хуудас</h1><p>CUPPA дэлгүүрийн ерөнхий байдал</p></div></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="st-products">0</div><div class="stat-label">Нийт бараа</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-categories">0</div><div class="stat-label">Ангилал</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-brands">0</div><div class="stat-label">Брэнд</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-pending">0</div><div class="stat-label">Хүлээгдэж буй захиалга</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Сүүлийн захиалгууд</div><button class="btn btn-outline btn-sm" onclick="navTo('orders')">Бүгдийг харах</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Дүн</th><th>Төлөв</th></tr></thead><tbody id="recentOrders"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-products">
+    <div class="page-header"><div><h1>Бараа</h1><p id="prodCount">Нийт 0 бараа</p></div><button class="btn btn-primary" onclick="openAddProduct()">➕ Бараа нэмэх</button></div>
+    <div class="card">
+      <div class="table-wrap">
+        <table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Ангилал</th><th>Ширхэг үнэ</th><th>Хайрцаг үнэ</th><th>Нөөц</th><th>Үйлдэл</th></tr></thead><tbody id="productTable"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-categories">
+    <div class="page-header"><div><h1>Ангилал</h1><p>Ангилал ба дэд ангилал удирдах</p></div><button class="btn btn-primary" onclick="openAddCategory()">➕ Ангилал нэмэх</button></div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Ангилал</th><th>Дэд ангилал</th><th>Бараа тоо</th><th>Үйлдэл</th></tr></thead><tbody id="categoryTable"></tbody></table></div></div>
+  </div>
+
+  <div class="page" id="page-brands">
+    <div class="page-header"><div><h1>Брэнд</h1><p>Брэндийн жагсаалт</p></div><button class="btn btn-primary" onclick="openAddBrand()">➕ Брэнд нэмэх</button></div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Брэнд</th><th>Бараа тоо</th><th>Үйлдэл</th></tr></thead><tbody id="brandTable"></tbody></table></div></div>
+  </div>
+
+  <div class="page" id="page-orders">
+    <div class="page-header"><div><h1>Захиалга</h1><p id="orderCount">Нийт 0 захиалга</p></div></div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧' };
+const ICON_KEYS = Object.keys(ICON_EMOJI);
+const COLOR_SWATCHES = ["#6B4226","#3E2A1E","#8A5A34","#5C1F1F","#B23A48","#5B6B3F","#C9A227","#8C5A20","#3B2418","#7A2E2E","#48583A","#B8862E"];
+
+let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [];
+let selectedColor = COLOR_SWATCHES[0];
+
+const IMAGE_BUCKET = 'product-images';
+const MAX_PRODUCT_IMAGES = 3;
+let productImages = [];
+
+function fmt(n){ return '₮' + Math.round(n||0).toLocaleString(); }
+
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('loginScreen').style.display = 'none';
+    loadAll();
+  } else {
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Нэвтэрч байна…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Нэвтрэх';
+  if (error) { err.textContent = 'Имэйл эсвэл нууц үг буруу байна.'; return; }
+  checkAuth();
+});
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function loadAll() {
+  const [c, s, b, p, o, oi] = await Promise.all([
+    sb.from('categories').select('*').order('id'),
+    sb.from('subcategories').select('*'),
+    sb.from('brands').select('*').order('id'),
+    sb.from('products').select('*').order('id', { ascending: false }),
+    sb.from('orders').select('*').order('created_at', { ascending: false }),
+    sb.from('order_items').select('*'),
+  ]);
+  categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
+  products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
+  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders();
+}
+
+function navTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navBtn) navBtn.classList.add('active');
+}
+
+function toast(msg, type='success') {
+  const w = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  w.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+function openModal(title, body, foot) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFoot').innerHTML = foot;
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+function renderDashboard() {
+  document.getElementById('nb-products').textContent = products.length;
+  document.getElementById('nb-orders').textContent = orders.filter(o => o.status === 'pending').length;
+  document.getElementById('st-products').textContent = products.length;
+  document.getElementById('st-categories').textContent = categories.length;
+  document.getElementById('st-brands').textContent = brands.length;
+  document.getElementById('st-pending').textContent = orders.filter(o => o.status === 'pending').length;
+
+  const tb = document.getElementById('recentOrders');
+  const recent = orders.slice(0, 6);
+  tb.innerHTML = recent.map(o => `
+    <tr><td class="mono">${o.order_number}</td><td>${o.customer_name||'-'}</td><td class="mono">${fmt(o.subtotal)}</td><td>${statusBadge(o.status)}</td></tr>
+  `).join('') || `<tr><td colspan="4" class="empty">Захиалга алга байна</td></tr>`;
+}
+
+function statusBadge(s) {
+  const label = { pending:'Хүлээгдэж байна', processing:'Боловсруулж байна', shipped:'Явуулсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' };
+  return `<span class="badge ${s}">${label[s]||s}</span>`;
+}
+
+function renderProducts() {
+  document.getElementById('prodCount').textContent = `Нийт ${products.length} бараа`;
+  const tb = document.getElementById('productTable');
+  tb.innerHTML = products.map(p => {
+    const brand = brands.find(b => b.id === p.brand_id);
+    const cat = categories.find(c => c.id === p.category_id);
+    const thumb = p.images && p.images[0]
+      ? `<img src="${p.images[0]}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:36px;height:36px;border-radius:8px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--ink))"></div>`;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
+      <td>${brand?.name||'-'}</td>
+      <td>${cat?.name||'-'}</td>
+      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''}</div></td>
+      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''}</div></td>
+      <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
+      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">🗑️</button></div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="empty">Одоогоор бараа алга</td></tr>`;
+}
+
+function categoryOptions(selectedId) {
+  return categories.map(c => `<option value="${c.id}" ${String(c.id)===String(selectedId)?'selected':''}>${ICON_EMOJI[c.icon]||'☕'} ${c.name}</option>`).join('');
+}
+function brandOptions(selectedId) {
+  return brands.map(b => `<option value="${b.id}" ${String(b.id)===String(selectedId)?'selected':''}>${b.name}</option>`).join('');
+}
+function subOptionsDatalist(categoryId) {
+  const cat = categories.find(c => String(c.id) === String(categoryId));
+  const subs = subcategories.filter(s => s.category_id === cat?.id);
+  return subs.map(s => `<option value="${s.name}">`).join('');
+}
+function colorSwatchesHtml(active) {
+  return COLOR_SWATCHES.map(c => `<div class="swatch ${c===active?'active':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('');
+}
+function selectColor(c) {
+  selectedColor = c;
+  document.querySelectorAll('#modalBody .swatch').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function imagesSectionHtml() {
+  const thumbs = productImages.map((img, i) => `
+    <div class="img-thumb">
+      <img src="${img.url}">
+      <button type="button" class="rm-btn" onclick="removeProductImage(${i})">✕</button>
+    </div>`).join('');
+  const addTile = productImages.length < MAX_PRODUCT_IMAGES
+    ? `<div class="img-add-tile" onclick="document.getElementById('pf-image-file').click()"><span>➕</span>Зураг нэмэх</div>`
+    : '';
+  return `
+    <div class="img-thumbs">${thumbs}${addTile}</div>
+    <input type="file" id="pf-image-file" accept="image/*" multiple style="display:none" onchange="onImageFilesSelected(this.files)">
+    <div class="img-hint" style="margin-top:6px">Дор хаяж 1, дээд тал нь ${MAX_PRODUCT_IMAGES} зураг оруулж болно.</div>`;
+}
+function renderImagesSection() {
+  const wrap = document.getElementById('pf-images-wrap');
+  if (wrap) wrap.innerHTML = imagesSectionHtml();
+}
+function onImageFilesSelected(fileList) {
+  const files = Array.from(fileList || []);
+  const room = MAX_PRODUCT_IMAGES - productImages.length;
+  files.slice(0, room).forEach(file => {
+    productImages.push({ url: URL.createObjectURL(file), file });
+  });
+  if (files.length > room) toast(`Дээд тал нь ${MAX_PRODUCT_IMAGES} зураг сонгож болно`, 'err');
+  renderImagesSection();
+}
+function removeProductImage(i) {
+  const img = productImages[i];
+  if (img && img.file) URL.revokeObjectURL(img.url);
+  productImages.splice(i, 1);
+  renderImagesSection();
+}
+
+function productFormHtml(p) {
+  p = p || {};
+  selectedColor = p.color || COLOR_SWATCHES[0];
+  productImages = (p.images || []).map(url => ({ url }));
+  return `
+    <div class="form-grid form-grid-2">
+      <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}"></div>
+      <div class="fg"><label>Брэнд</label><select id="pf-brand">${brandOptions(p.brand_id)}</select></div>
+      <div class="fg"><label>Ангилал</label><select id="pf-category" onchange="refreshSubDatalist()">${categoryOptions(p.category_id)}</select></div>
+      <div class="fg"><label>Дэд ангилал</label><input id="pf-subcategory" list="sub-dl" value="${p.subcategory||''}"><datalist id="sub-dl">${subOptionsDatalist(p.category_id)}</datalist></div>
+      <div class="fg"><label>Гарал үүсэл</label><input id="pf-origin" value="${p.origin||''}"></div>
+      <div class="fg"><label>Шошго</label><select id="pf-tag"><option value="" ${!p.tag?'selected':''}>Байхгүй</option><option value="шинэ" ${p.tag==='шинэ'?'selected':''}>шинэ</option><option value="алдартай" ${p.tag==='алдартай'?'selected':''}>алдартай</option></select></div>
+      <div class="fg full"><label>Өнгө</label><div class="swatches" id="pf-swatches">${colorSwatchesHtml(selectedColor)}</div></div>
+      <div class="fg full"><label>Зургууд</label><div id="pf-images-wrap">${imagesSectionHtml()}</div></div>
+      <div class="fg full"><label>Тайлбар</label><textarea id="pf-desc">${p.description||''}</textarea></div>
+      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px"><label style="color:var(--cherry)">Ширхэгээр</label></div>
+      <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'1 ширхэг'}"></div>
+      <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" value="${p.unit_price||''}"></div>
+      <div class="fg full"><label>Нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
+      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px"><label style="color:var(--cherry)">Хайрцгаар</label></div>
+      <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
+      <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
+      <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" value="${p.box_per_box||''}"></div>
+      <div class="fg"><label>Нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+    </div>`;
+}
+function refreshSubDatalist() {
+  document.getElementById('sub-dl').innerHTML = subOptionsDatalist(document.getElementById('pf-category').value);
+}
+
+function openAddProduct() {
+  if (!brands.length || !categories.length) { toast('Эхлээд дор хаяж нэг брэнд, ангилал үүсгэнэ үү', 'err'); return; }
+  openModal('Бараа нэмэх', productFormHtml(), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(null)">Нэмэх</button>`);
+}
+function openEditProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  openModal('Бараа засах', productFormHtml(p), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(${id})">Хадгалах</button>`);
+}
+
+async function saveProduct(id) {
+  const name = document.getElementById('pf-name').value.trim();
+  if (!name) { toast('Барааны нэр оруулна уу', 'err'); return; }
+  const saveBtn = document.querySelector('#modalFoot .btn-primary');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Хадгалж байна…'; }
+  try {
+    const images = [];
+    for (const img of productImages) {
+      if (img.file) {
+        const ext = (img.file.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, img.file, { contentType: img.file.type });
+        if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
+        const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+        images.push(pub.publicUrl);
+      } else {
+        images.push(img.url);
+      }
+    }
+    const row = {
+      name,
+      brand_id: parseInt(document.getElementById('pf-brand').value, 10),
+      category_id: parseInt(document.getElementById('pf-category').value, 10),
+      subcategory: document.getElementById('pf-subcategory').value.trim(),
+      origin: document.getElementById('pf-origin').value.trim(),
+      tag: document.getElementById('pf-tag').value || null,
+      color: selectedColor,
+      description: document.getElementById('pf-desc').value.trim(),
+      images,
+      unit_label: document.getElementById('pf-unit-label').value || '1 ширхэг',
+      unit_price: Number(document.getElementById('pf-unit-price').value) || 0,
+      unit_stock: parseInt(document.getElementById('pf-unit-stock').value, 10) || 0,
+      box_label: document.getElementById('pf-box-label').value || '1 хайрцаг',
+      box_price: Number(document.getElementById('pf-box-price').value) || 0,
+      box_per_box: parseInt(document.getElementById('pf-box-per').value, 10) || 1,
+      box_stock: parseInt(document.getElementById('pf-box-stock').value, 10) || 0,
+    };
+    const { error } = id
+      ? await sb.from('products').update(row).eq('id', id)
+      : await sb.from('products').insert(row);
+    if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+    closeModal();
+    toast(id ? '✅ Бараа шинэчлэгдлээ' : '✅ Бараа нэмэгдлээ');
+    await loadAll();
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
+  }
+}
+
+function confirmDeleteProduct(id) {
+  const p = products.find(x => x.id === id);
+  openModal('Устгах', `<p>Та “${p?.name||''}” барааг устгахдаа итгэлтэй байна уу?</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteProductNow(${id})">Устгах</button>`);
+}
+async function deleteProductNow(id) {
+  const { error } = await sb.from('products').delete().eq('id', id);
+  closeModal();
+  if (error) { toast('Устгахад алдаа гарлаа', 'err'); return; }
+  toast('Бараа устгагдлаа');
+  await loadAll();
+}
+
+function renderCategories() {
+  const tb = document.getElementById('categoryTable');
+  tb.innerHTML = categories.map(c => {
+    const subs = subcategories.filter(s => s.category_id === c.id);
+    const count = products.filter(p => p.category_id === c.id).length;
+    return `<tr>
+      <td><span class="icon-emoji">${ICON_EMOJI[c.icon]||'☕'}</span> <b>${c.name}</b></td>
+      <td>${subs.map(s => `<span class="chip">${s.name}</span>`).join('') || '-'}</td>
+      <td>${count}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">🗑️</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4" class="empty">Ангилал алга байна</td></tr>`;
+}
+function openAddCategory() {
+  openModal('Ангилал нэмэх', `
+    <div class="form-grid">
+      <div class="fg"><label>Ангиллын нэр</label><input id="cf-name" placeholder="жишээ: Хиймэл сүү"></div>
+      <div class="fg"><label>Тэмдэг</label><select id="cf-icon">${ICON_KEYS.map(k=>`<option value="${k}">${ICON_EMOJI[k]} ${k}</option>`).join('')}</select></div>
+      <div class="fg"><label>Дэд ангилал (таслалаар тусгаарлана)</label><input id="cf-sub" placeholder="Соя, Овъёос, Ямаа"></div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveCategory()">Нэмэх</button>`
+  );
+}
+async function saveCategory() {
+  const name = document.getElementById('cf-name').value.trim();
+  if (!name) { toast('Ангиллын нэр оруулна уу', 'err'); return; }
+  const icon = document.getElementById('cf-icon').value;
+  const subs = document.getElementById('cf-sub').value.split(',').map(s => s.trim()).filter(Boolean);
+  const { data, error } = await sb.from('categories').insert({ name, icon }).select().single();
+  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+  if (subs.length) {
+    const rows = subs.map(s => ({ category_id: data.id, name: s }));
+    await sb.from('subcategories').insert(rows);
+  }
+  closeModal();
+  toast('✅ Ангилал нэмэгдлээ');
+  await loadAll();
+}
+function confirmDeleteCategory(id) {
+  openModal('Устгах', `<p>Ангиллыг устгахад дэд ангиллууд нь мөн устана. Итгэлтэй байна уу?</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteCategoryNow(${id})">Устгах</button>`);
+}
+async function deleteCategoryNow(id) {
+  const { error } = await sb.from('categories').delete().eq('id', id);
+  closeModal();
+  if (error) { toast('Устгахад алдаа гарлаа (энэ ангилалд хамаарах бараа байж магадгүй)', 'err'); return; }
+  toast('Ангилал устгагдлаа');
+  await loadAll();
+}
+
+function renderBrands() {
+  const tb = document.getElementById('brandTable');
+  tb.innerHTML = brands.map(b => {
+    const count = products.filter(p => p.brand_id === b.id).length;
+    return `<tr><td><b>${b.name}</b></td><td>${count}</td><td><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">🗑️</button></td></tr>`;
+  }).join('') || `<tr><td colspan="3" class="empty">Брэнд алга байна</td></tr>`;
+}
+function openAddBrand() {
+  openModal('Брэнд нэмэх', `<div class="form-grid"><div class="fg"><label>Брэндийн нэр</label><input id="bf-name" placeholder="жишээ: Nescafé"></div></div>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveBrand()">Нэмэх</button>`);
+}
+async function saveBrand() {
+  const name = document.getElementById('bf-name').value.trim();
+  if (!name) { toast('Брэндийн нэр оруулна уу', 'err'); return; }
+  const { error } = await sb.from('brands').insert({ name });
+  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+  closeModal();
+  toast('✅ Брэнд нэмэгдлээ');
+  await loadAll();
+}
+function confirmDeleteBrand(id) {
+  openModal('Устгах', `<p>Брэндийг устгахдаа итгэлтэй байна уу?</p>`,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteBrandNow(${id})">Устгах</button>`);
+}
+async function deleteBrandNow(id) {
+  const { error } = await sb.from('brands').delete().eq('id', id);
+  closeModal();
+  if (error) { toast('Устгахад алдаа гарлаа (энэ брэндэд хамаарах бараа байж магадгүй)', 'err'); return; }
+  toast('Брэнд устгагдлаа');
+  await loadAll();
+}
+
+function renderOrders() {
+  document.getElementById('orderCount').textContent = `Нийт ${orders.length} захиалга`;
+  const tb = document.getElementById('orderTable');
+  tb.innerHTML = orders.map(o => {
+    const items = orderItems.filter(i => i.order_number === o.order_number);
+    const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
+    return `<tr>
+      <td class="mono">${o.order_number}</td>
+      <td>${o.customer_name||'-'}</td>
+      <td class="mono">${o.phone||'-'}</td>
+      <td style="font-size:12px">${itemsText || '-'}</td>
+      <td class="mono">${fmt(o.subtotal)}</td>
+      <td class="mono" style="font-size:11px">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
+      <td>
+        <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card)">
+          ${['pending','processing','shipped','done','cancelled'].map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="empty">Захиалга алга байна</td></tr>`;
+}
+function statusLabel(s) {
+  return { pending:'Хүлээгдэж байна', processing:'Боловсруулж байна', shipped:'Явуулсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' }[s] || s;
+}
+async function updateOrderStatus(orderNumber, status) {
+  const { error } = await sb.from('orders').update({ status }).eq('order_number', orderNumber);
+  if (error) { toast('Төлөв солиход алдаа гарлаа', 'err'); return; }
+  toast('Төлөв шинэчлэгдлээ');
+  await loadAll();
+}
+
+checkAuth();
+</script>
+</body>
+</html>
