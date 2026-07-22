@@ -33,9 +33,8 @@ const ICON_KEYS = Object.keys(ICONS);
 const money = (n) => Math.round(n || 0).toLocaleString("mn-MN") + "₮";
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
-/* ------------------------------------------------------------------ */
 /*  Data context — backend-ээс татсан ангилал/брэнд/бараа              */
-/* ------------------------------------------------------------------ */
+
 const DataContext = createContext({ categories: [], brands: [], products: [] });
 
 /* ------------------------------------------------------------------ */
@@ -107,13 +106,12 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
   const [q, setQ] = useState("");
   return (
     <header style={{ background: T.ink, color: T.cream, position: "sticky", top: 0, zIndex: 100 }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-        <div onClick={() => setView({ name: "home" })} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 6 }}>
+      <div className="cuppa-header-row" style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+        <div className="cuppa-logo" onClick={() => setView({ name: "home" })} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 6 }}>
           <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 26, letterSpacing: "-0.01em" }}>CUPPA</span>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: T.gold, letterSpacing: "0.12em" }}>ROASTERY&nbsp;SUPPLY</span>
         </div>
 
-        <nav style={{ display: "flex", gap: 4, flex: 1, flexWrap: "wrap" }}>
+        <nav className="cuppa-nav" style={{ display: "flex", gap: 4, flex: 1, flexWrap: "wrap" }}>
           {categories.map((c) => {
             const Icon = ICONS[c.icon] || Coffee;
             return (
@@ -132,14 +130,14 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           })}
         </nav>
 
-        <form onSubmit={(e) => { e.preventDefault(); onSearch(q); }}
+        <form className="cuppa-search-form" onSubmit={(e) => { e.preventDefault(); onSearch(q); }}
           style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.1)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..."
             style={{ background: "transparent", border: "none", outline: "none", color: T.cream, fontFamily: "'Inter', sans-serif", fontSize: 13, width: "100%" }} />
         </form>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
             <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
           </button>
@@ -223,8 +221,8 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
   if (!category) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Ангилал олдсонгүй.</div>;
 
   return (
-    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
-      <aside style={{ width: 210, flexShrink: 0 }}>
+    <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
         <div style={{ fontFamily: "'Fraunces', serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{category.name}</div>
 
         <div style={{ marginBottom: 26 }}>
@@ -299,7 +297,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
       <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Inter', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
         <ChevronLeft size={15} /> Буцах
       </button>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
+      <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           {images ? (
             <div style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.ink }}>
@@ -309,7 +307,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
             <ProductArt product={product} height={420} />
           )}
           {images && images.length > 1 && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <div className="cuppa-thumb-row" style={{ display: "flex", gap: 8, marginTop: 10 }}>
               {images.map((src, i) => (
                 <button key={i} onClick={() => setActiveImg(i)} style={{
                   width: 64, height: 64, borderRadius: 8, overflow: "hidden", padding: 0, cursor: "pointer",
@@ -323,7 +321,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
         </div>
         <div>
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
-          <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
+          <h1 className="cuppa-detail-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>
           <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26 }}>{product.desc}</p>
 
@@ -546,13 +544,10 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   return (
     <div>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
+        <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.gold, letterSpacing: "0.1em", marginBottom: 14 }}>ЖИЖИГЛЭН & БӨӨНӨӨР — ШИРХЭГ ХАМ ХАЙРЦГААР</div>
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>Кофе шоп, кафений эрхлэгчдэд<br/>зориулсан бүх орц нэг дор.</h1>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15.5, color: "#D8CBB3", lineHeight: 1.6, maxWidth: 460, marginBottom: 26 }}>
-              Буурцаг, сироп, паудер, аяга — ганц ширхэгээр туршиж үзээд, тогтмол хайрцгаар нийлүүлж авах хүртэл. CUPPA дэлгүүрт бүгд бэлэн.
-            </p>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>Кофе шоп, кафений эрхлэгчдэд<br/>зориулсан бүх орц нэг дор.</h1>
+
             {categories[0] && (
               <button onClick={() => setView({ name: "category", categoryId: categories[0].id })} style={{
                 background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
@@ -569,7 +564,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 10px" }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаар үзэх</div>
+        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
           {categories.map((c) => {
             const Icon = ICONS[c.icon] || Coffee;
@@ -587,13 +582,13 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 90px" }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Алдартай бүтээгдэхүүн</div>
+        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Эрэлттэй бүтээгдэхүүн</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор алдартай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор эрэлттэй бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
     </div>
@@ -619,12 +614,12 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
         <ChevronLeft size={15} /> Сагс руу буцах
       </button>
       <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 700, color: T.ink, marginBottom: 26 }}>Хүргэлтийн мэдээлэл</h1>
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 34, flexWrap: "wrap" }}>
+      <div className="cuppa-checkout-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 34, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 260 }}>
           <input placeholder="Хүлээн авагчийн нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
           <input placeholder="Утасны дугаар" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
           <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Inter', sans-serif" }} />
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөр: Хүргэлтийн үед бэлнээр / QPay (демо)</div>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөрийн хэлбэр : QPay</div>
         </div>
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, alignSelf: "flex-start", minWidth: 240 }}>
           <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын дүн</div>
@@ -679,7 +674,7 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
   const items = products.filter((p) => wishlist.includes(p.id));
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Хүслийн жагсаалт</h1>
+      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Таалагдсан бүтээгдэхүүн</h1>
       {items.length === 0 ? (
         <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Жагсаалт хоосон байна.</div>
       ) : (
@@ -734,7 +729,7 @@ export default function App() {
   useEffect(() => { if (loaded.current) localStorage.setItem("cuppa:cart", JSON.stringify(cart)); }, [cart]);
   useEffect(() => { if (loaded.current) localStorage.setItem("cuppa:wishlist", JSON.stringify(wishlist)); }, [wishlist]);
 
-  // Хэрэглэгчийн нэвтрэлтийн төлөв — Supabase Auth session-той шууд синхрон (жинхэнэ auth, демо биш)
+  // Хэрэглэгчийн нэвтрэлтийн төлөв — Supabase Auth session-той шууд синхрон
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(shapeAuthUser(session?.user));
@@ -792,7 +787,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: T.paper, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: T.inkSoft }}>
         <style>{FONT_IMPORT}</style>
-        Дэлгүүрийн өгөгдлийг ачааллаж байна…
+        Ачааллаж байна…
       </div>
     );
   }
@@ -851,7 +846,7 @@ export default function App() {
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
         {body}
         <footer style={{ background: T.ink, color: T.cream, padding: "30px 20px", textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>
-          CUPPA ROASTERY SUPPLY — Демо дэлгүүрийн прототип
+          © 2026 CoffeeTree
         </footer>
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
