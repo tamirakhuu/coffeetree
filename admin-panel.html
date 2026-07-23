@@ -387,7 +387,7 @@ function productFormHtml(p) {
       <div class="fg"><label>Ангилал</label><select id="pf-category" onchange="refreshSubDatalist()">${categoryOptions(p.category_id)}</select></div>
       <div class="fg"><label>Дэд ангилал</label><input id="pf-subcategory" list="sub-dl" value="${p.subcategory||''}"><datalist id="sub-dl">${subOptionsDatalist(p.category_id)}</datalist></div>
       <div class="fg"><label>Гарал үүсэл</label><input id="pf-origin" value="${p.origin||''}"></div>
-      <div class="fg"><label>Шошго</label><select id="pf-tag"><option value="" ${!p.tag?'selected':''}>Байхгүй</option><option value="шинэ" ${p.tag==='шинэ'?'selected':''}>шинэ</option><option value="алдартай" ${p.tag==='алдартай'?'selected':''}>алдартай</option></select></div>
+      <div class="fg"><label>Шошго</label><select id="pf-tag"><option value="" ${!p.tag?'selected':''}>Байхгүй</option><option value="шинэ" ${p.tag==='шинэ'?'selected':''}>шинэ</option><option value="эрэлттэй" ${p.tag==='эрэлттэй'?'selected':''}>эрэлттэй</option></select></div>
       <div class="fg full"><label>Өнгө</label><div class="swatches" id="pf-swatches">${colorSwatchesHtml(selectedColor)}</div></div>
       <div class="fg full"><label>Зургууд</label><div id="pf-images-wrap">${imagesSectionHtml()}</div></div>
       <div class="fg full"><label>Тайлбар</label><textarea id="pf-desc">${p.description||''}</textarea></div>

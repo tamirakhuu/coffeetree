@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { fetchBootstrap, submitOrder } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, loginWithGoogle, loginWithFacebook, logout, shapeAuthUser } from "./auth.js";
+import { registerWithEmail, loginWithEmail, logout, shapeAuthUser } from "./auth.js";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -536,7 +536,7 @@ function AuthModal({ open, onClose }) {
       if (mode === "register") {
         const data = await registerWithEmail(name, email, password);
         if (!data.session) {
-          setNotice("Бүртгэл амжилттай! Имэйл хаяг руугаа орж баталгаажуулах линк дээр дарснаар нэвтэрч болно.");
+          setNotice("Бүртгэл амжилттай! Имэйлээ баталгаажуулж нэвтрэх хэсгээр орно уу.");
         }
         // Session шууд үүссэн бол App-ийн onAuthStateChange listener modal-г автоматаар хаана
       } else {
@@ -547,15 +547,6 @@ function AuthModal({ open, onClose }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = async () => {
-    setError("");
-    try { await loginWithGoogle(); } catch (err) { setError(err.message); }
-  };
-  const handleFacebook = async () => {
-    setError("");
-    try { await loginWithFacebook(); } catch (err) { setError(err.message); }
   };
 
   return (
@@ -571,16 +562,6 @@ function AuthModal({ open, onClose }) {
             }}>{m === "login" ? "Нэвтрэх" : "Бүртгүүлэх"}</button>
           ))}
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 18 }}>
-          <button type="button" onClick={handleGoogle} style={socialBtn}>
-            <GoogleG /> Google-ээр нэвтрэх
-          </button>
-          <button type="button" onClick={handleFacebook} style={{ ...socialBtn, background: "#1877F2", color: "#fff" }}>
-            <span style={{ fontWeight: 800, fontSize: 15 }}>f</span> Facebook-ээр нэвтрэх
-          </button>
-        </div>
-        <div style={{ textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: T.inkSoft, marginBottom: 18 }}>— эсвэл имэйлээр —</div>
 
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {mode === "register" && (
@@ -601,19 +582,13 @@ function AuthModal({ open, onClose }) {
   );
 }
 const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Inter', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none" };
-const socialBtn = { display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "10px", borderRadius: 10, border: `1px solid ${T.line}`, background: T.card, cursor: "pointer", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5, color: T.ink };
-function GoogleG() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.2 29.5 4 24 4c-7.7 0-14.3 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.5-5.2l-6.2-5.3C29.3 35.4 26.8 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.2 5.3C40.8 36.4 44 30.8 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
 /* ------------------------------------------------------------------ */
 function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
-  const featured = products.filter((p) => p.tag === "алдартай").slice(0, 4);
+  const featured = products.filter((p) => p.tag === "эрэлттэй").slice(0, 4);
   const heroPicks = products.slice(0, 4);
   return (
     <div>
@@ -870,8 +845,13 @@ export default function App() {
   const openProduct = (p) => setView({ name: "product", productId: p.id });
   const handleSearch = (q) => setView({ name: "search", query: q });
   const handleLogout = async () => { await logout(); flash("Гарлаа"); };
-  const handleCheckout = () => { setCartOpen(false); setView({ name: "checkout" }); };
+  const handleCheckout = () => {
+    setCartOpen(false);
+    if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
+    setView({ name: "checkout" });
+  };
   const handleConfirm = async (form) => {
+    if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     try {
       const orderNumber = await submitOrder({ form, cart, products: data.products });
       setOrderNumber(orderNumber);
@@ -946,34 +926,34 @@ export default function App() {
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
         <main style={{ flex: 1 }}>{body}</main>
-        <footer style={{ background: T.ink, color: T.cream, padding: "40px 20px 24px" }}>
+        <footer style={{ background: T.ink, color: T.cream, padding: "26px 20px 16px" }}>
           <div style={{
-            maxWidth: 1180, margin: "0 auto 26px", display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 26,
+            maxWidth: 1180, margin: "0 auto 16px", display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
           }}>
             {BRANCHES.map((b) => (
               <div key={b.name} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13 }}>
-                <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{b.name}</div>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8, opacity: 0.85 }}>
+                <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name}</div>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, opacity: 0.85 }}>
                   <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
                 </div>
-                <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+                <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
                   <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
                 </a>
-                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
                   <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
                 </a>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                  {SOCIALS.map(({ label, href, Icon }) => (
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
+                      display: "flex", alignItems: "center", gap: 6, color: T.cream, textDecoration: "none",
+                      fontFamily: "'Inter', sans-serif", fontSize: 13, opacity: 0.85,
+                    }}>
+                      <Icon size={16} /> {label}
+                    </a>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap", marginBottom: 20 }}>
-            {SOCIALS.map(({ label, href, Icon }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
-                display: "flex", alignItems: "center", gap: 8, color: T.cream, textDecoration: "none",
-                fontFamily: "'Inter', sans-serif", fontSize: 13, opacity: 0.85,
-              }}>
-                <Icon size={16} /> {label}
-              </a>
             ))}
           </div>
           <div style={{ textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
