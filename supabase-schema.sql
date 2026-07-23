@@ -130,17 +130,17 @@ insert into categories (name, icon) values
 -- Дэд ангилал — санал болгож буй эхлэл, дараа нь Admin panel-аасаа хялбар
 -- нэмэх/өөрчлөх боломжтой тул энд төгс байх шаардлагагүй
 insert into subcategories (category_id, name)
-  select id, s.name from categories, unnest(array['Шарсан буурцаг','Ханд/Дрип уусмал','Капсул']) as s(name) where categories.name = 'Кофе'
+  select id, s.name from categories, unnest(array['Light','Medium','Medium Dark','Dark']) as s(name) where categories.name = 'Кофе'
   union all
-  select id, s.name from categories, unnest(array['Шингэн цай','Цайны уут','Цайны хэрэгсэл']) as s(name) where categories.name = 'Цай'
+  select id, s.name from categories, unnest(array['Жимстэй цай' ,'Хар цай','Ногоон цай']) as s(name) where categories.name = 'Цай'
   union all
-  select id, s.name from categories, unnest(array['Амтлагч сироп','Чихрийн сироп']) as s(name) where categories.name = 'Сироп'
+  select id, s.name from categories, unnest(array['Жимсний сироп','Чихрийн сироп']) as s(name) where categories.name = 'Сироп'
   union all
-  select id, s.name from categories, unnest(array['Шоколад соус','Каррамель соус']) as s(name) where categories.name = 'Соус'
+  select id, s.name from categories, unnest(array['Шоколад','Карамел']) as s(name) where categories.name = 'Соус'
   union all
-  select id, s.name from categories, unnest(array['Шоколад','Матча','Фрапе']) as s(name) where categories.name = 'Нунтаг'
+  select id, s.name from categories, unnest(array['Шоколад','Матча','Тараг','Жимс']) as s(name) where categories.name = 'Нунтаг'
   union all
-  select id, s.name from categories, unnest(array['Пресс/Дриппер','Аяга/Таг','Сав баглаа']) as s(name) where categories.name = 'Бариста хэрэгсэл';
+  select id, s.name from categories, unnest(array['Fortafilter/Tamper','Аяга/Таг','Цэвэрлэгээ']) as s(name) where categories.name = 'Бариста хэрэгсэл';
 
 -- ---------------------------------------------------------------------
 -- 4) Таны брэндүүд

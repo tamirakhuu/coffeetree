@@ -842,7 +842,7 @@ export default function App() {
   }, 0), [cart, data.products]);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
-  const openProduct = (p) => setView({ name: "product", productId: p.id });
+  const openProduct = (p) => setView({ name: "product", productId: p.id, returnTo: view });
   const handleSearch = (q) => setView({ name: "search", query: q });
   const handleLogout = async () => { await logout(); flash("Гарлаа"); };
   const handleCheckout = () => {
@@ -895,7 +895,7 @@ export default function App() {
       onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
   } else if (view.name === "product") {
     const product = data.products.find((p) => p.id === view.productId);
-    body = <ProductDetail product={product} onBack={() => setView({ name: "home" })}
+    body = <ProductDetail product={product} onBack={() => setView(view.returnTo || { name: "home" })}
       onAddToCart={addToCart} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
   } else if (view.name === "search") {
     const q = view.query.toLowerCase();
