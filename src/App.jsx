@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef, createContext, useContext 
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
-  Package, ArrowRight, LogOut, Trash2, ShieldAlert
+  Package, ArrowRight, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
+  Facebook, Instagram
 } from "lucide-react";
 import { fetchBootstrap, submitOrder } from "./api.js";
 import { supabase } from "./supabaseClient.js";
@@ -189,13 +190,13 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 26, letterSpacing: "-0.01em" }}>CUPPA</span>
         </div>
 
-        <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", display: "flex", gap: 4, flex: 1, flexWrap: "wrap" }}>
-          <NavButton active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-            Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
-          </NavButton>
-          <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
-          <NavButton onClick={() => setView({ name: "location" })}>Байршил</NavButton>
-          <NavButton onClick={() => setView({ name: "contact" })}>Холбоо барих</NavButton>
+        <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", flex: 1 }}>
+          <div className="cuppa-nav-links" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            <NavButton active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+              Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+            </NavButton>
+            <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
+          </div>
 
           {menuOpen && (
             <ProductsMegaMenu categories={categories} brands={brands} products={products}
@@ -761,9 +762,7 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Info pages (Сургалт / Байршил / Холбоо барих) — placeholder        */
-/* ------------------------------------------------------------------ */
+
 function InfoPage({ title, note }) {
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
@@ -775,12 +774,18 @@ function InfoPage({ title, note }) {
 function TrainingPage() {
   return <InfoPage title="Сургалт" note="Бариста бэлтгэлийн сургалтын хуваарь энд удахгүй нэмэгдэнэ." />;
 }
-function LocationPage() {
-  return <InfoPage title="Байршил" note="Дэлгүүр, Салбар болон агуулахын байршил, ажиллах цагийн мэдээлэл энд удахгүй нэмэгдэнэ." />;
-}
-function ContactPage() {
-  return <InfoPage title="Холбоо барих" note="Утас, имэйл, сошиал холбоосууд энд удахгүй нэмэгдэнэ." />;
-}
+const BRANCHES = [
+  {
+    name: "Холбоо барих",
+    address: "СБД, 3-р хороо, Нарны зам, Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
+    phone: "70111772",
+    email: "coffeetreellc@gmail.com",
+  },
+];
+const SOCIALS = [
+  { label: "CuppA", href: "https://www.facebook.com/profile.php?id=100053215639953", Icon: Facebook },
+  { label: "cuppa_coffeesupply", href: "https://www.instagram.com/cuppa_coffeesupply/", Icon: Instagram },
+];
 
 const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
 
@@ -932,10 +937,6 @@ export default function App() {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
   } else if (view.name === "training") {
     body = <TrainingPage />;
-  } else if (view.name === "location") {
-    body = <LocationPage />;
-  } else if (view.name === "contact") {
-    body = <ContactPage />;
   }
 
   return (
@@ -945,8 +946,37 @@ export default function App() {
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
         <main style={{ flex: 1 }}>{body}</main>
-        <footer style={{ background: T.ink, color: T.cream, padding: "30px 20px", textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>
-          © 2026 CoffeeTreeLLC
+        <footer style={{ background: T.ink, color: T.cream, padding: "40px 20px 24px" }}>
+          <div style={{
+            maxWidth: 1180, margin: "0 auto 26px", display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 26,
+          }}>
+            {BRANCHES.map((b) => (
+              <div key={b.name} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13 }}>
+                <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{b.name}</div>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8, opacity: 0.85 }}>
+                  <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
+                </div>
+                <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+                  <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
+                </a>
+                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+                  <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
+                </a>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap", marginBottom: 20 }}>
+            {SOCIALS.map(({ label, href, Icon }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
+                display: "flex", alignItems: "center", gap: 8, color: T.cream, textDecoration: "none",
+                fontFamily: "'Inter', sans-serif", fontSize: 13, opacity: 0.85,
+              }}>
+                <Icon size={16} /> {label}
+              </a>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
         </footer>
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
