@@ -101,9 +101,87 @@ function Toast({ message }) {
 /* ------------------------------------------------------------------ */
 /*  Header                                                              */
 /* ------------------------------------------------------------------ */
+function NavButton({ onClick, active, children }) {
+  return (
+    <button onClick={onClick}
+      style={{
+        background: active ? "rgba(255,255,255,0.08)" : "transparent", border: "none", color: T.cream, opacity: 0.85,
+        fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
+        borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = active ? "rgba(255,255,255,0.08)" : "transparent")}
+    >{children}</button>
+  );
+}
+
+function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory }) {
+  const activeCategory = categories.find((c) => c.id === activeCat) || categories[0];
+  const brandsInActive = activeCategory
+    ? brands.filter((b) => products.some((p) => p.categoryId === activeCategory.id && p.brandId === b.id))
+    : [];
+  return (
+    <div className="cuppa-megamenu" style={{
+      position: "absolute", top: "calc(100% + 10px)", left: 0, background: T.card, border: `1px solid ${T.line}`,
+      borderRadius: 14, padding: "22px 24px", display: "flex", gap: 32, boxShadow: "0 24px 50px rgba(0,0,0,.35)",
+      zIndex: 120, minWidth: 580,
+    }}>
+      <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
+        <div style={sideLabel}>Ангилал</div>
+        {categories.map((c) => {
+          const Icon = ICONS[c.icon] || Coffee;
+          const active = activeCategory?.id === c.id;
+          return (
+            <button key={c.id} onClick={() => onGoCategory(c.id)} onMouseEnter={() => setActiveCat(c.id)}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
+                background: active ? T.ink : "transparent", color: active ? T.cream : T.ink,
+                border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Inter', sans-serif",
+                fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
+              }}>
+              <Icon size={15} /> {c.name}
+            </button>
+          );
+        })}
+      </div>
+      <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
+        <div style={sideLabel}>Дэд ангилал</div>
+        {(activeCategory?.sub || []).map((s) => (
+          <div key={s} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: T.inkSoft, padding: "6px 2px" }}>{s}</div>
+        ))}
+      </div>
+      <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
+        <div style={sideLabel}>Брэнд</div>
+        {brandsInActive.map((b) => (
+          <div key={b.id} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: T.inkSoft, padding: "6px 2px" }}>{b.name}</div>
+        ))}
+        {brandsInActive.length === 0 && (
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch, onLogout }) {
-  const { categories } = useContext(DataContext);
+  const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeCat, setActiveCat] = useState(null);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    if (categories.length && activeCat == null) setActiveCat(categories[0].id);
+  }, [categories, activeCat]);
+
+  useEffect(() => {
+    const onDocClick = (e) => { if (navRef.current && !navRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); };
+
   return (
     <header style={{ background: T.ink, color: T.cream, position: "sticky", top: 0, zIndex: 100 }}>
       <div className="cuppa-header-row" style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
@@ -111,23 +189,18 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 26, letterSpacing: "-0.01em" }}>CUPPA</span>
         </div>
 
-        <nav className="cuppa-nav" style={{ display: "flex", gap: 4, flex: 1, flexWrap: "wrap" }}>
-          {categories.map((c) => {
-            const Icon = ICONS[c.icon] || Coffee;
-            return (
-              <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })}
-                style={{
-                  background: "transparent", border: "none", color: T.cream, opacity: 0.85,
-                  fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
-                  borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                <Icon size={15} /> {c.name}
-              </button>
-            );
-          })}
+        <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", display: "flex", gap: 4, flex: 1, flexWrap: "wrap" }}>
+          <NavButton active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+            Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+          </NavButton>
+          <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
+          <NavButton onClick={() => setView({ name: "location" })}>Байршил</NavButton>
+          <NavButton onClick={() => setView({ name: "contact" })}>Холбоо барих</NavButton>
+
+          {menuOpen && (
+            <ProductsMegaMenu categories={categories} brands={brands} products={products}
+              activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} />
+          )}
         </nav>
 
         <form className="cuppa-search-form" onSubmit={(e) => { e.preventDefault(); onSearch(q); }}
@@ -688,6 +761,27 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Info pages (Сургалт / Байршил / Холбоо барих) — placeholder        */
+/* ------------------------------------------------------------------ */
+function InfoPage({ title, note }) {
+  return (
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
+      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>{title}</h1>
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6 }}>{note}</p>
+    </div>
+  );
+}
+function TrainingPage() {
+  return <InfoPage title="Сургалт" note="Бариста бэлтгэлийн сургалтын хуваарь энд удахгүй нэмэгдэнэ." />;
+}
+function LocationPage() {
+  return <InfoPage title="Байршил" note="Дэлгүүр, Салбар болон агуулахын байршил, ажиллах цагийн мэдээлэл энд удахгүй нэмэгдэнэ." />;
+}
+function ContactPage() {
+  return <InfoPage title="Холбоо барих" note="Утас, имэйл, сошиал холбоосууд энд удахгүй нэмэгдэнэ." />;
+}
+
 const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
 
 /* ------------------------------------------------------------------ */
@@ -836,17 +930,23 @@ export default function App() {
     body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} />;
   } else if (view.name === "confirmation") {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
+  } else if (view.name === "training") {
+    body = <TrainingPage />;
+  } else if (view.name === "location") {
+    body = <LocationPage />;
+  } else if (view.name === "contact") {
+    body = <ContactPage />;
   }
 
   return (
     <DataContext.Provider value={data}>
-      <div style={{ background: T.paper, minHeight: "100%", fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Inter', sans-serif" }}>
         <style>{FONT_IMPORT}</style>
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
-        {body}
+        <main style={{ flex: 1 }}>{body}</main>
         <footer style={{ background: T.ink, color: T.cream, padding: "30px 20px", textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>
-          © 2026 CoffeeTree
+          © 2026 CoffeeTreeLLC
         </footer>
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />

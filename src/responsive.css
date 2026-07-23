@@ -1,5 +1,5 @@
 /* Mobile responsiveness overrides for the inline-styled CUPPA layout. */
-html, body {
+html {
   overflow-x: hidden;
 }
 
@@ -38,6 +38,17 @@ html, body {
   .cuppa-thumb-row { overflow-x: auto !important; }
 
   .cuppa-checkout-grid { grid-template-columns: 1fr !important; }
+
+  .cuppa-megamenu {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    box-shadow: none !important;
+    margin-top: 8px;
+  }
+  .cuppa-megamenu-col { min-width: 0 !important; }
 }
 
 @media (max-width: 480px) {

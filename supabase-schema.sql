@@ -1,12 +1,10 @@
 -- =====================================================================
--- CUPPA — Supabase database schema
+-- CUPPA — Supabase database schema (таны өөрийн ангилал/брэндэд тохируулсан)
 -- Ажиллуулах газар: Supabase Dashboard → SQL Editor → New query → Run
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 0) Хуучин хүснэгтүүдийг цэвэрлэх (АНХААР: одоо байгаа бодит өгөгдөл
---    байвал энэ хэсэг устгагдана. Хэрэв хуучин "products" хүснэгтэндээ
---    хадгалах өгөгдөл байгаа бол энэ 6 мөрийг comment хийж (-- нэмээд) алгасаарай)
+-- 0) Хуучин хүснэгтүүдийг цэвэрлэх
 -- ---------------------------------------------------------------------
 drop table if exists order_items cascade;
 drop table if exists orders cascade;
@@ -58,8 +56,6 @@ create table products (
   created_at timestamptz default now()
 );
 
--- order_number-г primary key болгосноор захиалагч (нэвтрээгүй хэрэглэгч)
--- захиалга үүсгэхэд буцаан унших (SELECT) эрх шаардахгүйгээр ажиллана
 create table orders (
   order_number text primary key,
   customer_name text,
@@ -83,7 +79,7 @@ create table order_items (
 );
 
 -- ---------------------------------------------------------------------
--- 2) Row Level Security — дэлгүүр зөвхөн уншина, admin (нэвтэрсэн) л бичнэ
+-- 2) Row Level Security
 -- ---------------------------------------------------------------------
 alter table categories enable row level security;
 alter table subcategories enable row level security;
@@ -92,13 +88,11 @@ alter table products enable row level security;
 alter table orders enable row level security;
 alter table order_items enable row level security;
 
--- Уншихыг бүгдэд (дэлгүүр үзэгч, admin) нээлттэй болгоно
 create policy "public read categories" on categories for select using (true);
 create policy "public read subcategories" on subcategories for select using (true);
 create policy "public read brands" on brands for select using (true);
 create policy "public read products" on products for select using (true);
 
--- Бичих (нэмэх/засах/устгах)-ыг зөвхөн нэвтэрсэн admin-д зөвшөөрнө
 create policy "admin insert categories" on categories for insert with check (auth.role() = 'authenticated');
 create policy "admin update categories" on categories for update using (auth.role() = 'authenticated');
 create policy "admin delete categories" on categories for delete using (auth.role() = 'authenticated');
@@ -113,8 +107,6 @@ create policy "admin insert products" on products for insert with check (auth.ro
 create policy "admin update products" on products for update using (auth.role() = 'authenticated');
 create policy "admin delete products" on products for delete using (auth.role() = 'authenticated');
 
--- Захиалга: дэлгүүрийн үзэгч (нэвтрээгүй хэрэглэгч ч) захиалга ҮҮСГЭЖ (insert)
--- болно, гэхдээ жагсаалтыг зөвхөн admin (нэвтэрсэн) харна
 create policy "public create orders" on orders for insert with check (true);
 create policy "admin read orders" on orders for select using (auth.role() = 'authenticated');
 create policy "admin update orders" on orders for update using (auth.role() = 'authenticated');
@@ -125,63 +117,52 @@ create policy "admin read order_items" on order_items for select using (auth.rol
 create policy "admin delete order_items" on order_items for delete using (auth.role() = 'authenticated');
 
 -- ---------------------------------------------------------------------
--- 3) Эхний өгөгдөл (seed) — 5 ангилал, 8 брэнд, 17 бараа
+-- 3) Таны ангилал (6) — icon бүрд тохирсон утга өгсөн (доор жагсаалт: Coffee/Leaf/Droplet/Snowflake/Wrench)
 -- ---------------------------------------------------------------------
 insert into categories (name, icon) values
   ('Кофе', 'Coffee'),
   ('Цай', 'Leaf'),
-  ('Сироп/Соус', 'Droplet'),
-  ('Паудер', 'Snowflake'),
-  ('Кафены хэрэгсэл', 'Wrench');
+  ('Сироп', 'Droplet'),
+  ('Соус', 'Droplet'),
+  ('Нунтаг', 'Snowflake'),
+  ('Бариста хэрэгсэл', 'Wrench');
 
+-- Дэд ангилал — санал болгож буй эхлэл, дараа нь Admin panel-аасаа хялбар
+-- нэмэх/өөрчлөх боломжтой тул энд төгс байх шаардлагагүй
 insert into subcategories (category_id, name)
   select id, s.name from categories, unnest(array['Шарсан буурцаг','Ханд/Дрип уусмал','Капсул']) as s(name) where categories.name = 'Кофе'
   union all
   select id, s.name from categories, unnest(array['Шингэн цай','Цайны уут','Цайны хэрэгсэл']) as s(name) where categories.name = 'Цай'
   union all
-  select id, s.name from categories, unnest(array['Амтлагч сироп','Шоколад соус','Чихрийн сироп']) as s(name) where categories.name = 'Сироп/Соус'
+  select id, s.name from categories, unnest(array['Амтлагч сироп','Чихрийн сироп']) as s(name) where categories.name = 'Сироп'
   union all
-  select id, s.name from categories, unnest(array['Шоколад','Матча','Фрапе']) as s(name) where categories.name = 'Паудер'
+  select id, s.name from categories, unnest(array['Шоколад соус','Каррамель соус']) as s(name) where categories.name = 'Соус'
   union all
-  select id, s.name from categories, unnest(array['Пресс/Дриппер','Аяга/Таг','Сав баглаа']) as s(name) where categories.name = 'Кафены хэрэгсэл';
-
-insert into brands (name) values
-  ('Lavazza'), ('illy'), ('Monin'), ('DaVinci'), ('Ghirardelli'), ('Hario'), ('Kalita'), ('Cuppa House');
-
-insert into products
-  (name, brand_id, category_id, subcategory, origin, tag, color, description,
-   unit_label, unit_price, unit_stock, box_label, box_price, box_per_box, box_stock)
-select
-  v.name, b.id, c.id, v.subcategory, v.origin, v.tag, v.color, v.description,
-  v.unit_label, v.unit_price, v.unit_stock, v.box_label, v.box_price, v.box_per_box, v.box_stock
-from (values
-  ('Qualita Rossa шарсан буурцаг','Lavazza','Кофе','Шарсан буурцаг','Бразил · Дундаж шарсан','алдартай','#6B4226','Хурц шоколадлаг амт, зөөлөн исгэлэн дэвсгэртэй, эспрессод тохиромжтой бленд.','1 боодол (1кг)',24900,86,'1 хайрцаг (6 боодол)',138000,6,12),
-  ('Monsooned Malabar буурцаг','illy','Кофе','Шарсан буурцаг','Энэтхэг · Хүчтэй шарсан',null,'#3E2A1E','Мооссоны чийгэнд боловсруулсан, бага хүчиллэг, зузаан бие бүхий буурцаг.','1 боодол (500г)',21500,54,'1 хайрцаг (8 боодол)',158000,8,7),
-  ('Yirgacheffe жин ялгасан буурцаг','Cuppa House','Кофе','Шарсан буурцаг','Этиоп · Гэрэл шарсан','шинэ','#8A5A34','Цэцэглэг, цитрус аромат, гэрэл шарсан тул гарчигт тод харагдана.','1 боодол (250г)',15900,120,'1 хайрцаг (12 боодол)',172000,12,9),
-  ('Дриппер ханд кофены багц','Cuppa House','Кофе','Ханд/Дрип уусмал','Колумб · Дундаж шарсан',null,'#4A3120','Ганц аягад зориулсан drip bag, ажлын өдрийн хурдан шийдэл.','1 ширхэг',1900,400,'1 хайрцаг (20ш)',33000,20,30),
-  ('Кофены капсул (эспрессо)','illy','Кофе','Капсул','Бленд · Хүчтэй шарсан',null,'#2E1E14','Nespresso-той тохирох стандарт капсул, тогтмол хурц эспрессо.','1 хайрцаг (10ш)',12900,65,'1 карт (6 хайрцаг)',71000,60,8),
-  ('Английн өглөөний хар цай','Cuppa House','Цай','Цайны уут','Шри Ланка',null,'#5C1F1F','Классик хар цай, сүүтэй хослуулахад тохиромжтой хурц амт.','1 хайрцаг (25 уут)',8900,140,'1 карт (12 хайрцаг)',96000,300,10),
-  ('Пийч улаан цай (ханд)','Monin','Цай','Шингэн цай','Франц','шинэ','#B23A48','Жимсний амттай концентрат, зөвхөн ус/мөстэй хольж бэлддэг.','1 шил (750мл)',17500,48,'1 хайрцаг (6 шил)',96000,6,6),
-  ('Матча дриппер иж бүрдэл','Hario','Цай','Цайны хэрэгсэл','Япон дизайн',null,'#5B6B3F','Гар аргаар матча хийхэд зориулсан керамик аяга, бамбукан сойз.','1 иж бүрдэл',62000,22,'1 хайрцаг (4 иж бүрдэл)',232000,4,3),
-  ('Ванилын сироп','Monin','Сироп/Соус','Амтлагч сироп','Франц','алдартай','#C9A227','Латте, фрапе бүхэнд тохирох сонгодог ванилын амт.','1 шил (700мл)',13900,96,'1 хайрцаг (12 шил)',149000,12,11),
-  ('Каррамель соус','DaVinci','Сироп/Соус','Шоколад соус','АНУ',null,'#8C5A20','Зузаан бүтэцтэй, топинг болон холилтод хоёуланд нь тохиромжтой.','1 шил (750мл)',15900,70,'1 хайрцаг (6 шил)',87000,6,8),
-  ('Хазелнатын сироп','DaVinci','Сироп/Соус','Амтлагч сироп','АНУ',null,'#6B4A2C','Нэрмэл самрын амт, кофе болон какаотай сайн зохицдог.','1 шил (750мл)',14200,58,'1 хайрцаг (12 шил)',152000,12,5),
-  ('Бельгийн шоколад паудер','Ghirardelli','Паудер','Шоколад','Бельги','алдартай','#3B2418','Өндөр какаотай, моча болон халуун шоколадад тохиромжтой.','1 уут (1кг)',27500,44,'1 хайрцаг (10 уут)',245000,10,6),
-  ('Матча паудер (кулинар зэрэглэл)','Cuppa House','Паудер','Матча','Япон',null,'#5B6B3F','Латте бэлдэхэд тохиромжтой, тод ногоон өнгө, зөөлөн гашуун.','1 уут (500г)',32000,30,'1 хайрцаг (8 уут)',235000,8,4),
-  ('Фрапе миксийн паудер','DaVinci','Паудер','Фрапе','АНУ',null,'#7A5230','Мөстэй хослуулан хийхэд тохиромжтой, зузаан хөөстэй фрапе.','1 уут (1кг)',21900,60,'1 хайрцаг (10 уут)',195000,10,7),
-  ('V60 керамик дриппер','Hario','Кафены хэрэгсэл','Пресс/Дриппер','Япон','шинэ','#7A2E2E','Гар аргаар кофе шүүх сонгодог хэрэгсэл, дулаан тогтоолт сайтай.','1 ширхэг',34900,40,'1 хайрцаг (6ш)',189000,6,5),
-  ('Wave цаасан шүүлтүүр','Kalita','Кафены хэрэгсэл','Сав баглаа','Япон',null,'#B8862E','Тэгш урсацтай, цэвэр амт өгдөг цаасан шүүлтүүр.','1 багц (100ш)',9900,150,'1 хайрцаг (20 багц)',178000,2000,9),
-  ('PLA биодеградац аяга','Cuppa House','Кафены хэрэгсэл','Аяга/Таг','Байгальд ээлтэй',null,'#48583A','Take-away-д зориулсан задрах чадвартай аяга, таг хамт.','1 багц (50ш)',8500,220,'1 хайрцаг (20 багц)',152000,1000,14)
-) as v(name, brand, category, subcategory, origin, tag, color, description, unit_label, unit_price, unit_stock, box_label, box_price, box_per_box, box_stock)
-join brands b on b.name = v.brand
-join categories c on c.name = v.category;
+  select id, s.name from categories, unnest(array['Шоколад','Матча','Фрапе']) as s(name) where categories.name = 'Нунтаг'
+  union all
+  select id, s.name from categories, unnest(array['Пресс/Дриппер','Аяга/Таг','Сав баглаа']) as s(name) where categories.name = 'Бариста хэрэгсэл';
 
 -- ---------------------------------------------------------------------
--- 4) Барааны зураг хадгалах Storage bucket + policy
+-- 4) Таны брэндүүд
+-- ---------------------------------------------------------------------
+insert into brands (name) values
+  ('Pomona'), ('Hario'), ('Kalita'), ('UP'),
+  ('Taco'), ('Daeho'), ('Sweet Page'), ('Nature Tea')
+on conflict (name) do nothing;
+
+-- Бараа энд оруулаагүй — Admin panel (admin-panel.html) дээрээсээ гараар нэмнэ үү.
+
+-- ---------------------------------------------------------------------
+-- 5) Барааны зураг хадгалах Storage bucket + policy
+--    (drop if exists ашигласан тул дахин ажиллуулахад ч алдаа өгөхгүй)
 -- ---------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
 on conflict (id) do nothing;
+
+drop policy if exists "public read product images" on storage.objects;
+drop policy if exists "admin upload product images" on storage.objects;
+drop policy if exists "admin delete product images" on storage.objects;
 
 create policy "public read product images"
   on storage.objects for select
@@ -194,8 +175,3 @@ create policy "admin upload product images"
 create policy "admin delete product images"
   on storage.objects for delete
   using (bucket_id = 'product-images' and auth.role() = 'authenticated');
-
--- =====================================================================
--- Дууслаа. Дараагийн алхам: Authentication → Users хэсэгт admin-даа
--- зориулсан имэйл/нууц үг үүсгээрэй (admin-panel.html-ээр нэвтрэхэд хэрэглэнэ).
--- =====================================================================
