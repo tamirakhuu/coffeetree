@@ -31,10 +31,12 @@ export async function fetchBootstrap() {
 // Захиалга үүсгэх — нэвтрээгүй хэрэглэгч ч гэсэн бичиж болно (public insert policy)
 export async function submitOrder({ form, cart, products }) {
   const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
-  const subtotal = cart.reduce((sum, item) => {
-    const p = products.find((x) => x.id === item.productId);
-    return p ? sum + p[item.optionType].price * item.qty : sum;
-  }, 0);
+  // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
+  const validItems = cart
+    .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
+    .filter(({ product }) => product);
+
+  const subtotal = validItems.reduce((sum, { item, product }) => sum + product[item.optionType].price * item.qty, 0);
 
   const { error: orderErr } = await supabase.from("orders").insert({
     order_number: orderNumber,
@@ -46,13 +48,12 @@ export async function submitOrder({ form, cart, products }) {
   });
   if (orderErr) throw new Error(orderErr.message);
 
-  const itemRows = cart.map((item) => {
-    const p = products.find((x) => x.id === item.productId);
-    const option = p[item.optionType];
+  const itemRows = validItems.map(({ item, product }) => {
+    const option = product[item.optionType];
     return {
       order_number: orderNumber,
-      product_id: p.id,
-      product_name: p.name,
+      product_id: product.id,
+      product_name: product.name,
       option_type: item.optionType,
       option_label: option.label,
       unit_price: option.price,
