@@ -63,6 +63,8 @@ create table orders (
   address text,
   subtotal numeric,
   status text default 'pending', -- pending | processing | shipped | done | cancelled
+  receipt_type text default 'individual', -- individual | company
+  register_number text, -- байгууллагын регистрийн дугаар (receipt_type='company' үед)
   created_at timestamptz default now()
 );
 

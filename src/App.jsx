@@ -649,9 +649,10 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 function Checkout({ cart, subtotal, onConfirm, onBack }) {
   const { products } = useContext(DataContext);
-  const [form, setForm] = useState({ name: "", phone: "", address: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", receiptType: "individual", registerNumber: "" });
   const [submitting, setSubmitting] = useState(false);
-  const valid = form.name && form.phone && form.address && !submitting;
+  const valid = form.name && form.phone && form.address
+    && (form.receiptType !== "company" || form.registerNumber) && !submitting;
   const handleClick = async () => {
     setSubmitting(true);
     await onConfirm(form);
@@ -668,6 +669,25 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
           <input placeholder="Хүлээн авагчийн нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
           <input placeholder="Утасны дугаар" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
           <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Inter', sans-serif" }} />
+
+          <div>
+            <div style={sideLabel}>И-баримт</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[{ key: "individual", label: "Хувь хүн" }, { key: "company", label: "Байгууллага" }].map(({ key, label }) => (
+                <button key={key} type="button" onClick={() => setForm({ ...form, receiptType: key })} style={{
+                  flex: 1, textAlign: "center", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
+                  border: `1.5px solid ${form.receiptType === key ? T.cherry : T.line}`,
+                  background: form.receiptType === key ? T.cream : "transparent",
+                  fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
+                }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          {form.receiptType === "company" && (
+            <input placeholder="Байгууллагын регистрийн дугаар" value={form.registerNumber}
+              onChange={(e) => setForm({ ...form, registerNumber: e.target.value })} style={inputStyle} />
+          )}
+
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөрийн хэлбэр : QPay</div>
         </div>
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, alignSelf: "flex-start", minWidth: 240 }}>

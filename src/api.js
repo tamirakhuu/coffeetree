@@ -45,6 +45,8 @@ export async function submitOrder({ form, cart, products }) {
     address: form.address,
     subtotal,
     status: "pending",
+    receipt_type: form.receiptType || "individual",
+    register_number: form.receiptType === "company" ? form.registerNumber : null,
   });
   if (orderErr) throw new Error(orderErr.message);
 

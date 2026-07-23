@@ -188,8 +188,12 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-orders">
-    <div class="page-header"><div><h1>Захиалга</h1><p id="orderCount">Нийт 0 захиалга</p></div></div>
-    <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+    <div class="page-header">
+      <div><h1>Захиалга</h1><p id="orderCount">Нийт 0 захиалга</p></div>
+      <input id="orderSearch" oninput="renderOrders()" placeholder="Захиалгын дугаараар хайх..."
+        style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Inter',sans-serif;width:240px">
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>И-баримт</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
   </div>
 
 </main>
@@ -561,15 +565,23 @@ async function deleteBrandNow(id) {
 }
 
 function renderOrders() {
-  document.getElementById('orderCount').textContent = `Нийт ${orders.length} захиалга`;
+  const query = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
+  const filtered = query ? orders.filter(o => (o.order_number || '').toLowerCase().includes(query)) : orders;
+  document.getElementById('orderCount').textContent = query
+    ? `${filtered.length} / Нийт ${orders.length} захиалга`
+    : `Нийт ${orders.length} захиалга`;
   const tb = document.getElementById('orderTable');
-  tb.innerHTML = orders.map(o => {
+  tb.innerHTML = filtered.map(o => {
     const items = orderItems.filter(i => i.order_number === o.order_number);
     const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
+    const receiptText = o.receipt_type === 'company'
+      ? `Байгууллага<br><span class="mono" style="font-size:11px">${o.register_number || '-'}</span>`
+      : 'Хувь хүн';
     return `<tr>
       <td class="mono">${o.order_number}</td>
       <td>${o.customer_name||'-'}</td>
       <td class="mono">${o.phone||'-'}</td>
+      <td style="font-size:12px">${receiptText}</td>
       <td style="font-size:12px">${itemsText || '-'}</td>
       <td class="mono">${fmt(o.subtotal)}</td>
       <td class="mono" style="font-size:11px">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
@@ -579,7 +591,7 @@ function renderOrders() {
         </select>
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" class="empty">Захиалга алга байна</td></tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">Захиалга алга байна</td></tr>`;
 }
 function statusLabel(s) {
   return { pending:'Хүлээгдэж байна', processing:'Боловсруулж байна', shipped:'Явуулсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' }[s] || s;
