@@ -14,6 +14,7 @@ function translate(msg) {
 export function shapeAuthUser(u) {
   if (!u) return null;
   return {
+    id: u.id,
     name: u.user_metadata?.name || u.email.split("@")[0],
     email: u.email,
     provider: u.app_metadata?.provider || "email",

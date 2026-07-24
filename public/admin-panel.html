@@ -118,7 +118,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <button type="submit" class="login-btn" id="loginBtn">Нэвтрэх</button>
       <div class="login-err" id="loginErr"></div>
     </form>
-    <div class="login-hint">Supabase Dashboard → Authentication → Users хэсэгт admin эрхтэй имэйл/нууц үг үүсгэсэн байх шаардлагатай.</div>
   </div>
 </div>
 
@@ -190,7 +189,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   <div class="page" id="page-orders">
     <div class="page-header">
       <div><h1>Захиалга</h1><p id="orderCount">Нийт 0 захиалга</p></div>
-      <input id="orderSearch" oninput="renderOrders()" placeholder="Захиалгын дугаараар хайх..."
+      <input id="orderSearch" oninput="renderOrders()" placeholder="Захиалгын дугаар, регистр эсвэл утасны дугаараар хайх..."
         style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Inter',sans-serif;width:240px">
     </div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>И-баримт</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
@@ -566,7 +565,11 @@ async function deleteBrandNow(id) {
 
 function renderOrders() {
   const query = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
-  const filtered = query ? orders.filter(o => (o.order_number || '').toLowerCase().includes(query)) : orders;
+  const filtered = query ? orders.filter(o =>
+    (o.order_number || '').toLowerCase().includes(query) ||
+    (o.register_number || '').toLowerCase().includes(query) ||
+    (o.phone || '').toLowerCase().includes(query)
+  ) : orders;
   document.getElementById('orderCount').textContent = query
     ? `${filtered.length} / Нийт ${orders.length} захиалга`
     : `Нийт ${orders.length} захиалга`;

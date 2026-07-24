@@ -5,7 +5,7 @@ import {
   Package, ArrowRight, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram
 } from "lucide-react";
-import { fetchBootstrap, submitOrder } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, logout, shapeAuthUser } from "./auth.js";
 
@@ -220,7 +220,10 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           </button>
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 13, fontFamily: "'Inter', sans-serif" }}>{user.name}</span>
+              <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
+                background: "none", border: "none", cursor: "pointer", color: T.cream,
+                fontSize: 13, fontFamily: "'Inter', sans-serif", textDecoration: "underline",
+              }}>{user.name}</button>
               <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
             </div>
           ) : (
@@ -758,6 +761,80 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
 }
 
 
+/* ------------------------------------------------------------------ */
+/*  Миний захиалгууд                                                   */
+/* ------------------------------------------------------------------ */
+const ORDER_STATUS_LABELS = { pending: "Хүлээгдэж байна", processing: "Боловсруулж байна", shipped: "Явуулсан", done: "Хүргэгдсэн", cancelled: "Цуцлагдсан" };
+const ORDER_STATUS_COLORS = {
+  pending: { bg: "#F3E6C9", color: "#8A6A1E" },
+  processing: { bg: "#DCE6F5", color: "#2E4E8A" },
+  shipped: { bg: "#E4DCF5", color: "#5B3E8A" },
+  done: { bg: "#DFEED6", color: "#2E5C2E" },
+  cancelled: { bg: "#F5DCDC", color: "#8A2E2E" },
+};
+function OrderStatusBadge({ status }) {
+  const c = ORDER_STATUS_COLORS[status] || ORDER_STATUS_COLORS.pending;
+  return (
+    <span style={{
+      background: c.bg, color: c.color, fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
+      borderRadius: 999, fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap",
+    }}>{ORDER_STATUS_LABELS[status] || status}</span>
+  );
+}
+function MyOrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyOrders()
+      .then((data) => { if (!cancelled) { setOrders(data); setStatus("ready"); } })
+      .catch(() => { if (!cancelled) setStatus("error"); });
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px 90px" }}>
+      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Миний захиалгууд</h1>
+      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Ачааллаж байна…</div>}
+      {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Inter', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
+      {status === "ready" && orders.length === 0 && (
+        <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Та одоогоор захиалга хийгээгүй байна.</div>
+      )}
+      {status === "ready" && orders.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {orders.map((o) => (
+            <div key={o.orderNumber} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 15, color: T.ink }}>{o.orderNumber}</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+                    {new Date(o.createdAt).toLocaleDateString("mn-MN")}
+                    {o.receiptType === "company" && <> · Байгууллага ({o.registerNumber})</>}
+                  </div>
+                </div>
+                <OrderStatusBadge status={o.status} />
+              </div>
+              <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                {o.items.map((it, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+                    <span>{it.productName} ({it.optionLabel}) × {it.qty}</span>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(it.lineTotal)}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(o.subtotal)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InfoPage({ title, note }) {
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
@@ -873,7 +950,7 @@ export default function App() {
   const handleConfirm = async (form) => {
     if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     try {
-      const orderNumber = await submitOrder({ form, cart, products: data.products });
+      const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
       setOrderNumber(orderNumber);
       setCart([]);
       setView({ name: "confirmation" });
@@ -937,6 +1014,8 @@ export default function App() {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
   } else if (view.name === "training") {
     body = <TrainingPage />;
+  } else if (view.name === "orders") {
+    body = user ? <MyOrdersPage /> : <InfoPage title="Миний захиалгууд" note="Захиалгаа харахын тулд эхлээд нэвтэрнэ үү." />;
   }
 
   return (

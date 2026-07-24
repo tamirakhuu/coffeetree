@@ -28,8 +28,9 @@ export async function fetchBootstrap() {
   return { categories: cats, brands, products: products.map(shapeProduct) };
 }
 
-// Захиалга үүсгэх — нэвтрээгүй хэрэглэгч ч гэсэн бичиж болно (public insert policy)
-export async function submitOrder({ form, cart, products }) {
+// Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
+// "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
+export async function submitOrder({ form, cart, products, userId }) {
   const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
   // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
@@ -40,6 +41,7 @@ export async function submitOrder({ form, cart, products }) {
 
   const { error: orderErr } = await supabase.from("orders").insert({
     order_number: orderNumber,
+    user_id: userId || null,
     customer_name: form.name,
     phone: form.phone,
     address: form.address,
@@ -67,4 +69,25 @@ export async function submitOrder({ form, cart, products }) {
   if (itemsErr) throw new Error(itemsErr.message);
 
   return orderNumber;
+}
+
+// Нэвтэрсэн хэрэглэгчийн өөрийн захиалгуудыг татах (RLS-ээр автоматаар шүүгдэнэ)
+export async function fetchMyOrders() {
+  const [{ data: orders, error: oe }, { data: items, error: ie }] = await Promise.all([
+    supabase.from("orders").select("*").order("created_at", { ascending: false }),
+    supabase.from("order_items").select("*"),
+  ]);
+  const err = oe || ie;
+  if (err) throw new Error(err.message);
+  return orders.map((o) => ({
+    orderNumber: o.order_number,
+    status: o.status,
+    subtotal: o.subtotal,
+    receiptType: o.receipt_type,
+    registerNumber: o.register_number,
+    createdAt: o.created_at,
+    items: items.filter((i) => i.order_number === o.order_number).map((i) => ({
+      productName: i.product_name, optionLabel: i.option_label, qty: i.qty, lineTotal: i.line_total,
+    })),
+  }));
 }
