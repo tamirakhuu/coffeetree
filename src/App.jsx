@@ -879,6 +879,10 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const loaded = useRef(false);
+  // Сагс/wishlist-ийг нэвтэрсэн хэрэглэгчийн ID-гаар тусгаарлана — ингэснээр
+  // нэг browser дээр өөр өөр account-аар нэвтрэхэд хэрэглэгч бүр зөвхөн
+  // өөрийн сагс/wishlist-ээ л харна (нэвтрээгүй үед "guest" сагс)
+  const storageKey = useRef("guest");
 
   const loadData = async () => {
     try {
@@ -892,22 +896,35 @@ export default function App() {
 
   useEffect(() => { loadData(); }, []);
 
+  const loadCartWishlist = (key) => {
+    try { const raw = localStorage.getItem(`cuppa:cart:${key}`); setCart(raw ? JSON.parse(raw) : []); } catch (e) { setCart([]); }
+    try { const raw = localStorage.getItem(`cuppa:wishlist:${key}`); setWishlist(raw ? JSON.parse(raw) : []); } catch (e) { setWishlist([]); }
+  };
+
   useEffect(() => {
-    try { const raw = localStorage.getItem("cuppa:cart"); if (raw) setCart(JSON.parse(raw)); } catch (e) {}
-    try { const raw = localStorage.getItem("cuppa:wishlist"); if (raw) setWishlist(JSON.parse(raw)); } catch (e) {}
-    loaded.current = true;
-  }, []);
-  useEffect(() => { if (loaded.current) localStorage.setItem("cuppa:cart", JSON.stringify(cart)); }, [cart]);
-  useEffect(() => { if (loaded.current) localStorage.setItem("cuppa:wishlist", JSON.stringify(wishlist)); }, [wishlist]);
+    if (loaded.current) localStorage.setItem(`cuppa:cart:${storageKey.current}`, JSON.stringify(cart));
+  }, [cart]);
+  useEffect(() => {
+    if (loaded.current) localStorage.setItem(`cuppa:wishlist:${storageKey.current}`, JSON.stringify(wishlist));
+  }, [wishlist]);
 
   // Хэрэглэгчийн нэвтрэлтийн төлөв — Supabase Auth session-той шууд синхрон
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(shapeAuthUser(session?.user));
+      const u = shapeAuthUser(session?.user);
+      setUser(u);
+      storageKey.current = u?.id || "guest";
+      loadCartWishlist(storageKey.current);
+      loaded.current = true;
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = shapeAuthUser(session?.user);
       setUser(u);
+      const nextKey = u?.id || "guest";
+      if (nextKey !== storageKey.current) {
+        storageKey.current = nextKey;
+        loadCartWishlist(nextKey);
+      }
       if (u) { setAuthOpen(false); flash(`Тавтай морил, ${u.name}!`); }
     });
     return () => listener.subscription.unsubscribe();
