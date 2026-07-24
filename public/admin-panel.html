@@ -383,6 +383,14 @@ function productFormHtml(p) {
   p = p || {};
   selectedColor = p.color || COLOR_SWATCHES[0];
   productImages = (p.images || []).map(url => ({ url }));
+  // Одоо байгаа бараа засах үед box_price/unit_price/box_per_box-оос хямдралын
+  // хувийг буцаан тооцож, талбарт урьдчилан харуулна
+  let boxDiscount = '';
+  if (p.unit_price && p.box_per_box && p.box_price) {
+    const impliedUnit = p.box_price / p.box_per_box;
+    const pct = (1 - impliedUnit / p.unit_price) * 100;
+    if (pct > 0) boxDiscount = Math.round(pct * 10) / 10;
+  }
   return `
     <div class="form-grid form-grid-2">
       <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}"></div>
@@ -396,14 +404,27 @@ function productFormHtml(p) {
       <div class="fg full"><label>Тайлбар</label><textarea id="pf-desc">${p.description||''}</textarea></div>
       <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px"><label style="color:var(--cherry)">Ширхэгээр</label></div>
       <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'1 ширхэг'}"></div>
-      <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" value="${p.unit_price||''}"></div>
+      <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxPrice()" value="${p.unit_price||''}"></div>
       <div class="fg full"><label>Нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
       <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px"><label style="color:var(--cherry)">Хайрцгаар</label></div>
       <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
-      <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
-      <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" value="${p.box_per_box||''}"></div>
+      <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice()" value="${p.box_per_box||''}"></div>
+      <div class="fg"><label>Бөөний хямдрал (%)</label><input type="number" step="0.1" id="pf-box-discount" oninput="recalcBoxPrice()" placeholder="жишээ: 3.3" value="${boxDiscount}"></div>
+      <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
+      <div class="fg full" id="pf-box-preview" style="font-size:12px;color:var(--ink-soft);margin-top:-6px"></div>
       <div class="fg"><label>Нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
     </div>`;
+}
+function recalcBoxPrice() {
+  const unitPrice = parseFloat(document.getElementById('pf-unit-price').value) || 0;
+  const perBox = parseFloat(document.getElementById('pf-box-per').value) || 0;
+  const discount = parseFloat(document.getElementById('pf-box-discount').value) || 0;
+  const preview = document.getElementById('pf-box-preview');
+  if (!unitPrice || !perBox) { preview.textContent = ''; return; }
+  const discountedUnit = unitPrice * (1 - discount / 100);
+  const boxPrice = Math.round(discountedUnit * perBox);
+  document.getElementById('pf-box-price').value = boxPrice;
+  preview.textContent = `Ширхэгийн үнэ хайрцагт: ${Math.round(discountedUnit).toLocaleString('mn-MN')}₮ × ${perBox} = ${boxPrice.toLocaleString('mn-MN')}₮`;
 }
 function refreshSubDatalist() {
   document.getElementById('sub-dl').innerHTML = subOptionsDatalist(document.getElementById('pf-category').value);
@@ -412,11 +433,13 @@ function refreshSubDatalist() {
 function openAddProduct() {
   if (!brands.length || !categories.length) { toast('Эхлээд дор хаяж нэг брэнд, ангилал үүсгэнэ үү', 'err'); return; }
   openModal('Бараа нэмэх', productFormHtml(), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(null)">Нэмэх</button>`);
+  recalcBoxPrice();
 }
 function openEditProduct(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   openModal('Бараа засах', productFormHtml(p), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(${id})">Хадгалах</button>`);
+  recalcBoxPrice();
 }
 
 async function saveProduct(id) {
