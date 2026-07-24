@@ -250,6 +250,7 @@ function Badge({ n }) {
 function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   const { brands } = useContext(DataContext);
   const brand = brands.find((b) => b.id === product.brandId);
+  const outOfStock = (product.unit.stock || 0) <= 0;
   return (
     <div style={{ background: T.card, borderRadius: "14px 14px 4px 4px", border: `1px solid ${T.line}`, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ cursor: "pointer" }} onClick={() => onOpen(product)}>
@@ -268,11 +269,11 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
           <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(product.unit.price)}</span>
-          <button onClick={() => onQuickAdd(product)} style={{
-            background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
-            fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+          <button onClick={() => onQuickAdd(product)} disabled={outOfStock} style={{
+            background: outOfStock ? T.line : T.cherry, color: outOfStock ? T.inkSoft : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
+            fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>
-            <Plus size={13} /> Сагслах
+            {outOfStock ? "Дууссан" : (<><Plus size={13} /> Сагслах</>)}
           </button>
         </div>
       </div>
@@ -366,6 +367,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
   const option = product[optionType];
+  const outOfStock = (option.stock || 0) <= 0;
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
 
@@ -429,18 +431,27 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${T.line}`, borderRadius: 999, overflow: "hidden" }}>
-              <button onClick={() => setQty(Math.max(1, qty - 1))} style={stepBtn}><Minus size={14} /></button>
-              <span style={{ width: 40, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{qty}</span>
-              <button onClick={() => setQty(Math.min(option.stock || 1, qty + 1))} style={stepBtn}><Plus size={14} /></button>
-            </div>
-            <button onClick={() => onAddToCart(product, optionType, qty)} style={{
-              flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
-              padding: "13px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5,
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}>
-              <ShoppingBag size={16} /> Сагслах · {money(option.price * qty)}
-            </button>
+            {outOfStock ? (
+              <div style={{
+                flex: 1, background: T.line, color: T.inkSoft, borderRadius: 999,
+                padding: "13px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5, textAlign: "center",
+              }}>Бараа дууссан байна</div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", border: `1px solid ${T.line}`, borderRadius: 999, overflow: "hidden" }}>
+                  <button onClick={() => setQty(Math.max(1, qty - 1))} style={stepBtn}><Minus size={14} /></button>
+                  <span style={{ width: 40, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{qty}</span>
+                  <button onClick={() => setQty(Math.min(option.stock, qty + 1))} style={stepBtn}><Plus size={14} /></button>
+                </div>
+                <button onClick={() => onAddToCart(product, optionType, qty)} style={{
+                  flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
+                  padding: "13px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}>
+                  <ShoppingBag size={16} /> Сагслах · {money(option.price * qty)}
+                </button>
+              </>
+            )}
             <button onClick={() => onToggleWish(product.id)} style={{
               background: "none", border: `1px solid ${T.line}`, borderRadius: 999, width: 46, height: 46,
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: isWished ? T.cherry : T.ink, flexShrink: 0,
