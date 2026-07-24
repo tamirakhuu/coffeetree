@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
-  ChevronLeft, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
+  ChevronLeft, ChevronRight, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
   Package, ArrowRight, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram
 } from "lucide-react";
@@ -608,10 +608,17 @@ function HeroSlideshow({ products, onOpen }) {
     if (slides.length < 2) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), 4000);
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [slides.length, index]);
 
   if (slides.length === 0) return null;
   const current = slides[index];
+  const goPrev = (e) => { e.stopPropagation(); setIndex((i) => (i - 1 + slides.length) % slides.length); };
+  const goNext = (e) => { e.stopPropagation(); setIndex((i) => (i + 1) % slides.length); };
+  const arrowBtnStyle = {
+    position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
+    border: "none", cursor: "pointer", background: "rgba(0,0,0,.35)", color: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1,
+  };
   return (
     <div onClick={() => onOpen(current)} style={{
       position: "relative", height: 320, borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.ink,
@@ -623,13 +630,17 @@ function HeroSlideshow({ products, onOpen }) {
         }} />
       ))}
       {slides.length > 1 && (
-        <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
-          {slides.map((_, i) => (
-            <span key={i} style={{
-              width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
-            }} />
-          ))}
-        </div>
+        <>
+          <button onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
+          <button onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
+          <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+            {slides.map((_, i) => (
+              <span key={i} style={{
+                width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
+              }} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
