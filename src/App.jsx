@@ -600,10 +600,44 @@ const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid 
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
 /* ------------------------------------------------------------------ */
+function HeroSlideshow({ products, onOpen }) {
+  const slides = products.filter((p) => p.images && p.images.length > 0).slice(0, 6);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), 4000);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
+  if (slides.length === 0) return null;
+  const current = slides[index];
+  return (
+    <div onClick={() => onOpen(current)} style={{
+      position: "relative", height: 320, borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.ink,
+    }}>
+      {slides.map((p, i) => (
+        <img key={p.id} src={p.images[0]} alt={p.name} style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+          opacity: i === index ? 1 : 0, transition: "opacity .6s ease", pointerEvents: i === index ? "auto" : "none",
+        }} />
+      ))}
+      {slides.length > 1 && (
+        <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+          {slides.map((_, i) => (
+            <span key={i} style={{
+              width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
+            }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
   const featured = products.filter((p) => p.tag === "эрэлттэй").slice(0, 4);
-  const heroPicks = products.slice(0, 4);
   return (
     <div>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
@@ -618,11 +652,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               }}>Дэлгүүр үзэх <ArrowRight size={16} /></button>
             )}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            {heroPicks.map((p, i) => (
-              <div key={p.id} style={{ marginTop: i % 2 ? 26 : 0 }}><ProductArt product={p} height={130} /></div>
-            ))}
-          </div>
+          <HeroSlideshow products={products} onOpen={onOpen} />
         </div>
       </section>
 
