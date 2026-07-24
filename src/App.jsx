@@ -969,6 +969,16 @@ export default function App() {
     try {
       const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
       setOrderNumber(orderNumber);
+      // Захиалсан хэмжээгээр нөөцийг дэлгүүрийн UI дээр шууд бууруулна
+      setData((prev) => ({
+        ...prev,
+        products: prev.products.map((p) => {
+          const item = cart.find((i) => i.productId === p.id);
+          if (!item) return p;
+          const field = item.optionType === "box" ? "box" : "unit";
+          return { ...p, [field]: { ...p[field], stock: Math.max(0, (p[field].stock || 0) - item.qty) } };
+        }),
+      }));
       setCart([]);
       setView({ name: "confirmation" });
     } catch (err) {

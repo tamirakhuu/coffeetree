@@ -105,6 +105,21 @@ create or replace function is_admin() returns boolean as $$
 $$ language sql security definer stable;
 grant execute on function is_admin() to authenticated, anon;
 
+-- Захиалга өгөхөд барааны нөөцөөс хасах (security definer тул анон/
+-- нэвтэрсэн хэрэглэгч products хүснэгтийг шууд UPDATE хийх эрхгүй ч энэ
+-- функцээр дамжуулан аюулгүйгээр нөөцөө хасуулж чадна, 0-ээс доош орохгүй)
+create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
+returns void as $$
+begin
+  if p_option_type = 'box' then
+    update products set box_stock = greatest(box_stock - p_qty, 0) where id = p_product_id;
+  else
+    update products set unit_stock = greatest(unit_stock - p_qty, 0) where id = p_product_id;
+  end if;
+end;
+$$ language plpgsql security definer;
+grant execute on function decrement_stock(bigint, text, int) to authenticated, anon;
+
 create policy "public read categories" on categories for select using (true);
 create policy "public read subcategories" on subcategories for select using (true);
 create policy "public read brands" on brands for select using (true);

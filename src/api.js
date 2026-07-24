@@ -68,6 +68,13 @@ export async function submitOrder({ form, cart, products, userId }) {
   const { error: itemsErr } = await supabase.from("order_items").insert(itemRows);
   if (itemsErr) throw new Error(itemsErr.message);
 
+  // Барааны нөөцөөс хасах — захиалга аль хэдийн үүссэн тул алдаа гарсан ч
+  // захиалгыг цуцлахгүй, зөвхөн log хийж өнгөрнө
+  await Promise.all(validItems.map(({ item, product }) =>
+    supabase.rpc("decrement_stock", { p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty })
+      .then(({ error }) => { if (error) console.error("Нөөц хасахад алдаа гарлаа:", error.message); })
+  ));
+
   return orderNumber;
 }
 
