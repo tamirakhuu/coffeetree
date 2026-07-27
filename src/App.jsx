@@ -197,8 +197,8 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
   return (
     <header style={{ background: T.ink, color: T.cream, position: "sticky", top: 0, zIndex: 100 }}>
       <div className="cuppa-header-row" style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-        <div className="cuppa-logo" onClick={() => setView({ name: "home" })} style={{ cursor: "pointer", display: "flex", alignItems: "baseline", gap: 6 }}>
-          <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 26, letterSpacing: "-0.01em" }}>CUPPA</span>
+        <div className="cuppa-logo" onClick={() => setView({ name: "home" })} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+          <img src="/cuppa-logo.png" alt="CUPPA" style={{ height: 26, display: "block" }} />
         </div>
 
         <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", flex: 1 }}>
