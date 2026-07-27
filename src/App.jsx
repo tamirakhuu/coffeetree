@@ -604,7 +604,7 @@ const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid 
 /*  Home                                                                */
 /* ------------------------------------------------------------------ */
 function HeroSlideshow({ products, onOpen }) {
-  const slides = products.filter((p) => p.images && p.images.length > 0).slice(0, 6);
+  const slides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
