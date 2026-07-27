@@ -242,7 +242,7 @@ const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧' };
+const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧', Cupwithstraw:'🥤'};
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 const COLOR_SWATCHES = ["#6B4226","#3E2A1E","#8A5A34","#5C1F1F","#B23A48","#5B6B3F","#C9A227","#8C5A20","#3B2418","#7A2E2E","#48583A","#B8862E"];
 
@@ -365,7 +365,7 @@ function renderProducts() {
       <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''}</div></td>
       <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''}</div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
-      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">🗑️</button></div></td>
+      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">Одоогоор бараа алга</td></tr>`;
 }
@@ -583,7 +583,7 @@ function renderCategories() {
       <td><span class="icon-emoji">${ICON_EMOJI[c.icon]||'☕'}</span> <b>${c.name}</b></td>
       <td>${subs.map(s => `<span class="chip">${s.name}</span>`).join('') || '-'}</td>
       <td>${count}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">🗑️</button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">Устгах</button></td>
     </tr>`;
   }).join('') || `<tr><td colspan="4" class="empty">Ангилал алга байна</td></tr>`;
 }
@@ -628,7 +628,7 @@ function renderBrands() {
   const tb = document.getElementById('brandTable');
   tb.innerHTML = brands.map(b => {
     const count = products.filter(p => p.brand_id === b.id).length;
-    return `<tr><td><b>${b.name}</b></td><td>${count}</td><td><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">🗑️</button></td></tr>`;
+    return `<tr><td><b>${b.name}</b></td><td>${count}</td><td><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">Устгах</button></td></tr>`;
   }).join('') || `<tr><td colspan="3" class="empty">Брэнд алга байна</td></tr>`;
 }
 function openAddBrand() {

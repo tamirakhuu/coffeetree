@@ -61,10 +61,10 @@ function ProductArt({ product, height = 190 }) {
   return (
     <div style={{
       height, borderRadius: "14px 14px 4px 4px", position: "relative", overflow: "hidden",
-      background: hasImage ? T.ink : `linear-gradient(155deg, ${product.color} 0%, ${T.ink} 130%)`,
+      background: hasImage ? T.card : `linear-gradient(155deg, ${product.color} 0%, ${T.ink} 130%)`,
     }}>
       {hasImage ? (
-        <img src={product.images[0]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <img src={product.images[0]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
       ) : (
         <>
           <div style={{
@@ -390,8 +390,8 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
       <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           {images ? (
-            <div style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.ink }}>
-              <img src={images[activeImg]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <div style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card }}>
+              <img src={images[activeImg]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
             </div>
           ) : (
             <ProductArt product={product} height={420} />
@@ -632,11 +632,11 @@ function HeroSlideshow({ products, onOpen }) {
   };
   return (
     <div onClick={() => onOpen(current)} style={{
-      position: "relative", height: 320, borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.ink,
+      position: "relative", height: 320, borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
     }}>
       {slides.map((p, i) => (
         <img key={p.id} src={p.images[0]} alt={p.name} style={{
-          position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+          position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
           opacity: i === index ? 1 : 0, transition: "opacity .6s ease", pointerEvents: i === index ? "auto" : "none",
         }} />
       ))}
@@ -871,7 +871,7 @@ function MyOrdersPage() {
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px 90px" }}>
       <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Миний захиалгууд</h1>
-      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Ачааллаж байна…</div>}
+      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
       {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Inter', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
       {status === "ready" && orders.length === 0 && (
         <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Та одоогоор захиалга хийгээгүй байна.</div>
