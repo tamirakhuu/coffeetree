@@ -257,12 +257,21 @@ function fmt(n){ return '₮' + Math.round(n||0).toLocaleString(); }
 
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    document.getElementById('loginScreen').style.display = 'none';
-    loadAll();
-  } else {
+  if (!session) {
     document.getElementById('loginScreen').style.display = 'flex';
+    return;
   }
+  // Session байгаа ч гэсэн зөвхөн admins хүснэгтэд байгаа имэйл хаяг л
+  // admin panel-руу орох ёстой тул is_admin()-ээр давхар шалгана
+  const { data: isAdmin, error } = await sb.rpc('is_admin');
+  if (error || !isAdmin) {
+    await sb.auth.signOut();
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginErr').textContent = 'Танд admin эрх байхгүй байна.';
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  loadAll();
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {

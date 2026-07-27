@@ -211,8 +211,8 @@
 
   create policy "admin upload product images"
     on storage.objects for insert
-    with check (bucket_id = 'product-images' and auth.role() = 'authenticated');
+    with check (bucket_id = 'product-images' and is_admin());
 
   create policy "admin delete product images"
     on storage.objects for delete
-    using (bucket_id = 'product-images' and auth.role() = 'authenticated');
+    using (bucket_id = 'product-images' and is_admin());
