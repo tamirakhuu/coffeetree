@@ -104,6 +104,36 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .chip{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--ink-soft);margin:2px 4px 2px 0}
 .empty{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px}
 .icon-emoji{font-size:16px}
+.mobile-topbar{display:none}
+.sidebar-backdrop{display:none}
+
+@media (max-width: 860px) {
+  body{display:block}
+  .mobile-topbar{
+    display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:110;
+    background:var(--ink);color:var(--cream);padding:14px 16px;
+  }
+  .mobile-topbar .hamburger{background:none;border:none;color:var(--cream);cursor:pointer;padding:4px;display:flex}
+  .mobile-topbar .a{font-family:'Fraunces',serif;font-weight:700;font-size:18px}
+  .mobile-topbar .b{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--gold);letter-spacing:.1em}
+  .sidebar{
+    transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 30px rgba(0,0,0,.3);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;
+  }
+  .sidebar-backdrop.open{display:block}
+  .main{margin-left:0;padding:18px 14px}
+  .page-header h1{font-size:20px}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-card{padding:12px}
+  .stat-val{font-size:20px}
+  .form-grid-2{grid-template-columns:1fr}
+  .modal-bg{padding:0}
+  .modal{max-width:100%;width:100%;height:100%;max-height:100%;border-radius:0}
+  #orderSearch{width:100% !important}
+}
 </style>
 </head>
 <body>
@@ -134,7 +164,16 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 </div>
 
-<aside class="sidebar">
+<div class="mobile-topbar">
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Цэс">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div><div class="a">CUPPA</div><div class="b">ADMIN PANEL</div></div>
+</div>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="a">CUPPA</div>
     <div class="b">ADMIN PANEL</div>
@@ -265,6 +304,12 @@ function navTo(page) {
   document.getElementById('page-' + page).classList.add('active');
   const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
   if (navBtn) navBtn.classList.add('active');
+  toggleSidebar(false);
+}
+function toggleSidebar(force) {
+  const open = typeof force === 'boolean' ? force : !document.getElementById('sidebar').classList.contains('open');
+  document.getElementById('sidebar').classList.toggle('open', open);
+  document.getElementById('sidebarBackdrop').classList.toggle('open', open);
 }
 
 function toast(msg, type='success') {
