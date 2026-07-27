@@ -32,6 +32,10 @@ const ICONS = { Coffee, Leaf, Droplet, Snowflake, Wrench };
 const ICON_KEYS = Object.keys(ICONS);
 
 const money = (n) => Math.round(n || 0).toLocaleString("mn-MN") + "₮";
+const discountPercent = (option) => {
+  if (!option || !option.price || !option.originalPrice || option.originalPrice <= option.price) return null;
+  return Math.round((1 - option.price / option.originalPrice) * 100);
+};
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
 /*  Data context — backend-ээс татсан ангилал/брэнд/бараа              */
@@ -78,7 +82,11 @@ function ProductArt({ product, height = 190 }) {
           position: "absolute", bottom: 10, left: 12, fontFamily: "'IBM Plex Mono', monospace",
           fontSize: 11, letterSpacing: "0.06em", color: T.ink, background: T.gold,
           padding: "3px 9px", borderRadius: 999, fontWeight: 600, textTransform: "uppercase",
-        }}>{product.tag}</span>
+        }}>
+          {product.tag === "хямдралтай" && discountPercent(product.unit) != null
+            ? `-${discountPercent(product.unit)}%`
+            : product.tag}
+        </span>
       )}
     </div>
   );
@@ -421,7 +429,12 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
                     {t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
                   <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600, color: T.ink, margin: "3px 0" }}>{product[t].label}</div>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
+                    {discountPercent(product[t]) != null && (
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, textDecoration: "line-through" }}>{money(product[t].originalPrice)}</span>
+                    )}
+                  </div>
                   {optionType === t && <div style={{ position: "absolute", top: 10, right: 10, color: T.cherry }}><Check size={16} /></div>}
                 </button>
               ))}
