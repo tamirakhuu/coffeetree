@@ -116,7 +116,7 @@ function NavButton({ onClick, active, children }) {
   );
 }
 
-function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory }) {
+function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory, onGoBrand }) {
   const activeCategory = categories.find((c) => c.id === activeCat) || categories[0];
   const brandsInActive = activeCategory
     ? brands.filter((b) => products.some((p) => p.categoryId === activeCategory.id && p.brandId === b.id))
@@ -125,7 +125,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
     <div className="cuppa-megamenu" style={{
       position: "absolute", top: "calc(100% + 10px)", left: 0, background: T.card, border: `1px solid ${T.line}`,
       borderRadius: 14, padding: "22px 24px", display: "flex", gap: 32, boxShadow: "0 24px 50px rgba(0,0,0,.35)",
-      zIndex: 120, minWidth: 580,
+      zIndex: 120, minWidth: 400,
     }}>
       <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
         <div style={sideLabel}>Ангилал</div>
@@ -146,15 +146,17 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
         })}
       </div>
       <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
-        <div style={sideLabel}>Дэд ангилал</div>
-        {(activeCategory?.sub || []).map((s) => (
-          <div key={s} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: T.inkSoft, padding: "6px 2px" }}>{s}</div>
-        ))}
-      </div>
-      <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
         <div style={sideLabel}>Брэнд</div>
         {brandsInActive.map((b) => (
-          <div key={b.id} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: T.inkSoft, padding: "6px 2px" }}>{b.name}</div>
+          <button key={b.id} onClick={() => onGoBrand(activeCategory.id, b.id)}
+            style={{
+              display: "block", width: "100%", textAlign: "left", background: "transparent", color: T.ink,
+              border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Inter', sans-serif",
+              fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = T.cream)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >{b.name}</button>
         ))}
         {brandsInActive.length === 0 && (
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
@@ -182,6 +184,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
   }, []);
 
   const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); };
+  const goBrand = (categoryId, brandId) => { setView({ name: "category", categoryId, brandId }); setMenuOpen(false); };
 
   return (
     <header style={{ background: T.ink, color: T.cream, position: "sticky", top: 0, zIndex: 100 }}>
@@ -200,7 +203,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
 
           {menuOpen && (
             <ProductsMegaMenu categories={categories} brands={brands} products={products}
-              activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} />
+              activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} onGoBrand={goBrand} />
           )}
         </nav>
 
@@ -649,6 +652,7 @@ function HeroSlideshow({ products, onOpen }) {
 function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
   const featured = products.filter((p) => p.tag === "эрэлттэй").slice(0, 4);
+  const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
   return (
     <div>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
@@ -693,6 +697,17 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
           {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор эрэлттэй бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+        </div>
+      </section>
+
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "10px 20px 90px" }}>
+        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Хямдралтай бүтээгдэхүүн</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+          {discounted.map((p) => (
+            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+          ))}
+          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
     </div>
@@ -982,7 +997,13 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { setBrandFilter([]); setSubFilter(null); setSortBy("default"); }, [view.categoryId]);
+  // Ангилал руу шилжихэд шүүлтүүрийг цэвэрлэнэ — гэхдээ header-ийн мега менюгээс
+  // тодорхой брэнд сонгож орж ирсэн бол (view.brandId) тэрийг шууд идэвхжүүлнэ
+  useEffect(() => {
+    setBrandFilter(view.brandId ? [view.brandId] : []);
+    setSubFilter(null);
+    setSortBy("default");
+  }, [view.categoryId, view.brandId]);
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
 
