@@ -794,7 +794,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
           <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөрийн хэлбэр : QPay</div>
         </div>
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, alignSelf: "flex-start", minWidth: 240 }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын дүн</div>
+          <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын мэдээлэл</div>
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
