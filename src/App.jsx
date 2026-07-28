@@ -759,7 +759,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
           <div>
             <div style={sideLabel}>Хүргэлтийн хэлбэр</div>
             <div style={{ display: "flex", gap: 10 }}>
-              {[{ key: "pickup", label: "Очиж авах" }, { key: "delivery", label: "Хүргүүлэх" }].map(({ key, label }) => (
+              {[{ key: "pickup", label: "Очиж авах(Саруул зах)" }, { key: "delivery", label: "Хүргүүлэх/Орон нутгийн унаанд" }].map(({ key, label }) => (
                 <button key={key} type="button" onClick={() => setForm({ ...form, deliveryMethod: key })} style={{
                   flex: 1, textAlign: "center", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
                   border: `1.5px solid ${form.deliveryMethod === key ? T.cherry : T.line}`,
@@ -923,7 +923,7 @@ function MyOrdersPage() {
                   <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
                     {new Date(o.createdAt).toLocaleDateString("mn-MN")}
                     {o.receiptType === "company" && <> · Байгууллага ({o.registerNumber})</>}
-                    {" · "}{o.deliveryMethod === "delivery" ? "Хүргүүлэх" : "Очиж авах"}
+                    {" · "}{o.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
                   </div>
                 </div>
                 <OrderStatusBadge status={o.status} />
