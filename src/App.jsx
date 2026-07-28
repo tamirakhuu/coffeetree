@@ -264,7 +264,7 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   const outOfStock = (product.unit.stock || 0) <= 0;
   return (
     <div style={{ background: T.card, borderRadius: "14px 14px 4px 4px", border: `1px solid ${T.line}`, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      <div style={{ cursor: "pointer" }} onClick={() => onOpen(product)}>
+      <div style={{ cursor: "pointer", borderBottom: `1px solid ${T.line}` }} onClick={() => onOpen(product)}>
         <ProductArt product={product} />
       </div>
       <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
