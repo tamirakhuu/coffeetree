@@ -876,7 +876,7 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 /*  Миний захиалгууд                                                   */
 /* ------------------------------------------------------------------ */
-const ORDER_STATUS_LABELS = { pending: "Хүлээгдэж байна", processing: "Боловсруулж байна", shipped: "Явуулсан", done: "Хүргэгдсэн", cancelled: "Цуцлагдсан" };
+const ORDER_STATUS_LABELS = { pending: "Хүлээгдэж байна", processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн", cancelled: "Цуцлагдсан" };
 const ORDER_STATUS_COLORS = {
   pending: { bg: "#F3E6C9", color: "#8A6A1E" },
   processing: { bg: "#DCE6F5", color: "#2E4E8A" },
