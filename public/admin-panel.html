@@ -207,7 +207,14 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-products">
-    <div class="page-header"><div><h1>Бараа</h1><p id="prodCount">Нийт 0 бараа</p></div><button class="btn btn-primary" onclick="openAddProduct()">➕ Бараа нэмэх</button></div>
+    <div class="page-header">
+      <div><h1>Бараа</h1><p id="prodCount">Нийт 0 бараа</p></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="productSearch" oninput="renderProducts()" placeholder="Нэр эсвэл үнээр хайх..."
+          style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Inter',sans-serif;width:220px">
+        <button class="btn btn-primary" onclick="openAddProduct()">➕ Бараа нэмэх</button>
+      </div>
+    </div>
     <div class="card">
       <div class="table-wrap">
         <table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Ангилал</th><th>Ширхэг үнэ</th><th>Хайрцаг үнэ</th><th>Нөөц</th><th>Үйлдэл</th></tr></thead><tbody id="productTable"></tbody></table>
@@ -305,6 +312,20 @@ async function loadAll() {
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
   renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders();
+  checkLowStock();
+}
+
+// Панел нээгдэх үед л нэг удаа нөөц багассан барааны тухай мэдэгдэл өгнө
+// (засвар хийх бүрт loadAll() дахин дуудагддаг тул давхар мэдэгдэхээс сэргийлнэ)
+let lowStockAlerted = false;
+function checkLowStock() {
+  if (lowStockAlerted) return;
+  lowStockAlerted = true;
+  const lowStockItems = products.filter(p => (p.unit_stock ?? 0) < 10);
+  if (lowStockItems.length === 0) return;
+  const names = lowStockItems.slice(0, 3).map(p => p.name).join(', ');
+  const extra = lowStockItems.length > 3 ? ` +${lowStockItems.length - 3}` : '';
+  toast(`⚠️ ${lowStockItems.length} бараа нөөц багассан: ${names}${extra}`, 'err', 7000);
 }
 
 function navTo(page) {
@@ -321,14 +342,14 @@ function toggleSidebar(force) {
   document.getElementById('sidebarBackdrop').classList.toggle('open', open);
 }
 
-function toast(msg, type='success') {
+function toast(msg, type='success', duration) {
   const w = document.getElementById('toastWrap');
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
   w.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, duration || 3000);
 }
 function openModal(title, body, foot) {
   document.getElementById('modalTitle').textContent = title;
@@ -359,9 +380,17 @@ function statusBadge(s) {
 }
 
 function renderProducts() {
-  document.getElementById('prodCount').textContent = `Нийт ${products.length} бараа`;
+  const query = (document.getElementById('productSearch')?.value || '').trim().toLowerCase();
+  const filtered = query ? products.filter(p =>
+    (p.name || '').toLowerCase().includes(query) ||
+    String(p.unit_price ?? '').includes(query) ||
+    String(p.box_price ?? '').includes(query)
+  ) : products;
+  document.getElementById('prodCount').textContent = query
+    ? `${filtered.length} / Нийт ${products.length} бараа`
+    : `Нийт ${products.length} бараа`;
   const tb = document.getElementById('productTable');
-  tb.innerHTML = products.map(p => {
+  tb.innerHTML = filtered.map(p => {
     const brand = brands.find(b => b.id === p.brand_id);
     const cat = categories.find(c => c.id === p.category_id);
     const thumb = p.images && p.images[0]
@@ -376,7 +405,7 @@ function renderProducts() {
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
       <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" class="empty">Одоогоор бараа алга</td></tr>`;
+  }).join('') || `<tr><td colspan="7" class="empty">${query ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
 
 function categoryOptions(selectedId) {
