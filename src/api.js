@@ -38,17 +38,21 @@ export async function submitOrder({ form, cart, products, userId }) {
     .filter(({ product }) => product);
 
   const subtotal = validItems.reduce((sum, { item, product }) => sum + product[item.optionType].price * item.qty, 0);
+  const deliveryMethod = form.deliveryMethod === "delivery" ? "delivery" : "pickup";
+  const deliveryFee = deliveryMethod === "delivery" ? 15000 : 0;
 
   const { error: orderErr } = await supabase.from("orders").insert({
     order_number: orderNumber,
     user_id: userId || null,
     customer_name: form.name,
     phone: form.phone,
-    address: form.address,
+    address: deliveryMethod === "delivery" ? form.address : null,
     subtotal,
     status: "pending",
     receipt_type: form.receiptType || "individual",
     register_number: form.receiptType === "company" ? form.registerNumber : null,
+    delivery_method: deliveryMethod,
+    delivery_fee: deliveryFee,
   });
   if (orderErr) throw new Error(orderErr.message);
 
@@ -92,6 +96,8 @@ export async function fetchMyOrders() {
     subtotal: o.subtotal,
     receiptType: o.receipt_type,
     registerNumber: o.register_number,
+    deliveryMethod: o.delivery_method,
+    deliveryFee: o.delivery_fee,
     createdAt: o.created_at,
     items: items.filter((i) => i.order_number === o.order_number).map((i) => ({
       productName: i.product_name, optionLabel: i.option_label, qty: i.qty, lineTotal: i.line_total,

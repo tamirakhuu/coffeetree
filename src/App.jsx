@@ -16,12 +16,12 @@ const T = {
   ink: "#241C15",
   inkSoft: "#5C4E3E",
   paper: "#EFE3CF",
-  card: "#FBF5E9",
-  line: "#D9C9A8",
+  card: "#ffffff",  //card ungu
+  line: "#D9C9A8", //card huree
   cherry: "#7A2E2E",
   cherryDark: "#5C2222",
-  moss: "#48583A",
-  gold: "#B8862E",
+  moss: "#48583A", 
+  gold: "#B8862E", //badge color
   cream: "#F6EFE0",
 };
 
@@ -671,7 +671,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>.</h1>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>байршуулах</h1>
 
             {categories[0] && (
               <button onClick={() => setView({ name: "category", categoryId: categories[0].id })} style={{
@@ -730,11 +730,15 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 /*  Checkout & Confirmation                                             */
 /* ------------------------------------------------------------------ */
+const DELIVERY_FEE = 15000;
+
 function Checkout({ cart, subtotal, onConfirm, onBack }) {
   const { products } = useContext(DataContext);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", receiptType: "individual", registerNumber: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", receiptType: "individual", registerNumber: "", deliveryMethod: "pickup" });
   const [submitting, setSubmitting] = useState(false);
-  const valid = form.name && form.phone && form.address
+  const deliveryFee = form.deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
+  const total = subtotal + deliveryFee;
+  const valid = form.name && form.phone && (form.deliveryMethod !== "delivery" || form.address)
     && (form.receiptType !== "company" || form.registerNumber) && !submitting;
   const handleClick = async () => {
     setSubmitting(true);
@@ -751,7 +755,23 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 260 }}>
           <input placeholder="Хүлээн авагчийн нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
           <input placeholder="Утасны дугаар" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
-          <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Inter', sans-serif" }} />
+
+          <div>
+            <div style={sideLabel}>Хүргэлтийн хэлбэр</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[{ key: "pickup", label: "Очиж авах" }, { key: "delivery", label: "Хүргүүлэх" }].map(({ key, label }) => (
+                <button key={key} type="button" onClick={() => setForm({ ...form, deliveryMethod: key })} style={{
+                  flex: 1, textAlign: "center", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
+                  border: `1.5px solid ${form.deliveryMethod === key ? T.cherry : T.line}`,
+                  background: form.deliveryMethod === key ? T.cream : "transparent",
+                  fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
+                }}>{label}{key === "delivery" && <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: T.inkSoft, marginTop: 2 }}>+{money(DELIVERY_FEE)}</span>}</button>
+              ))}
+            </div>
+          </div>
+          {form.deliveryMethod === "delivery" && (
+            <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Inter', sans-serif" }} />
+          )}
 
           <div>
             <div style={sideLabel}>И-баримт</div>
@@ -786,9 +806,21 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
               </div>
             );
           })}
-          <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-            <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(subtotal)}</span>
+          <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 10, paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+              <span>Барааны дүн</span>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(subtotal)}</span>
+            </div>
+            {deliveryFee > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+                <span>Хүргэлтийн хураамж</span>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(deliveryFee)}</span>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, borderTop: `1px solid ${T.line}`, paddingTop: 8 }}>
+              <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(total)}</span>
+            </div>
           </div>
           <button disabled={!valid} onClick={handleClick} style={{
             width: "100%", marginTop: 16, background: valid ? T.cherry : T.line, color: "#fff", border: "none",
@@ -891,6 +923,7 @@ function MyOrdersPage() {
                   <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
                     {new Date(o.createdAt).toLocaleDateString("mn-MN")}
                     {o.receiptType === "company" && <> · Байгууллага ({o.registerNumber})</>}
+                    {" · "}{o.deliveryMethod === "delivery" ? "Хүргүүлэх" : "Очиж авах"}
                   </div>
                 </div>
                 <OrderStatusBadge status={o.status} />
@@ -902,10 +935,16 @@ function MyOrdersPage() {
                     <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(it.lineTotal)}</span>
                   </div>
                 ))}
+                {o.deliveryFee > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+                    <span>Хүргэлтийн хураамж</span>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(o.deliveryFee)}</span>
+                  </div>
+                )}
               </div>
               <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
                 <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(o.subtotal)}</span>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(o.subtotal + (o.deliveryFee || 0))}</span>
               </div>
             </div>
           ))}

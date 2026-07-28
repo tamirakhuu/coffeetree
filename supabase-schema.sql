@@ -74,6 +74,8 @@
     status text default 'pending', -- pending | processing | shipped | done | cancelled
     receipt_type text default 'individual', -- individual | company
     register_number text, -- байгууллагын регистрийн дугаар (receipt_type='company' үед)
+    delivery_method text default 'pickup', -- pickup | delivery
+    delivery_fee numeric default 0,
     created_at timestamptz default now()
   );
 
