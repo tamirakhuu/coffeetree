@@ -103,7 +103,7 @@
   -- admin эсэхийг найдвартай шалгах функц (admins хүснэгтийг өөрийн эрхээр
   -- уншина, ингэснээр admins дээр нийтэд нээлттэй select policy хэрэггүй)
   create or replace function is_admin() returns boolean as $$
-    select exists(select 1 from admins where email = auth.email());
+    select exists(select 1 from admins where lower(email) = lower(auth.email()));
   $$ language sql security definer stable;
   grant execute on function is_admin() to authenticated, anon;
 
