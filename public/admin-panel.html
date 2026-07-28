@@ -378,7 +378,7 @@ function renderDashboard() {
 }
 
 function statusBadge(s) {
-  const label = { pending:'Хүлээгдэж байна', processing:'Боловсруулж байна', shipped:'Явуулсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' };
+  const label = { pending:'Хүлээгдэж байна', processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' };
   return `<span class="badge ${s}">${label[s]||s}</span>`;
 }
 
@@ -739,7 +739,7 @@ function renderOrders() {
   }).join('') || `<tr><td colspan="9" class="empty">Захиалга алга байна</td></tr>`;
 }
 function statusLabel(s) {
-  return { pending:'Хүлээгдэж байна', processing:'Боловсруулж байна', shipped:'Явуулсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' }[s] || s;
+  return { pending:'Хүлээгдэж байна', processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' }[s] || s;
 }
 async function updateOrderStatus(orderNumber, status) {
   const { error } = await sb.from('orders').update({ status }).eq('order_number', orderNumber);
