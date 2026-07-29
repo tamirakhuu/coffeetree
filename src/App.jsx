@@ -3,7 +3,7 @@ import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
   Package, ArrowRight, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
-  Facebook, Instagram
+  Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
 import { supabase } from "./supabaseClient.js";
@@ -548,11 +548,17 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
 /* ------------------------------------------------------------------ */
 /*  Auth Modal                                                         */
 /* ------------------------------------------------------------------ */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const PASSWORD_RE = /^(?=.*[^A-Za-z0-9]).{8,}$/;
+
 function AuthModal({ open, onClose }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -562,6 +568,14 @@ function AuthModal({ open, onClose }) {
     e.preventDefault();
     setError(""); setNotice("");
     if (!email || !password) return;
+    if (!EMAIL_RE.test(email)) { setError("Имэйл хаягийн формат буруу байна."); return; }
+    if (mode === "register") {
+      if (!PASSWORD_RE.test(password)) {
+        setError("Нууц үг нь 8 үсэгтэй, дор хаяж 1 тусгай тэмдэгт (!@#$% гэх мэт) агуулсан байх ёстой.");
+        return;
+      }
+      if (password !== confirmPassword) { setError("Нууц үг таарахгүй байна."); return; }
+    }
     setLoading(true);
     try {
       if (mode === "register") {
@@ -599,7 +613,23 @@ function AuthModal({ open, onClose }) {
             <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
           )}
           <input type="email" required placeholder="Имэйл хаяг" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
-          <input type="password" required minLength={6} placeholder="Нууц үг (дор хаяж 6 тэмдэгт)" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+          <div style={{ position: "relative" }}>
+            <input type={showPassword ? "text" : "password"} required minLength={8}
+              placeholder={mode === "register" ? "Нууц үг (8+ орон, 1 тусгай тэмдэгт)" : "Нууц үг"}
+              value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
+            <button type="button" onClick={() => setShowPassword((v) => !v)} title={showPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {mode === "register" && (
+            <div style={{ position: "relative" }}>
+              <input type={showConfirmPassword ? "text" : "password"} required minLength={8} placeholder="Нууц үг давтах"
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
+              <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} title={showConfirmPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          )}
           {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
           {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
           <button type="submit" disabled={loading} style={{
@@ -612,7 +642,12 @@ function AuthModal({ open, onClose }) {
     </div>
   );
 }
-const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none" };
+const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none", boxSizing: "border-box" };
+const eyeBtnStyle = {
+  position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
+  background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
+  padding: 6, display: "flex", alignItems: "center", justifyContent: "center",
+};
 
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
