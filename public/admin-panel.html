@@ -62,6 +62,8 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .badge.shipped{background:#E3E1FB;color:#4338CA}
 .badge.done{background:var(--green-light);color:#2F4A22}
 .badge.cancelled{background:var(--red-light);color:var(--red)}
+.badge.prepared{background:#DCE8FB;color:#1D4ED8}
+.badge.handed_over{background:var(--green-light);color:#2F4A22}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;white-space:nowrap}
 .btn-primary{background:var(--cherry);color:#fff}
 .btn-primary:hover{background:var(--cherry-dark)}
@@ -378,9 +380,13 @@ function renderDashboard() {
   `).join('') || `<tr><td colspan="4" class="empty">Захиалга алга байна</td></tr>`;
 }
 
+const ORDER_STATUSES = ['pending', 'prepared', 'handed_over', 'cancelled'];
+function statusLabel(s) {
+  return { pending:'Хүлээгдэж байна', prepared:'Бэлдсэн', handed_over:'Хүлээлгэн өгсөн', cancelled:'Цуцлагдсан',
+    processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн' }[s] || s;
+}
 function statusBadge(s) {
-  const label = { pending:'Хүлээгдэж байна', processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' };
-  return `<span class="badge ${s}">${label[s]||s}</span>`;
+  return `<span class="badge ${s}">${statusLabel(s)}</span>`;
 }
 
 function renderProducts() {
@@ -715,6 +721,9 @@ function renderOrders() {
   tb.innerHTML = filtered.map(o => {
     const items = orderItems.filter(i => i.order_number === o.order_number);
     const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
+    const unitQty = items.filter(i => i.option_type === 'unit').reduce((s, i) => s + (i.qty || 0), 0);
+    const boxQty = items.filter(i => i.option_type === 'box').reduce((s, i) => s + (i.qty || 0), 0);
+    const packSummary = `<div style="font-size:10.5px;color:var(--ink-soft);margin-top:4px;font-family:'IBM Plex Mono',monospace">📦 Хайрцаг: ${boxQty} · Ширхэг: ${unitQty}</div>`;
     const receiptText = o.receipt_type === 'company'
       ? `Байгууллага<br><span class="mono" style="font-size:11px">${o.register_number || '-'}</span>`
       : 'Хувь хүн';
@@ -728,19 +737,16 @@ function renderOrders() {
       <td class="mono">${o.phone||'-'}</td>
       <td style="font-size:12px">${receiptText}</td>
       <td style="font-size:12px">${deliveryText}</td>
-      <td style="font-size:12px">${itemsText || '-'}</td>
+      <td style="font-size:12px">${itemsText || '-'}${items.length ? packSummary : ''}</td>
       <td class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</td>
       <td class="mono" style="font-size:11px">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
       <td>
         <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card)">
-          ${['pending','processing','shipped','done','cancelled'].map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
+          ${ORDER_STATUSES.map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
         </select>
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="9" class="empty">Захиалга алга байна</td></tr>`;
-}
-function statusLabel(s) {
-  return { pending:'Хүлээгдэж байна', processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн', cancelled:'Цуцлагдсан' }[s] || s;
 }
 async function updateOrderStatus(orderNumber, status) {
   const { error } = await sb.from('orders').update({ status }).eq('order_number', orderNumber);

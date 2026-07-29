@@ -877,13 +877,19 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 /*  Миний захиалгууд                                                   */
 /* ------------------------------------------------------------------ */
-const ORDER_STATUS_LABELS = { pending: "Хүлээгдэж байна", processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн", cancelled: "Цуцлагдсан" };
+const ORDER_STATUS_LABELS = {
+  pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",
+  // Хуучин захиалгуудад байж болох хуучин статусууд (үзүүлэлтийн зорилгоор хадгалав)
+  processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн",
+};
 const ORDER_STATUS_COLORS = {
   pending: { bg: "#F3E6C9", color: "#8A6A1E" },
+  prepared: { bg: "#DCE6F5", color: "#2E4E8A" },
+  handed_over: { bg: "#DFEED6", color: "#2E5C2E" },
+  cancelled: { bg: "#F5DCDC", color: "#8A2E2E" },
   processing: { bg: "#DCE6F5", color: "#2E4E8A" },
   shipped: { bg: "#E4DCF5", color: "#5B3E8A" },
   done: { bg: "#DFEED6", color: "#2E5C2E" },
-  cancelled: { bg: "#F5DCDC", color: "#8A2E2E" },
 };
 function OrderStatusBadge({ status }) {
   const c = ORDER_STATUS_COLORS[status] || ORDER_STATUS_COLORS.pending;
