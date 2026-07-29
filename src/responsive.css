@@ -56,6 +56,12 @@ html {
   .cuppa-hero-title { font-size: 24px !important; }
 }
 
+.cuppa-category-tile:hover,
+.cuppa-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(36, 28, 20, .14) !important;
+}
+
 /* iOS Safari zooms the page in when a focused input's font-size is under
    16px — force 16px on all form fields so focusing never triggers zoom. */
 @media (max-width: 720px) {

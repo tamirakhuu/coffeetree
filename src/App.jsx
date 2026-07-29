@@ -15,9 +15,9 @@ import { registerWithEmail, loginWithEmail, logout, shapeAuthUser } from "./auth
 const T = {
   ink: "#241C15",
   inkSoft: "#5C4E3E",
-  paper: "#EFE3CF",
+  paper: "#ffffff",
   card: "#ffffff",  //card ungu
-  line: "#D9C9A8", //card huree
+  line: "#d3cecb7c", //card huree
   cherry: "#7A2E2E",
   cherryDark: "#5C2222",
   moss: "#48583A", 
@@ -79,7 +79,7 @@ function ProductArt({ product, height = 190 }) {
       )}
       {product.tag && (
         <span style={{
-          position: "absolute", bottom: 10, left: 12, fontFamily: "'Ubuntu', sans-serif",
+          position: "absolute", top: hasImage ? 10 : 80, left: 12, fontFamily: "'Ubuntu', sans-serif",
           fontSize: 11, letterSpacing: "0.06em", color: T.ink, background: T.gold,
           padding: "3px 9px", borderRadius: 999, fontWeight: 600, textTransform: "uppercase",
         }}>
@@ -288,7 +288,11 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   const brand = brands.find((b) => b.id === product.brandId);
   const outOfStock = (product.unit.stock || 0) <= 0;
   return (
-    <div style={{ background: T.card, borderRadius: "14px 14px 4px 4px", border: `1px solid ${T.line}`, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div className="cuppa-product-card" style={{
+      background: T.card, borderRadius: "14px 14px 4px 4px", border: `1px solid ${T.line}`, overflow: "hidden",
+      display: "flex", flexDirection: "column", boxShadow: "0 2px 10px rgba(36,28,20,.08)",
+      transition: "transform .15s ease, box-shadow .15s ease",
+    }}>
       <div style={{ cursor: "pointer", borderBottom: `1px solid ${T.line}` }} onClick={() => onOpen(product)}>
         <ProductArt product={product} />
       </div>
@@ -724,7 +728,7 @@ function HeroSlideshow({ products, onOpen }) {
 
 function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
-  const featured = products.filter((p) => p.tag === "эрэлттэй").slice(0, 4);
+  const featured = products.filter((p) => p.tag === "бестселлэр").slice(0, 4);
   const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
   return (
     <div>
@@ -750,9 +754,10 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           {categories.map((c) => {
             const Icon = ICONS[c.icon] || Coffee;
             return (
-              <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} style={{
+              <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
                 background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "26px 14px",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(36,28,20,.08)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
                 <Icon size={26} color={T.cherry} />
                 <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
@@ -763,13 +768,13 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 90px" }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Эрэлттэй бүтээгдэхүүн</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Бестселлэр бүтээгдэхүүн</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор эрэлттэй бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
 
