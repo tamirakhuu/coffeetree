@@ -55,3 +55,11 @@ html {
 @media (max-width: 480px) {
   .cuppa-hero-title { font-size: 24px !important; }
 }
+
+/* iOS Safari zooms the page in when a focused input's font-size is under
+   16px — force 16px on all form fields so focusing never triggers zoom. */
+@media (max-width: 720px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
