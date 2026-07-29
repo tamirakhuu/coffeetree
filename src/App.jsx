@@ -232,9 +232,10 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
-                background: "none", border: "none", cursor: "pointer", color: T.cream,
-                fontSize: 13, fontFamily: "'Inter', sans-serif", textDecoration: "underline",
-              }}>{user.name}</button>
+                width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
+                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
               <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
             </div>
           ) : (
