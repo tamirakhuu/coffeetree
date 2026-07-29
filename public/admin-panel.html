@@ -640,33 +640,50 @@ function renderCategories() {
       <td><span class="icon-emoji">${ICON_EMOJI[c.icon]||'☕'}</span> <b>${c.name}</b></td>
       <td>${subs.map(s => `<span class="chip">${s.name}</span>`).join('') || '-'}</td>
       <td>${count}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">Устгах</button></td>
+      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditCategory(${c.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="4" class="empty">Ангилал алга байна</td></tr>`;
 }
 function openAddCategory() {
-  openModal('Ангилал нэмэх', `
+  openCategoryModal(null);
+}
+function openEditCategory(id) {
+  const c = categories.find(x => x.id === id);
+  if (!c) return;
+  openCategoryModal(c);
+}
+function openCategoryModal(c) {
+  const subsValue = c ? subcategories.filter(s => s.category_id === c.id).map(s => s.name).join(', ') : '';
+  openModal(c ? 'Ангилал засах' : 'Ангилал нэмэх', `
     <div class="form-grid">
-      <div class="fg"><label>Ангиллын нэр</label><input id="cf-name" placeholder="жишээ: Хиймэл сүү"></div>
-      <div class="fg"><label>Тэмдэг</label><select id="cf-icon">${ICON_KEYS.map(k=>`<option value="${k}">${ICON_EMOJI[k]} ${k}</option>`).join('')}</select></div>
-      <div class="fg"><label>Дэд ангилал (таслалаар тусгаарлана)</label><input id="cf-sub" placeholder="Соя, Овъёос, Ямаа"></div>
+      <div class="fg"><label>Ангиллын нэр</label><input id="cf-name" placeholder="жишээ: Хиймэл сүү" value="${c?.name || ''}"></div>
+      <div class="fg"><label>Тэмдэг</label><select id="cf-icon">${ICON_KEYS.map(k=>`<option value="${k}" ${c?.icon===k?'selected':''}>${ICON_EMOJI[k]} ${k}</option>`).join('')}</select></div>
+      <div class="fg"><label>Дэд ангилал (таслалаар тусгаарлана)</label><input id="cf-sub" placeholder="Соя, Овъёос, Ямаа" value="${subsValue}"></div>
     </div>`,
-    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveCategory()">Нэмэх</button>`
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveCategory(${c ? c.id : 'null'})">${c ? 'Хадгалах' : 'Нэмэх'}</button>`
   );
 }
-async function saveCategory() {
+async function saveCategory(id) {
   const name = document.getElementById('cf-name').value.trim();
   if (!name) { toast('Ангиллын нэр оруулна уу', 'err'); return; }
   const icon = document.getElementById('cf-icon').value;
   const subs = document.getElementById('cf-sub').value.split(',').map(s => s.trim()).filter(Boolean);
-  const { data, error } = await sb.from('categories').insert({ name, icon }).select().single();
-  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+  let categoryId = id;
+  if (id) {
+    const { error } = await sb.from('categories').update({ name, icon }).eq('id', id);
+    if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+    await sb.from('subcategories').delete().eq('category_id', id);
+  } else {
+    const { data, error } = await sb.from('categories').insert({ name, icon }).select().single();
+    if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+    categoryId = data.id;
+  }
   if (subs.length) {
-    const rows = subs.map(s => ({ category_id: data.id, name: s }));
+    const rows = subs.map(s => ({ category_id: categoryId, name: s }));
     await sb.from('subcategories').insert(rows);
   }
   closeModal();
-  toast('✅ Ангилал нэмэгдлээ');
+  toast(id ? '✅ Ангилал шинэчлэгдлээ' : '✅ Ангилал нэмэгдлээ');
   await loadAll();
 }
 function confirmDeleteCategory(id) {
@@ -728,7 +745,7 @@ function renderOrders() {
     const items = orderItems.filter(i => i.order_number === o.order_number);
     const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
     const boxCountInput = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
-      <span style="font-size:10.5px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">📦 Хайрцаг:</span>
+      <span style="font-size:10.5px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">Хайрцаг:</span>
       <input type="number" min="0" value="${o.box_count ?? 0}" onchange="updateOrderBoxCount('${o.order_number}', this.value)"
         style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:11px;font-family:'Ubuntu',sans-serif;background:var(--card)">
     </div>`;
