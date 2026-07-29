@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, createContext, useContext 
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
-  Package, ArrowRight, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
+  Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
@@ -104,6 +104,30 @@ function Toast({ message }) {
     }}>
       <Check size={16} color={T.gold} /> {message}
     </div>
+  );
+}
+
+function ScrollToTopButton() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  if (!visible) return null;
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Дээш буцах"
+      style={{
+        position: "fixed", bottom: 24, right: 24, width: 46, height: 46, borderRadius: "50%",
+        background: T.cherry, color: "#fff", border: "none", cursor: "pointer", zIndex: 150,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 6px 20px rgba(0,0,0,.25)",
+      }}
+    >
+      <ArrowUp size={20} />
+    </button>
   );
 }
 
@@ -1303,6 +1327,7 @@ export default function App() {
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         <Toast message={toast} />
+        <ScrollToTopButton />
       </div>
     </DataContext.Provider>
   );
