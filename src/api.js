@@ -98,6 +98,7 @@ export async function fetchMyOrders() {
     registerNumber: o.register_number,
     deliveryMethod: o.delivery_method,
     deliveryFee: o.delivery_fee,
+    boxCount: o.box_count,
     createdAt: o.created_at,
     items: items.filter((i) => i.order_number === o.order_number).map((i) => ({
       productName: i.product_name, optionLabel: i.option_label, qty: i.qty, lineTotal: i.line_total,

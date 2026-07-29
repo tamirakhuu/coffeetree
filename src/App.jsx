@@ -26,7 +26,7 @@ const T = {
 };
 
 const FONT_IMPORT =
-  "@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');";
+  "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');";
 
 const ICONS = { Coffee, Leaf, Droplet, Snowflake, Wrench };
 const ICON_KEYS = Object.keys(ICONS);
@@ -50,7 +50,7 @@ function StampBadge({ label, size = 56 }) {
     <div style={{
       width: size, height: size, borderRadius: "999px", border: `2px dashed ${T.cream}`,
       display: "flex", alignItems: "center", justifyContent: "center", color: T.cream,
-      fontFamily: "'IBM Plex Mono', monospace", fontSize: size * 0.28, fontWeight: 600,
+      fontFamily: "'Ubuntu', sans-serif", fontSize: size * 0.28, fontWeight: 600,
       letterSpacing: "0.02em", transform: "rotate(-8deg)", flexShrink: 0, opacity: 0.9,
     }}>{label}</div>
   );
@@ -79,7 +79,7 @@ function ProductArt({ product, height = 190 }) {
       )}
       {product.tag && (
         <span style={{
-          position: "absolute", bottom: 10, left: 12, fontFamily: "'IBM Plex Mono', monospace",
+          position: "absolute", bottom: 10, left: 12, fontFamily: "'Ubuntu', sans-serif",
           fontSize: 11, letterSpacing: "0.06em", color: T.ink, background: T.gold,
           padding: "3px 9px", borderRadius: 999, fontWeight: 600, textTransform: "uppercase",
         }}>
@@ -98,7 +98,7 @@ function Toast({ message }) {
     <div style={{
       position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
       background: T.ink, color: T.cream, padding: "12px 22px", borderRadius: 999,
-      fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, zIndex: 200,
+      fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 500, zIndex: 200,
       display: "flex", alignItems: "center", gap: 8, boxShadow: "0 10px 30px rgba(0,0,0,.25)",
       maxWidth: "80vw", textAlign: "center",
     }}>
@@ -115,7 +115,7 @@ function NavButton({ onClick, active, children }) {
     <button onClick={onClick}
       style={{
         background: active ? "rgba(255,255,255,0.08)" : "transparent", border: "none", color: T.cream, opacity: 0.85,
-        fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
+        fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
         borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
@@ -145,7 +145,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
               style={{
                 display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
                 background: active ? T.ink : "transparent", color: active ? T.cream : T.ink,
-                border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Inter', sans-serif",
+                border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Ubuntu', sans-serif",
                 fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
               }}>
               <Icon size={15} /> {c.name}
@@ -159,7 +159,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
           <button key={b.id} onClick={() => onGoBrand(activeCategory.id, b.id)}
             style={{
               display: "block", width: "100%", textAlign: "left", background: "transparent", color: T.ink,
-              border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Inter', sans-serif",
+              border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif",
               fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = T.cream)}
@@ -167,7 +167,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
           >{b.name}</button>
         ))}
         {brandsInActive.length === 0 && (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
         )}
       </div>
     </div>
@@ -219,7 +219,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.1)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..."
-            style={{ background: "transparent", border: "none", outline: "none", color: T.cream, fontFamily: "'Inter', sans-serif", fontSize: 13, width: "100%" }} />
+            style={{ background: "transparent", border: "none", outline: "none", color: T.cream, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
         </form>
 
         <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -234,7 +234,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
               <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
                 width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
                 border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
               }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
               <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
             </div>
@@ -252,7 +252,7 @@ function Badge({ n }) {
     position: "absolute", top: -4, right: -6, background: T.cherry, color: "#fff",
     fontSize: 10, fontWeight: 700, borderRadius: 999, minWidth: 16, height: 16,
     display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px",
-    fontFamily: "'IBM Plex Mono', monospace",
+    fontFamily: "'Ubuntu', sans-serif",
   }}>{n}</span>;
 }
 
@@ -270,20 +270,20 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
       </div>
       <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11, color: T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
           <button onClick={() => onToggleWish(product.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isWished ? T.cherry : T.inkSoft }}>
             <Heart size={16} fill={isWished ? T.cherry : "none"} />
           </button>
         </div>
-        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Fraunces', serif", fontSize: 17, fontWeight: 600, color: T.ink, lineHeight: 1.25 }}>
+        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Ubuntu', sans-serif", fontSize: 17, fontWeight: 600, color: T.ink, lineHeight: 1.25 }}>
           {product.name}
         </div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(product.unit.price)}</span>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(product.unit.price)}</span>
           <button onClick={() => onQuickAdd(product)} disabled={outOfStock} style={{
             background: outOfStock ? T.line : T.cherry, color: outOfStock ? T.inkSoft : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
-            fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>
             {outOfStock ? "Дууссан" : (<><Plus size={13} /> Сагслах</>)}
           </button>
@@ -313,7 +313,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{category.name}</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{category.name}</div>
 
         <div style={{ marginBottom: 26 }}>
           <div style={sideLabel}>Дэд ангилал</div>
@@ -326,7 +326,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
         <div>
           <div style={sideLabel}>Брэнд</div>
           {brandsInCat.map((b) => (
-            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={brandFilter.includes(b.id)}
                 onChange={() => setBrandFilter(brandFilter.includes(b.id) ? brandFilter.filter((x) => x !== b.id) : [...brandFilter, b.id])}
                 style={{ accentColor: T.cherry }} />
@@ -338,9 +338,9 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
 
       <div style={{ flex: 1, minWidth: 280 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-            style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
+            style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
             <option value="default">Санал болгох</option>
             <option value="new">Шинэ эхэндээ</option>
             <option value="price_asc">Үнэ: багаас их</option>
@@ -352,17 +352,17 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Тохирох бараа олдсонгүй.</div>}
+          {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Тохирох бараа олдсонгүй.</div>}
         </div>
       </div>
     </div>
   );
 }
-const sideLabel = { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10 };
+const sideLabel = { fontFamily: "'Ubuntu', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10 };
 const subBtn = (active) => ({
   display: "block", width: "100%", textAlign: "left", background: active ? T.ink : "transparent",
   color: active ? T.cream : T.ink, border: `1px solid ${active ? T.ink : "transparent"}`,
-  borderRadius: 8, padding: "7px 10px", fontFamily: "'Inter', sans-serif", fontSize: 13.5,
+  borderRadius: 8, padding: "7px 10px", fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5,
   cursor: "pointer", marginBottom: 4,
 });
 
@@ -385,7 +385,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Inter', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
+      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
         <ChevronLeft size={15} /> Буцах
       </button>
       <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
@@ -411,10 +411,10 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
           )}
         </div>
         <div>
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
-          <h1 className="cuppa-detail-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26 }}>{product.desc}</p>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
+          <h1 className="cuppa-detail-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26 }}>{product.desc}</p>
 
           <div style={{ marginBottom: 22 }}>
             <div style={sideLabel}>Савлагаа сонгох</div>
@@ -426,14 +426,14 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
                   background: optionType === t ? T.cream : "transparent",
                   position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.cherry}22` : "none",
                 }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.moss, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                     {t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
-                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600, color: T.ink, margin: "3px 0" }}>{product[t].label}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, fontWeight: 600, color: T.ink, margin: "3px 0" }}>{product[t].label}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
                     {discountPercent(product[t]) != null && (
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, textDecoration: "line-through" }}>{money(product[t].originalPrice)}</span>
+                      <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, textDecoration: "line-through" }}>{money(product[t].originalPrice)}</span>
                     )}
                   </div>
                   {optionType === t && <div style={{ position: "absolute", top: 10, right: 10, color: T.cherry }}><Check size={16} /></div>}
@@ -442,7 +442,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
             </div>
           </div>
 
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 20 }}>
             Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "unit" ? "ширхэг" : "хайрцаг"} байна
             {optionType === "box" && <> · 1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
           </div>
@@ -451,18 +451,18 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
             {outOfStock ? (
               <div style={{
                 flex: 1, background: T.line, color: T.inkSoft, borderRadius: 999,
-                padding: "13px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5, textAlign: "center",
+                padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, textAlign: "center",
               }}>Бараа дууссан байна</div>
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "center", border: `1px solid ${T.line}`, borderRadius: 999, overflow: "hidden" }}>
                   <button onClick={() => setQty(Math.max(1, qty - 1))} style={stepBtn}><Minus size={14} /></button>
-                  <span style={{ width: 40, textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{qty}</span>
+                  <span style={{ width: 40, textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600 }}>{qty}</span>
                   <button onClick={() => setQty(Math.min(option.stock, qty + 1))} style={stepBtn}><Plus size={14} /></button>
                 </div>
                 <button onClick={() => onAddToCart(product, optionType, qty)} style={{
                   flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
-                  padding: "13px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5,
+                  padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 }}>
                   <ShoppingBag size={16} /> Сагслах · {money(option.price * qty)}
@@ -498,11 +498,11 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
         zIndex: 160, display: "flex", flexDirection: "column", boxShadow: "-10px 0 30px rgba(0,0,0,.2)",
       }}>
         <div style={{ padding: "20px 20px 14px", borderBottom: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: T.ink }}>Сагс</span>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink }}>Сагс</span>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={20} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "10px 20px" }}>
-          {cart.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif", fontSize: 14, marginTop: 30, textAlign: "center" }}>Сагс хоосон байна.</div>}
+          {cart.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, marginTop: 30, textAlign: "center" }}>Сагс хоосон байна.</div>}
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
@@ -511,15 +511,15 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
               <div key={item.productId + item.optionType} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
                 <div style={{ width: 56, height: 56, borderRadius: 8, background: `linear-gradient(155deg, ${product.color}, ${T.ink})`, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{product.name}</div>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.moss, margin: "3px 0" }}>{option.label}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{product.name}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.moss, margin: "3px 0" }}>{option.label}</div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", border: `1px solid ${T.line}`, borderRadius: 999 }}>
                       <button onClick={() => updateQty(item.productId, item.optionType, Math.max(1, item.qty - 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Minus size={11} /></button>
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, width: 22, textAlign: "center" }}>{item.qty}</span>
+                      <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, width: 22, textAlign: "center" }}>{item.qty}</span>
                       <button onClick={() => updateQty(item.productId, item.optionType, Math.min(option.stock || item.qty, item.qty + 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Plus size={11} /></button>
                     </div>
-                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 600, color: T.ink }}>{money(option.price * item.qty)}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600, color: T.ink }}>{money(option.price * item.qty)}</span>
                   </div>
                 </div>
                 <button onClick={() => removeItem(item.productId, item.optionType)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkSoft, alignSelf: "flex-start" }}><Trash2 size={15} /></button>
@@ -529,13 +529,13 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
         </div>
         {cart.length > 0 && (
           <div style={{ padding: 20, borderTop: `1px solid ${T.line}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, fontFamily: "'Inter', sans-serif" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, fontFamily: "'Ubuntu', sans-serif" }}>
               <span style={{ color: T.inkSoft, fontSize: 14 }}>Нийт дүн</span>
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 17, color: T.ink }}>{money(subtotal)}</span>
+              <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 17, color: T.ink }}>{money(subtotal)}</span>
             </div>
             <button onClick={onCheckout} style={{
               width: "100%", background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
-              padding: "13px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer",
+              padding: "13px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}>Захиалга үүсгэх <ArrowRight size={16} /></button>
           </div>
@@ -588,7 +588,7 @@ function AuthModal({ open, onClose }) {
           {["login", "register"].map((m) => (
             <button key={m} onClick={() => { setMode(m); setError(""); setNotice(""); }} style={{
               flex: 1, padding: "9px 0", borderRadius: 999, border: "none", cursor: "pointer",
-              fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5,
+              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
               background: mode === m ? T.ink : "transparent", color: mode === m ? T.cream : T.inkSoft,
             }}>{m === "login" ? "Нэвтрэх" : "Бүртгүүлэх"}</button>
           ))}
@@ -600,11 +600,11 @@ function AuthModal({ open, onClose }) {
           )}
           <input type="email" required placeholder="Имэйл хаяг" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
           <input type="password" required minLength={6} placeholder="Нууц үг (дор хаяж 6 тэмдэгт)" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
-          {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Inter', sans-serif" }}>{error}</div>}
-          {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Inter', sans-serif" }}>{notice}</div>}
+          {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+          {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
           <button type="submit" disabled={loading} style={{
             marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
-            padding: "12px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14,
+            padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
             cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
           }}>{loading ? "Түр хүлээнэ үү…" : (mode === "login" ? "Нэвтрэх" : "Бүртгүүлэх")}</button>
         </form>
@@ -612,7 +612,7 @@ function AuthModal({ open, onClose }) {
     </div>
   );
 }
-const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Inter', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none" };
+const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none" };
 
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
@@ -672,12 +672,12 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>байршуулах</h1>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>байршуулах</h1>
 
             {categories[0] && (
               <button onClick={() => setView({ name: "category", categoryId: categories[0].id })} style={{
                 background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
-                fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+                fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
               }}>Дэлгүүр үзэх <ArrowRight size={16} /></button>
             )}
           </div>
@@ -686,7 +686,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 10px" }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
           {categories.map((c) => {
             const Icon = ICONS[c.icon] || Coffee;
@@ -696,7 +696,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
               }}>
                 <Icon size={26} color={T.cherry} />
-                <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
               </button>
             );
           })}
@@ -704,24 +704,24 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 90px" }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Эрэлттэй бүтээгдэхүүн</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Эрэлттэй бүтээгдэхүүн</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор эрэлттэй бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор эрэлттэй бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
 
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "10px 20px 90px" }}>
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Хямдралтай бүтээгдэхүүн</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Хямдралтай бүтээгдэхүүн</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {discounted.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
     </div>
@@ -748,14 +748,14 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
   };
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Inter', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
+      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
         <ChevronLeft size={15} /> Сагс руу буцах
       </button>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 700, color: T.ink, marginBottom: 26 }}>Хүргэлтийн мэдээлэл</h1>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 28, fontWeight: 700, color: T.ink, marginBottom: 26 }}>Хүргэлтийн мэдээлэл</h1>
       <div className="cuppa-checkout-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 34, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 260 }}>
           <input placeholder="Хүлээн авагчийн нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
-          <input placeholder="Утасны дугаар" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
+          <input placeholder="Утасны дугаар" inputMode="numeric" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
 
           <div>
             <div style={sideLabel}>Хүргэлтийн хэлбэр</div>
@@ -765,13 +765,13 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
                   flex: 1, textAlign: "center", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
                   border: `1.5px solid ${form.deliveryMethod === key ? T.cherry : T.line}`,
                   background: form.deliveryMethod === key ? T.cream : "transparent",
-                  fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
+                  fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
                 }}>{label}{key === "delivery" && <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: T.inkSoft, marginTop: 2 }}>+{money(DELIVERY_FEE)}</span>}</button>
               ))}
             </div>
           </div>
           {form.deliveryMethod === "delivery" && (
-            <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Inter', sans-serif" }} />
+            <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Ubuntu', sans-serif" }} />
           )}
 
           <div>
@@ -782,7 +782,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
                   flex: 1, textAlign: "center", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
                   border: `1.5px solid ${form.receiptType === key ? T.cherry : T.line}`,
                   background: form.receiptType === key ? T.cream : "transparent",
-                  fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
+                  fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
                 }}>{label}</button>
               ))}
             </div>
@@ -792,40 +792,40 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
               onChange={(e) => setForm({ ...form, registerNumber: e.target.value })} style={inputStyle} />
           )}
 
-          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөрийн хэлбэр : QPay</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginTop: -2 }}>Төлбөрийн хэлбэр : QPay</div>
         </div>
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, alignSelf: "flex-start", minWidth: 240 }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын мэдээлэл</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын мэдээлэл</div>
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
             const option = product[item.optionType];
             return (
-              <div key={item.productId + item.optionType} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
+              <div key={item.productId + item.optionType} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
                 <span>{product.name} × {item.qty}</span>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(option.price * item.qty)}</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(option.price * item.qty)}</span>
               </div>
             );
           })}
           <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 10, paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
               <span>Барааны дүн</span>
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(subtotal)}</span>
+              <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(subtotal)}</span>
             </div>
             {deliveryFee > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
                 <span>Хүргэлтийн хураамж</span>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(deliveryFee)}</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(deliveryFee)}</span>
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, borderTop: `1px solid ${T.line}`, paddingTop: 8 }}>
-              <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(total)}</span>
+              <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>Нийт</span>
+              <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(total)}</span>
             </div>
           </div>
           <button disabled={!valid} onClick={handleClick} style={{
             width: "100%", marginTop: 16, background: valid ? T.cherry : T.line, color: "#fff", border: "none",
-            borderRadius: 999, padding: "12px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14,
+            borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
             cursor: valid ? "pointer" : "not-allowed",
           }}>{submitting ? "Илгээж байна…" : "Захиалга баталгаажуулах"}</button>
         </div>
@@ -840,12 +840,12 @@ function Confirmation({ orderNumber, onContinue }) {
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.moss, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
         <Check size={30} color="#fff" />
       </div>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Захиалга амжилттай!</h1>
-      <p style={{ fontFamily: "'Inter', sans-serif", color: T.inkSoft, marginBottom: 6 }}>Захиалгын дугаар</p>
-      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 700, color: T.cherry, marginBottom: 30 }}>{orderNumber}</div>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Захиалга амжилттай!</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", color: T.inkSoft, marginBottom: 6 }}>Захиалгын дугаар</p>
+      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.cherry, marginBottom: 30 }}>{orderNumber}</div>
       <button onClick={onContinue} style={{
         background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
-        fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
+        fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
       }}>Дэлгүүр рүү буцах</button>
     </div>
   );
@@ -859,9 +859,9 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
   const items = products.filter((p) => wishlist.includes(p.id));
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Таалагдсан бүтээгдэхүүн</h1>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Таалагдсан бүтээгдэхүүн</h1>
       {items.length === 0 ? (
-        <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Жагсаалт хоосон байна.</div>
+        <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Жагсаалт хоосон байна.</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {items.map((p) => (
@@ -896,7 +896,7 @@ function OrderStatusBadge({ status }) {
   return (
     <span style={{
       background: c.bg, color: c.color, fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
-      borderRadius: 999, fontFamily: "'IBM Plex Mono', monospace", whiteSpace: "nowrap",
+      borderRadius: 999, fontFamily: "'Ubuntu', sans-serif", whiteSpace: "nowrap",
     }}>{ORDER_STATUS_LABELS[status] || status}</span>
   );
 }
@@ -914,11 +914,11 @@ function MyOrdersPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Миний захиалгууд</h1>
-      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
-      {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Inter', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Миний захиалгууд</h1>
+      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
+      {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
       {status === "ready" && orders.length === 0 && (
-        <div style={{ color: T.inkSoft, fontFamily: "'Inter', sans-serif" }}>Та одоогоор захиалга хийгээгүй байна.</div>
+        <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Та одоогоор захиалга хийгээгүй байна.</div>
       )}
       {status === "ready" && orders.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -926,32 +926,33 @@ function MyOrdersPage() {
             <div key={o.orderNumber} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 15, color: T.ink }}>{o.orderNumber}</div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{o.orderNumber}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
                     {new Date(o.createdAt).toLocaleDateString("mn-MN")}
                     {o.receiptType === "company" && <> · Байгууллага ({o.registerNumber})</>}
                     {" · "}{o.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
+                    {o.boxCount > 0 && <> · 📦 {o.boxCount} хайрцаг</>}
                   </div>
                 </div>
                 <OrderStatusBadge status={o.status} />
               </div>
               <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                 {o.items.map((it, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
                     <span>{it.productName} ({it.optionLabel}) × {it.qty}</span>
-                    <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(it.lineTotal)}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(it.lineTotal)}</span>
                   </div>
                 ))}
                 {o.deliveryFee > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Inter', sans-serif", fontSize: 13, color: T.ink }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
                     <span>Хүргэлтийн хураамж</span>
-                    <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{money(o.deliveryFee)}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(o.deliveryFee)}</span>
                   </div>
                 )}
               </div>
               <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-                <span style={{ fontFamily: "'Inter', sans-serif" }}>Нийт</span>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", color: T.cherry }}>{money(o.subtotal + (o.deliveryFee || 0))}</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>Нийт</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(o.subtotal + (o.deliveryFee || 0))}</span>
               </div>
             </div>
           ))}
@@ -964,8 +965,8 @@ function MyOrdersPage() {
 function InfoPage({ title, note }) {
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>{title}</h1>
-      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6 }}>{note}</p>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>{title}</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6 }}>{note}</p>
     </div>
   );
 }
@@ -985,7 +986,7 @@ const SOCIALS = [
   { label: "cuppa_coffeesupply", href: "https://www.instagram.com/cuppa_coffeesupply/", Icon: Instagram },
 ];
 
-const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
+const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
 
 /* ------------------------------------------------------------------ */
 /*  App                                                                 */
@@ -1120,7 +1121,7 @@ export default function App() {
 
   if (dataStatus === "loading") {
     return (
-      <div style={{ minHeight: "100vh", background: T.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: T.inkSoft, gap: 22 }}>
+      <div style={{ minHeight: "100vh", background: T.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Ubuntu', sans-serif", color: T.inkSoft, gap: 22 }}>
         <style>{FONT_IMPORT}</style>
         <style>{`
           @keyframes cuppa-steam {
@@ -1160,7 +1161,7 @@ export default function App() {
           <div style={{ position: "absolute", bottom: 38, left: 6, width: 80, height: 8, borderRadius: 999, background: T.ink, opacity: 0.14 }} />
         </div>
 
-        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, color: T.ink, display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, display: "flex", alignItems: "center", gap: 4 }}>
           Ачааллаж байна
           <span style={{ display: "inline-flex", gap: 3, marginLeft: 3 }}>
             {[0, 1, 2].map((i) => (
@@ -1180,8 +1181,8 @@ export default function App() {
         <style>{FONT_IMPORT}</style>
         <div style={{ maxWidth: 460 }}>
           <ShieldAlert size={30} color={T.cherry} style={{ marginBottom: 12 }} />
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Supabase-тай холбогдож чадсангүй</div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Supabase-тай холбогдож чадсангүй</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 16 }}>
             Интернэт холболтоо шалгана уу, эсвэл <code>supabase-schema.sql</code>-г Supabase төслийн SQL Editor-т ажиллуулсан эсэхийг баталгаажуулна уу.
           </div>
           <button onClick={loadData} style={{ ...primaryBtn, marginTop: 16 }}>Дахин оролдох</button>
@@ -1206,8 +1207,8 @@ export default function App() {
     const results = data.products.filter((p) => p.name.toLowerCase().includes(q) || (p.origin || "").toLowerCase().includes(q));
     body = (
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
-        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>“{view.query}” хайлтын үр дүн</h1>
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.inkSoft, marginBottom: 22 }}>{results.length} олдлоо</div>
+        <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>“{view.query}” хайлтын үр дүн</h1>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 22 }}>{results.length} олдлоо</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {results.map((p) => <ProductCard key={p.id} product={p} onOpen={openProduct} onQuickAdd={quickAdd} isWished={wishlist.includes(p.id)} onToggleWish={toggleWish} />)}
         </div>
@@ -1227,7 +1228,7 @@ export default function App() {
 
   return (
     <DataContext.Provider value={data}>
-      <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Ubuntu', sans-serif" }}>
         <style>{FONT_IMPORT}</style>
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
@@ -1238,8 +1239,8 @@ export default function App() {
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
           }}>
             {BRANCHES.map((b) => (
-              <div key={b.name} style={{ fontFamily: "'Inter', sans-serif", fontSize: 13 }}>
-                <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name}</div>
+              <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
+                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name}</div>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, opacity: 0.85 }}>
                   <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
                 </div>
@@ -1253,7 +1254,7 @@ export default function App() {
                   {SOCIALS.map(({ label, href, Icon }) => (
                     <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
                       display: "flex", alignItems: "center", gap: 6, color: T.cream, textDecoration: "none",
-                      fontFamily: "'Inter', sans-serif", fontSize: 13, opacity: 0.85,
+                      fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
                     }}>
                       <Icon size={16} /> {label}
                     </a>
@@ -1262,7 +1263,7 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
+          <div style={{ textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
         </footer>
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />

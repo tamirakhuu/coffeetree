@@ -380,7 +380,12 @@ function renderDashboard() {
   `).join('') || `<tr><td colspan="4" class="empty">Захиалга алга байна</td></tr>`;
 }
 
-const ORDER_STATUSES = ['pending', 'prepared', 'handed_over', 'cancelled'];
+// Очиж авах захиалга: 3 энгийн төлөвтэй. Хүргэлтийн захиалгын төлөв өөрчлөгдөөгүй.
+const STATUSES_PICKUP = ['pending', 'prepared', 'handed_over'];
+const STATUSES_DELIVERY = ['pending', 'processing', 'shipped', 'done', 'cancelled'];
+function statusesFor(o) {
+  return o.delivery_method === 'delivery' ? STATUSES_DELIVERY : STATUSES_PICKUP;
+}
 function statusLabel(s) {
   return { pending:'Хүлээгдэж байна', prepared:'Бэлдсэн', handed_over:'Хүлээлгэн өгсөн', cancelled:'Цуцлагдсан',
     processing:'Бэлдэж байна', shipped:'Хүргэлтэнд гарсан', done:'Хүргэгдсэн' }[s] || s;
@@ -721,9 +726,11 @@ function renderOrders() {
   tb.innerHTML = filtered.map(o => {
     const items = orderItems.filter(i => i.order_number === o.order_number);
     const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
-    const unitQty = items.filter(i => i.option_type === 'unit').reduce((s, i) => s + (i.qty || 0), 0);
-    const boxQty = items.filter(i => i.option_type === 'box').reduce((s, i) => s + (i.qty || 0), 0);
-    const packSummary = `<div style="font-size:10.5px;color:var(--ink-soft);margin-top:4px;font-family:'IBM Plex Mono',monospace">📦 Хайрцаг: ${boxQty} · Ширхэг: ${unitQty}</div>`;
+    const boxCountInput = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
+      <span style="font-size:10.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace">📦 Хайрцаг:</span>
+      <input type="number" min="0" value="${o.box_count ?? 0}" onchange="updateOrderBoxCount('${o.order_number}', this.value)"
+        style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;background:var(--card)">
+    </div>`;
     const receiptText = o.receipt_type === 'company'
       ? `Байгууллага<br><span class="mono" style="font-size:11px">${o.register_number || '-'}</span>`
       : 'Хувь хүн';
@@ -737,12 +744,12 @@ function renderOrders() {
       <td class="mono">${o.phone||'-'}</td>
       <td style="font-size:12px">${receiptText}</td>
       <td style="font-size:12px">${deliveryText}</td>
-      <td style="font-size:12px">${itemsText || '-'}${items.length ? packSummary : ''}</td>
+      <td style="font-size:12px">${itemsText || '-'}${boxCountInput}</td>
       <td class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</td>
       <td class="mono" style="font-size:11px">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
       <td>
         <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card)">
-          ${ORDER_STATUSES.map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
+          ${statusesFor(o).map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
         </select>
       </td>
     </tr>`;
@@ -753,6 +760,14 @@ async function updateOrderStatus(orderNumber, status) {
   if (error) { toast('Төлөв солиход алдаа гарлаа', 'err'); return; }
   toast('Төлөв шинэчлэгдлээ');
   await loadAll();
+}
+async function updateOrderBoxCount(orderNumber, value) {
+  const box_count = Math.max(0, parseInt(value, 10) || 0);
+  const { error } = await sb.from('orders').update({ box_count }).eq('order_number', orderNumber);
+  if (error) { toast('Хайрцгийн тоо хадгалахад алдаа гарлаа', 'err'); return; }
+  const o = orders.find(x => x.order_number === orderNumber);
+  if (o) o.box_count = box_count;
+  toast('✅ Хайрцгийн тоо шинэчлэгдлээ');
 }
 
 checkAuth();

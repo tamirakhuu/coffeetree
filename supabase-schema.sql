@@ -76,6 +76,7 @@
     register_number text, -- байгууллагын регистрийн дугаар (receipt_type='company' үед)
     delivery_method text default 'pickup', -- pickup | delivery
     delivery_fee numeric default 0,
+    box_count integer default 0, -- админ гараар оруулдаг хайрцгийн тоо
     created_at timestamptz default now()
   );
 
