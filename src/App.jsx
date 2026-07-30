@@ -219,7 +219,10 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
   const goBrand = (categoryId, brandId) => { setView({ name: "category", categoryId, brandId }); setMenuOpen(false); };
 
   return (
-    <header style={{ background: T.ink, color: T.cream, position: "sticky", top: 0, zIndex: 100 }}>
+    <header style={{
+      background: "rgba(36,28,20,.65)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      color: T.cream, position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid rgba(255,255,255,.08)",
+    }}>
       <div className="cuppa-header-row" style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
         <div className="cuppa-logo" onClick={() => setView({ name: "home" })} style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
           <img src="/cuppa-logo.png" alt="CUPPA" style={{ height: 26, display: "block" }} />
@@ -228,7 +231,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
         <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", flex: 1 }}>
           <div className="cuppa-nav-links" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
             <NavButton active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-              Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+              Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
             </NavButton>
             <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
           </div>
@@ -289,7 +292,8 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   const outOfStock = (product.unit.stock || 0) <= 0;
   return (
     <div className="cuppa-product-card" style={{
-      background: T.card, borderRadius: "14px 14px 4px 4px", border: `1px solid ${T.line}`, overflow: "hidden",
+      background: "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+      borderRadius: "14px 14px 10px 10px", border: "1px solid rgba(255,255,255,.5)", overflow: "hidden",
       display: "flex", flexDirection: "column", boxShadow: "0 2px 10px rgba(36,28,20,.08)",
       transition: "transform .15s ease, box-shadow .15s ease",
     }}>
@@ -755,7 +759,8 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
             const Icon = ICONS[c.icon] || Coffee;
             return (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
-                background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "26px 14px",
+                background: "rgba(255,255,255,.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,.5)", borderRadius: 14, padding: "26px 14px",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
                 boxShadow: "0 2px 10px rgba(36,28,20,.08)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
