@@ -24,6 +24,7 @@ const T = {
   gold: "#B8862E", //badge color
   cream: "#F6EFE0",
   green: "#177400",
+  blue: "#1b00b4"
 };
 
 const FONT_IMPORT =
@@ -199,7 +200,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
   );
 }
 
-function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch, onLogout }) {
+function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch }) {
   const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -263,14 +264,11 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
               <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
             </button>
             {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
-                  width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
-                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
-                }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
-                <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
-              </div>
+              <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
+                width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
+                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
             ) : (
               <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
             )}
@@ -976,7 +974,7 @@ function OrderStatusBadge({ status }) {
     }}>{ORDER_STATUS_LABELS[status] || status}</span>
   );
 }
-function MyOrdersPage() {
+function MyOrdersPage({ onLogout }) {
   const [orders, setOrders] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
 
@@ -990,7 +988,16 @@ function MyOrdersPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Миний захиалгууд</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, flexWrap: "wrap", gap: 10 }}>
+        <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, margin: 0 }}>Миний захиалгууд</h1>
+        <button onClick={onLogout} style={{
+          display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${T.line}`,
+          borderRadius: 999, padding: "8px 16px", color: T.ink, cursor: "pointer",
+          fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600,
+        }}>
+          <LogOut size={15} /> Гарах
+        </button>
+      </div>
       {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
       {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
       {status === "ready" && orders.length === 0 && (
@@ -1312,7 +1319,7 @@ export default function App() {
   } else if (view.name === "training") {
     body = <TrainingPage />;
   } else if (view.name === "orders") {
-    body = user ? <MyOrdersPage /> : <InfoPage title="Миний захиалгууд" note="Захиалгаа харахын тулд эхлээд нэвтэрнэ үү." />;
+    body = user ? <MyOrdersPage onLogout={handleLogout} /> : <InfoPage title="Миний захиалгууд" note="Захиалгаа харахын тулд эхлээд нэвтэрнэ үү." />;
   }
 
   return (
@@ -1320,7 +1327,7 @@ export default function App() {
       <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Ubuntu', sans-serif" }}>
         <style>{FONT_IMPORT}</style>
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
-          onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} onLogout={handleLogout} />
+          onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} />
         <main style={{ flex: 1 }}>{body}</main>
         <footer style={{ background: T.ink, color: T.cream, padding: "26px 20px 16px" }}>
           <div style={{
