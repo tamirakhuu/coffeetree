@@ -1040,6 +1040,7 @@ function TrainingPage() {
 const BRANCHES = [
   {
     name: "Саруул зах",
+    heading: "Дэлгүүрийн хаяг",
     address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
     mapUrl: "https://maps.app.goo.gl/ZAZ4cCXETKV2xaSm8",
     phone: "70111772",
@@ -1319,7 +1320,7 @@ export default function App() {
             </div>
             {BRANCHES.map((b) => (
               <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
-                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name} салбар</div>
+                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.heading || `${b.name} салбар`}</div>
                 <a href={b.mapUrl} target="_blank" rel="noopener noreferrer" style={{
                   display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.cream,
                   textDecoration: "none", opacity: 0.85,
