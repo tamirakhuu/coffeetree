@@ -1035,19 +1035,31 @@ function InfoPage({ title, note }) {
   );
 }
 function TrainingPage() {
-  return <InfoPage title="Сургалт" note="Бариста бэлтгэлийн сургалтын хуваарь энд удахгүй нэмэгдэнэ." />;
+  return <InfoPage title="Сургалт" note="Бариста бэлтгэлийн сургалт удахгүй" />;
 }
 const BRANCHES = [
   {
-    name: "Холбоо барих",
-    address: "СБД, 3-р хороо, Нарны зам, Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
+    name: "Саруул зах",
+    address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
+    mapUrl: "https://maps.app.goo.gl/ZAZ4cCXETKV2xaSm8",
     phone: "70111772",
-    email: "coffeetreellc@gmail.com",
+    email: "coffeetree2017@gmail.com",
+    socials: [
+      { label: "CuppA", href: "https://www.facebook.com/profile.php?id=100053215639953", Icon: Facebook },
+      { label: "cuppa_coffeesupply", href: "https://www.instagram.com/cuppa_coffeesupply/", Icon: Instagram },
+    ],
   },
-];
-const SOCIALS = [
-  { label: "CuppA", href: "https://www.facebook.com/profile.php?id=100053215639953", Icon: Facebook },
-  { label: "cuppa_coffeesupply", href: "https://www.instagram.com/cuppa_coffeesupply/", Icon: Instagram },
+  {
+    name: "Яармаг",
+    address: "Яармаг City Palace 3 давхар 11:00 - 19-00",
+    mapUrl: "https://maps.app.goo.gl/CqwyKw4dLudAQbU68",
+    phone: "76111772",
+    email: "test@gmail.com",
+    socials: [
+      { label: "CuppA Яармаг", href: "https://www.facebook.com/profile.php?id=61578460444954", Icon: Facebook },
+      { label: "cuppa2026", href: "https://www.instagram.com/cuppa2026/", Icon: Instagram },
+    ],
+  },
 ];
 
 const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
@@ -1302,28 +1314,32 @@ export default function App() {
             maxWidth: 1180, margin: "0 auto 16px", display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
           }}>
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140, filter: "invert(1)" }} />
+            </div>
             {BRANCHES.map((b) => (
               <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
-                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name}</div>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, opacity: 0.85 }}>
+                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.name} салбар</div>
+                <a href={b.mapUrl} target="_blank" rel="noopener noreferrer" style={{
+                  display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.cream,
+                  textDecoration: "none", opacity: 0.85,
+                }}>
                   <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
-                </div>
+                </a>
                 <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
                   <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
                 </a>
-                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
                   <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
                 </a>
-                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                  {SOCIALS.map(({ label, href, Icon }) => (
-                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
-                      display: "flex", alignItems: "center", gap: 6, color: T.cream, textDecoration: "none",
-                      fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
-                    }}>
-                      <Icon size={16} /> {label}
-                    </a>
-                  ))}
-                </div>
+                {b.socials.map(({ label, href, Icon }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
+                    display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none",
+                    fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
+                  }}>
+                    <Icon size={14} style={{ flexShrink: 0 }} /> {label}
+                  </a>
+                ))}
               </div>
             ))}
           </div>
