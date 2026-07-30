@@ -50,6 +50,8 @@ html {
     gap: 18px !important;
   }
   .cuppa-megamenu-col { min-width: 0 !important; }
+
+  .cuppa-footer-logo { justify-content: center !important; }
 }
 
 @media (max-width: 480px) {

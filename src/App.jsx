@@ -1314,7 +1314,7 @@ export default function App() {
             maxWidth: 1180, margin: "0 auto 16px", display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
           }}>
-            <div style={{ display: "flex", alignItems: "flex-start" }}>
+            <div className="cuppa-footer-logo" style={{ display: "flex", alignItems: "flex-start" }}>
               <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140, filter: "invert(1)" }} />
             </div>
             {BRANCHES.map((b) => (
