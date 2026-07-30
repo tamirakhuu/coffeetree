@@ -1145,6 +1145,7 @@ export default function App() {
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
   const [dataStatus, setDataStatus] = useState("loading"); // loading | ready | error
   const [view, setView] = useState({ name: "home" });
+  useEffect(() => { window.scrollTo(0, 0); }, [view]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [user, setUser] = useState(null);
