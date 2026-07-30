@@ -14,18 +14,40 @@ html {
     justify-content: space-between !important;
   }
   .cuppa-logo { order: 1; }
-  .cuppa-icons { order: 2; }
   .cuppa-search-toggle {
     display: flex !important;
   }
   .cuppa-search-form {
-    display: none !important;
-    order: 3;
-    width: 100% !important;
+    order: 2;
+    flex-grow: 0 !important;
+    flex-shrink: 1 !important;
+    flex-basis: 0% !important;
+    min-width: 0 !important;
     max-width: none !important;
+    width: auto !important;
+    opacity: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    pointer-events: none;
+    transition: flex-grow .32s ease, opacity .2s ease, padding .32s ease;
   }
   .cuppa-search-form.cuppa-search-open {
-    display: flex !important;
+    flex-grow: 1 !important;
+    opacity: 1;
+    padding: 6px 12px !important;
+    pointer-events: auto;
+  }
+  .cuppa-icons { order: 3; flex-shrink: 0; }
+  .cuppa-icons-rest {
+    overflow: hidden;
+    max-width: 200px;
+    opacity: 1;
+    transition: max-width .32s ease, opacity .5s ease;
+  }
+  .cuppa-icons-rest.cuppa-icons-rest-hidden {
+    max-width: 0;
+    opacity: 0;
   }
   .cuppa-nav {
     order: 4;

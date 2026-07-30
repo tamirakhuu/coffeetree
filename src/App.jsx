@@ -23,6 +23,7 @@ const T = {
   moss: "#48583A", 
   gold: "#B8862E", //badge color
   cream: "#F6EFE0",
+  green: "#177400",
 };
 
 const FONT_IMPORT =
@@ -252,26 +253,28 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
 
         <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button className="cuppa-search-toggle" onClick={() => setSearchOpen((v) => !v)} style={iconBtnStyle}>
-            <Search size={19} />
+            {searchOpen ? <X size={19} /> : <Search size={19} />}
           </button>
-          <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
-            <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
-          </button>
-          <button onClick={onOpenCart} style={iconBtnStyle}>
-            <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
-          </button>
-          {user ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
-                width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
-                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
-              <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
-            </div>
-          ) : (
-            <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
-          )}
+          <div className={`cuppa-icons-rest${searchOpen ? " cuppa-icons-rest-hidden" : ""}`} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
+              <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
+            </button>
+            <button onClick={onOpenCart} style={iconBtnStyle}>
+              <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
+            </button>
+            {user ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
+                  width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
+                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+                }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
+                <button onClick={onLogout} style={{ ...iconBtnStyle, opacity: 0.8 }} title="Гарах"><LogOut size={17} /></button>
+              </div>
+            ) : (
+              <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
+            )}
+          </div>
         </div>
       </div>
     </header>
