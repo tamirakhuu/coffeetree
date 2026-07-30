@@ -201,6 +201,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
 function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch, onLogout }) {
   const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCat, setActiveCat] = useState(null);
   const navRef = useRef(null);
@@ -242,14 +243,17 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
           )}
         </nav>
 
-        <form className="cuppa-search-form" onSubmit={(e) => { e.preventDefault(); onSearch(q); }}
+        <form className={`cuppa-search-form${searchOpen ? " cuppa-search-open" : ""}`} onSubmit={(e) => { e.preventDefault(); onSearch(q); setSearchOpen(false); }}
           style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.1)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..."
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..." autoFocus={searchOpen}
             style={{ background: "transparent", border: "none", outline: "none", color: T.cream, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
         </form>
 
         <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button className="cuppa-search-toggle" onClick={() => setSearchOpen((v) => !v)} style={iconBtnStyle}>
+            <Search size={19} />
+          </button>
           <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
             <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
           </button>

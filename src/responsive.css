@@ -1,6 +1,10 @@
-/* Mobile responsiveness overrides for the inline-styled CUPPA layout. */
 html {
   overflow-x: hidden;
+}
+
+/* search box nuuh */
+.cuppa-search-toggle {
+  display: none !important;
 }
 
 @media (max-width: 720px) {
@@ -11,10 +15,17 @@ html {
   }
   .cuppa-logo { order: 1; }
   .cuppa-icons { order: 2; }
+  .cuppa-search-toggle {
+    display: flex !important;
+  }
   .cuppa-search-form {
+    display: none !important;
     order: 3;
     width: 100% !important;
     max-width: none !important;
+  }
+  .cuppa-search-form.cuppa-search-open {
+    display: flex !important;
   }
   .cuppa-nav {
     order: 4;
@@ -64,8 +75,7 @@ html {
   box-shadow: 0 8px 20px rgba(36, 28, 20, .14) !important;
 }
 
-/* iOS Safari zooms the page in when a focused input's font-size is under
-   16px — force 16px on all form fields so focusing never triggers zoom. */
+/* safari zoom. */
 @media (max-width: 720px) {
   input, textarea, select {
     font-size: 16px !important;
