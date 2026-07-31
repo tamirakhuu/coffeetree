@@ -1332,9 +1332,9 @@ export default function App() {
         <style>{FONT_IMPORT}</style>
         <div style={{ maxWidth: 460 }}>
           <ShieldAlert size={30} color={T.cherry} style={{ marginBottom: 12 }} />
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Supabase-тай холбогдож чадсангүй</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 10 }}>CuppA-тай холбогдож чадсангүй</div>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 16 }}>
-            Интернэт холболтоо шалгана уу, эсвэл <code>supabase-schema.sql</code>-г Supabase төслийн SQL Editor-т ажиллуулсан эсэхийг баталгаажуулна уу.
+            Интернэт холболтоо шалгана уу, эсвэл <code>  CuppA  </code>дэлгүүртэй холбогдож мэдээллэнэ үү Баярлалаа
           </div>
           <button onClick={loadData} style={{ ...primaryBtn, marginTop: 16 }}>Дахин оролдох</button>
         </div>

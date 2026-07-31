@@ -286,6 +286,28 @@ async function checkAuth() {
   }
   document.getElementById('loginScreen').style.display = 'none';
   loadAll();
+  subscribeOrderNotifications();
+}
+
+// Шинэ захиалга орж ирэхэд хуудсаа refresh хийхгүйгээр мэдэгдэл өгнө
+// (Supabase Realtime — orders хүснэгтэд INSERT орох бүрт дуудагдана)
+let orderNotifySubscribed = false;
+function subscribeOrderNotifications() {
+  if (orderNotifySubscribed) return;
+  orderNotifySubscribed = true;
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  sb.channel('admin-orders')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+      const o = payload.new;
+      toast(`🛎️ Шинэ захиалга ирлээ: ${o.order_number}`, 'success', 8000);
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification('CUPPA — Шинэ захиалга', { body: `${o.order_number} · ${fmt(o.subtotal)}` });
+      }
+      loadAll();
+    })
+    .subscribe();
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {

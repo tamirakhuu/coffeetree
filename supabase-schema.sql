@@ -219,3 +219,9 @@
   create policy "admin delete product images"
     on storage.objects for delete
     using (bucket_id = 'product-images' and is_admin());
+
+  -- ---------------------------------------------------------------------
+  -- 6) Realtime: admin panel-д шинэ захиалга ирэхэд refresh хийхгүйгээр
+  --    мэдэгдэл өгөх боломжтой болгоно
+  -- ---------------------------------------------------------------------
+  alter publication supabase_realtime add table orders;

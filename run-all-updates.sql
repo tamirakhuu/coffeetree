@@ -150,6 +150,20 @@ alter table orders add column if not exists box_count integer default 0;
 -- ---------------------------------------------------------------------
 update products set tag = 'бестселлэр' where tag = 'эрэлттэй';
 
+-- ---------------------------------------------------------------------
+-- 11) Шинэ захиалга ирэхэд admin panel-д refresh хийхгүйгээр мэдэгдэл
+--     өгөх боломжтой болгох (Supabase Realtime-г orders хүснэгтэд асаах)
+-- ---------------------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table orders;
+  end if;
+end $$;
+
 -- =====================================================================
 -- Дууслаа. Шинэ admin имэйл нэмэхийг admin-add.sql-аас тусад нь хийнэ
 -- (тэнд өөрийн имэйлээ бичих шаардлагатай тул энд оруулаагүй).
