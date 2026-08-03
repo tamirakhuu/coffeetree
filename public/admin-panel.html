@@ -787,7 +787,7 @@ function renderOrders() {
       : 'Хувь хүн';
     const isDelivery = o.delivery_method === 'delivery';
     const deliveryText = isDelivery
-      ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:10.5px;color:var(--ink-soft);margin-top:3px">+${fmt(o.delivery_fee || 0)}</div>`
+      ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:10.5px;color:var(--ink-soft);margin-top:3px">+${fmt(o.delivery_fee || 0)}</div>${o.address ? `<div style="font-size:11px;color:var(--ink);margin-top:4px;max-width:170px;white-space:normal">📍 ${o.address}</div>` : ''}`
       : `<span class="badge" style="background:var(--green-light);color:#2F4A22">Очиж авах</span>`;
     return `<tr style="${isDelivery ? 'background:#F5F9FF' : ''}">
       <td class="mono">${o.order_number}</td>
