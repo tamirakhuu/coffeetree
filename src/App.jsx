@@ -410,8 +410,11 @@ const subBtn = (active) => ({
 const availableOptionTypes = (product) =>
   product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
 
-function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish }) {
-  const { brands } = useContext(DataContext);
+// Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
+const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump" };
+
+function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onToggleWish }) {
+  const { brands, categories, products } = useContext(DataContext);
   const availableTypes = availableOptionTypes(product);
   const [optionType, setOptionType] = useState(() => availableTypes[0] || "unit");
   const [qty, setQty] = useState(1);
@@ -427,6 +430,11 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
   const outOfStock = (option.stock || 0) <= 0;
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
+  const productCategory = categories.find((c) => c.id === product.categoryId);
+  const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
+  const suggestedPump = pumpName
+    ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
+    : null;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
@@ -521,6 +529,23 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: isWished ? T.cherry : T.ink, flexShrink: 0,
             }}><Heart size={18} fill={isWished ? T.cherry : "none"} /></button>
           </div>
+
+          {suggestedPump && (
+            <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
+              <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: `linear-gradient(155deg, ${suggestedPump.color}, ${T.ink})` }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{suggestedPump.name}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(suggestedPump.unit.price)}</div>
+                </div>
+                <button onClick={() => onQuickAdd(suggestedPump)} style={{
+                  background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px",
+                  fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", flexShrink: 0,
+                }}>+ Нэмэх</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -533,6 +558,7 @@ const stepBtn = { border: "none", background: "none", padding: "9px 12px", curso
 /* ------------------------------------------------------------------ */
 function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCheckout }) {
   const { products } = useContext(DataContext);
+
   return (
     <>
       <div onClick={onClose} style={{
@@ -1361,7 +1387,7 @@ export default function App() {
   } else if (view.name === "product") {
     const product = data.products.find((p) => p.id === view.productId);
     body = <ProductDetail product={product} onBack={() => setView(view.returnTo || { name: "home" })}
-      onAddToCart={addToCart} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
+      onAddToCart={addToCart} onQuickAdd={quickAdd} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
   } else if (view.name === "search") {
     const q = view.query.toLowerCase();
     const results = data.products.filter((p) => p.name.toLowerCase().includes(q) || (p.origin || "").toLowerCase().includes(q));
@@ -1431,7 +1457,7 @@ export default function App() {
           </div>
           <div style={{ textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
         </footer>
-        <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} />
+        <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         <Toast message={toast} />
         <ScrollToTopButton />
