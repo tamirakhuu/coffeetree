@@ -164,36 +164,6 @@ begin
   end if;
 end $$;
 
--- ---------------------------------------------------------------------
--- 12) Хэрэглэгчийн профайл (аватар зураг) хадгалах Storage bucket
---     Нэр/утас/хаяг нь auth.users.user_metadata дотор хадгалагддаг тул
---     шинэ багана/хүснэгт шаардлагагүй.
--- ---------------------------------------------------------------------
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
-
-drop policy if exists "public read avatars" on storage.objects;
-drop policy if exists "user upload own avatar" on storage.objects;
-drop policy if exists "user update own avatar" on storage.objects;
-drop policy if exists "user delete own avatar" on storage.objects;
-
-create policy "public read avatars"
-  on storage.objects for select
-  using (bucket_id = 'avatars');
-
-create policy "user upload own avatar"
-  on storage.objects for insert
-  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
-
-create policy "user update own avatar"
-  on storage.objects for update
-  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
-
-create policy "user delete own avatar"
-  on storage.objects for delete
-  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
-
 -- =====================================================================
 -- Дууслаа. Шинэ admin имэйл нэмэхийг admin-add.sql-аас тусад нь хийнэ
 -- (тэнд өөрийн имэйлээ бичих шаардлагатай тул энд оруулаагүй).

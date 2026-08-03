@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, uploadAvatar, deleteAccount } from "./auth.js";
+import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -268,10 +268,8 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
               <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={{
                 width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
                 border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0, overflow: "hidden",
-              }}>
-                {user.avatarUrl ? <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.name || "?").trim().charAt(0).toUpperCase()}
-              </button>
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
             ) : (
               <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
             )}
@@ -1097,29 +1095,9 @@ function ProfilePage({ user, section, setSection, onLogout, onUserUpdate }) {
 function ProfileInfoSection({ user, onUserUpdate }) {
   const [name, setName] = useState(user.name || "");
   const [phone, setPhone] = useState(user.phone || "");
-  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
-  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true); setError(""); setNotice("");
-    try {
-      const url = await uploadAvatar(file, user.id);
-      const updated = await updateProfile({ avatarUrl: url });
-      setAvatarUrl(url);
-      onUserUpdate(updated);
-      setNotice("Зураг шинэчлэгдлээ");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  };
 
   const handleSave = async () => {
     setSaving(true); setError(""); setNotice("");
@@ -1137,19 +1115,6 @@ function ProfileInfoSection({ user, onUserUpdate }) {
   return (
     <div>
       <h1 style={sectionTitleStyle}>Профайл</h1>
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 26 }}>
-        <div style={{
-          width: 76, height: 76, borderRadius: "50%", overflow: "hidden", background: T.card,
-          border: `1px solid ${T.line}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        }}>
-          {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 28, fontWeight: 700, color: T.inkSoft }}>{(name || "?").trim().charAt(0).toUpperCase()}</span>}
-        </div>
-        <label style={{ ...primaryBtn, cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}>
-          {uploading ? "Оруулж байна…" : "Зураг солих"}
-          <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploading} style={{ display: "none" }} />
-        </label>
-      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360 }}>
         <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
         <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />
@@ -1166,14 +1131,30 @@ function ProfileInfoSection({ user, onUserUpdate }) {
 
 function ProfileAddressSection({ user, onUserUpdate }) {
   const [address, setAddress] = useState(user.address || "");
+  const [locationUrl, setLocationUrl] = useState(user.locationUrl || "");
+  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) { setError("Таны браузер байршил тогтоох боломжгүй байна."); return; }
+    setLocating(true); setError(""); setNotice("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocationUrl(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
+        setLocating(false);
+      },
+      () => { setError("Байршил тогтооход алдаа гарлаа. Байршлын зөвшөөрөл олгосон эсэхээ шалгана уу."); setLocating(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleSave = async () => {
     setSaving(true); setError(""); setNotice("");
     try {
-      const updated = await updateProfile({ address: address.trim() });
+      const updated = await updateProfile({ address: address.trim(), locationUrl });
       onUserUpdate(updated);
       setNotice("Хаяг хадгалагдлаа");
     } catch (err) {
@@ -1189,6 +1170,25 @@ function ProfileAddressSection({ user, onUserUpdate }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
         <textarea placeholder="Дэлгэрэнгүй хаяг (дүүрэг, хороо, байр, орц г.м)" value={address}
           onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical" }} />
+
+        <button type="button" onClick={handleDetectLocation} disabled={locating} style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "none",
+          border: `1px solid ${T.line}`, borderRadius: 10, padding: "11px 14px",
+          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, color: T.ink,
+          cursor: locating ? "not-allowed" : "pointer", opacity: locating ? 0.7 : 1,
+        }}>
+          <MapPin size={16} /> {locating ? "Байршил тогтоож байна…" : "Миний байршлыг ашиглах"}
+        </button>
+
+        {locationUrl && (
+          <a href={locationUrl} target="_blank" rel="noopener noreferrer" style={{
+            display: "flex", alignItems: "center", gap: 8, color: T.moss,
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textDecoration: "none",
+          }}>
+            <MapPin size={14} /> Google Maps дээр харах
+          </a>
+        )}
+
         {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
         {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
         <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>

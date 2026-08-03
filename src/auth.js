@@ -29,7 +29,7 @@ export function shapeAuthUser(u) {
     email: u.email,
     phone: u.user_metadata?.phone || "",
     address: u.user_metadata?.address || "",
-    avatarUrl: u.user_metadata?.avatar_url || "",
+    locationUrl: u.user_metadata?.location_url || "",
     provider: u.app_metadata?.provider || "email",
   };
 }
@@ -57,26 +57,16 @@ export async function loginWithFacebook() {
   if (error) throw new Error(translate(error.message));
 }
 
-export async function updateProfile({ name, phone, address, avatarUrl }) {
+export async function updateProfile({ name, phone, address, locationUrl }) {
   await requireSession();
   const data = {};
   if (name !== undefined) data.name = name;
   if (phone !== undefined) data.phone = phone;
   if (address !== undefined) data.address = address;
-  if (avatarUrl !== undefined) data.avatar_url = avatarUrl;
+  if (locationUrl !== undefined) data.location_url = locationUrl;
   const { data: res, error } = await supabase.auth.updateUser({ data });
   if (error) throw new Error(translate(error.message));
   return shapeAuthUser(res.user);
-}
-
-export async function uploadAvatar(file, userId) {
-  await requireSession();
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: true });
-  if (upErr) throw new Error(translate(upErr.message));
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  return data.publicUrl;
 }
 
 export async function deleteAccount() {
