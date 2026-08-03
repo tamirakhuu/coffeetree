@@ -534,7 +534,11 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
               <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: `linear-gradient(155deg, ${suggestedPump.color}, ${T.ink})` }} />
+                {suggestedPump.images && suggestedPump.images.length ? (
+                  <img src={suggestedPump.images[0]} alt={suggestedPump.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: T.card }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: `linear-gradient(155deg, ${suggestedPump.color}, ${T.ink})` }} />
+                )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{suggestedPump.name}</div>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(suggestedPump.unit.price)}</div>
@@ -582,7 +586,11 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
             const option = product[item.optionType];
             return (
               <div key={item.productId + item.optionType} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
-                <div style={{ width: 56, height: 56, borderRadius: 8, background: `linear-gradient(155deg, ${product.color}, ${T.ink})`, flexShrink: 0 }} />
+                {product.images && product.images.length ? (
+                  <img src={product.images[0]} alt={product.name} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: T.card }} />
+                ) : (
+                  <div style={{ width: 56, height: 56, borderRadius: 8, background: `linear-gradient(155deg, ${product.color}, ${T.ink})`, flexShrink: 0 }} />
+                )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{product.name}</div>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.moss, margin: "3px 0" }}>{option.label}</div>

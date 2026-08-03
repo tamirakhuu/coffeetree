@@ -80,9 +80,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .fg input,.fg select,.fg textarea{padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--cherry)}
 .fg textarea{resize:vertical;min-height:60px}
-.swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:1px solid rgba(0,0,0,.15)}
-.swatch.active{border:2px solid var(--ink)}
 .img-thumbs{display:flex;gap:10px;flex-wrap:wrap}
 .img-thumb{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -258,10 +255,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧', Cupwithstraw:'🥤'};
 const ICON_KEYS = Object.keys(ICON_EMOJI);
-const COLOR_SWATCHES = ["#6B4226","#3E2A1E","#8A5A34","#5C1F1F","#B23A48","#5B6B3F","#C9A227","#8C5A20","#3B2418","#7A2E2E","#48583A","#B8862E"];
 
 let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [];
-let selectedColor = COLOR_SWATCHES[0];
 
 const IMAGE_BUCKET = 'product-images';
 const MAX_PRODUCT_IMAGES = 3;
@@ -460,14 +455,6 @@ function subOptionsDatalist(categoryId) {
   const subs = subcategories.filter(s => s.category_id === cat?.id);
   return subs.map(s => `<option value="${s.name}">`).join('');
 }
-function colorSwatchesHtml(active) {
-  return COLOR_SWATCHES.map(c => `<div class="swatch ${c===active?'active':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('');
-}
-function selectColor(c) {
-  selectedColor = c;
-  document.querySelectorAll('#modalBody .swatch').forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
-}
 
 function imagesSectionHtml() {
   const thumbs = productImages.map((img, i) => `
@@ -505,7 +492,6 @@ function removeProductImage(i) {
 
 function productFormHtml(p) {
   p = p || {};
-  selectedColor = p.color || COLOR_SWATCHES[0];
   productImages = (p.images || []).map(url => ({ url }));
   // Одоо байгаа бараа засах үед box_price/unit_price/box_per_box-оос хямдралын
   // хувийг буцаан тооцож, талбарт урьдчилан харуулна
@@ -525,7 +511,6 @@ function productFormHtml(p) {
       <div class="fg"><label>Дэд ангилал</label><input id="pf-subcategory" list="sub-dl" value="${p.subcategory||''}"><datalist id="sub-dl">${subOptionsDatalist(p.category_id)}</datalist></div>
       <div class="fg"><label>Гарал үүсэл</label><input id="pf-origin" value="${p.origin||''}"></div>
       <div class="fg"><label>Шошго</label><select id="pf-tag"><option value="" ${!p.tag?'selected':''}>Байхгүй</option><option value="шинэ" ${p.tag==='шинэ'?'selected':''}>шинэ</option><option value="бестселлэр" ${p.tag==='бестселлэр'?'selected':''}>бестселлэр</option><option value="хямдралтай" ${p.tag==='хямдралтай'?'selected':''}>хямдралтай</option></select></div>
-      <div class="fg full"><label>Өнгө</label><div class="swatches" id="pf-swatches">${colorSwatchesHtml(selectedColor)}</div></div>
       <div class="fg full"><label>Зургууд</label><div id="pf-images-wrap">${imagesSectionHtml()}</div></div>
       <div class="fg full"><label>Тайлбар</label><textarea id="pf-desc">${p.description||''}</textarea></div>
       <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px">
@@ -642,7 +627,6 @@ async function saveProduct(id) {
       subcategory: document.getElementById('pf-subcategory').value.trim(),
       origin: document.getElementById('pf-origin').value.trim(),
       tag: document.getElementById('pf-tag').value || null,
-      color: selectedColor,
       description: document.getElementById('pf-desc').value.trim(),
       images,
       unit_label: unitEnabled ? (document.getElementById('pf-unit-label').value || '1 ширхэг') : '1 ширхэг',
