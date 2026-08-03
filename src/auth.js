@@ -6,9 +6,19 @@ const ERROR_MESSAGES = {
   "Password should be at least 6 characters": "Нууц үг дор хаяж 6 тэмдэгт байх ёстой.",
   "Email not confirmed": "Имэйл хаягаа баталгаажуулна уу — имэйл рүүгээ орж илгээсэн линк дээр дарна уу.",
   "Unable to validate email address: invalid format": "Имэйл хаягийн формат буруу байна.",
+  "Auth session missing!": "Нэвтэрсэн байдал дууссан байна. Гарч, дахин нэвтэрнэ үү.",
 };
 function translate(msg) {
   return ERROR_MESSAGES[msg] || msg;
+}
+
+// updateUser()/storage.upload() зэрэг session шаарддаг үйлдлийн өмнө дуудна.
+// getSession() нь access_token хугацаа дуусаж байвал автоматаар шинэчилдэг
+// тул энэ шалгалт нь "Auth session missing" race condition-ыг ихэвчлэн засна.
+async function requireSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error(translate("Auth session missing!"));
+  return session;
 }
 
 export function shapeAuthUser(u) {
@@ -48,6 +58,7 @@ export async function loginWithFacebook() {
 }
 
 export async function updateProfile({ name, phone, address, avatarUrl }) {
+  await requireSession();
   const data = {};
   if (name !== undefined) data.name = name;
   if (phone !== undefined) data.phone = phone;
@@ -59,6 +70,7 @@ export async function updateProfile({ name, phone, address, avatarUrl }) {
 }
 
 export async function uploadAvatar(file, userId) {
+  await requireSession();
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
   const path = `${userId}/${Date.now()}.${ext}`;
   const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: true });
@@ -68,8 +80,7 @@ export async function uploadAvatar(file, userId) {
 }
 
 export async function deleteAccount() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Нэвтрээгүй байна.");
+  const session = await requireSession();
   const { data, error } = await supabase.functions.invoke("delete-account", {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
