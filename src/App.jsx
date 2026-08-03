@@ -407,13 +407,20 @@ const subBtn = (active) => ({
 /* ------------------------------------------------------------------ */
 /*  Product Detail                                                     */
 /* ------------------------------------------------------------------ */
+const availableOptionTypes = (product) =>
+  product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
+
 function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish }) {
   const { brands } = useContext(DataContext);
-  const [optionType, setOptionType] = useState("unit");
+  const availableTypes = availableOptionTypes(product);
+  const [optionType, setOptionType] = useState(() => availableTypes[0] || "unit");
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
 
-  useEffect(() => { setOptionType("unit"); setQty(1); setActiveImg(0); }, [product?.id]);
+  useEffect(() => {
+    setOptionType(availableOptionTypes(product)[0] || "unit");
+    setQty(1); setActiveImg(0);
+  }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
   const option = product[optionType];
@@ -454,10 +461,11 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26 }}>{product.desc}</p>
 
+          {availableTypes.length > 1 && (
           <div style={{ marginBottom: 22 }}>
             <div style={sideLabel}>Савлагаа сонгох</div>
             <div style={{ display: "flex", gap: 10 }}>
-              {["unit", "box"].map((t) => (
+              {availableTypes.map((t) => (
                 <button key={t} onClick={() => { setOptionType(t); setQty(1); }} style={{
                   flex: 1, textAlign: "left", padding: "14px 16px", borderRadius: 10, cursor: "pointer",
                   border: `1.5px solid ${optionType === t ? T.cherry : T.line}`,
@@ -479,6 +487,7 @@ function ProductDetail({ product, onBack, onAddToCart, isWished, onToggleWish })
               ))}
             </div>
           </div>
+          )}
 
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 20 }}>
             Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "unit" ? "ширхэг" : "хайрцаг"} байна
