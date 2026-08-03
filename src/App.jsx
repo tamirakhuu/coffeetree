@@ -1683,7 +1683,17 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
+          <div style={{
+            maxWidth: 1180, margin: "0 auto", display: "flex", justifyContent: "space-between",
+            alignItems: "center", flexWrap: "wrap", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)",
+          }}>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
+            <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+              <a href="/terms.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</a>
+              <a href="/privacy.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</a>
+              <a href="/data-deletion.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Мэдээлэл устгах</a>
+            </div>
+          </div>
         </footer>
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
