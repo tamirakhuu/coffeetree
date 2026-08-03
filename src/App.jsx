@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser } from "./auth.js";
+import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, uploadAvatar, deleteAccount } from "./auth.js";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -265,11 +265,13 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
               <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
             </button>
             {user ? (
-              <button onClick={() => setView({ name: "orders" })} title="Миний захиалгууд" style={{
+              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={{
                 width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
                 border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0, overflow: "hidden",
+              }}>
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (user.name || "?").trim().charAt(0).toUpperCase()}
+              </button>
             ) : (
               <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
             )}
@@ -1041,7 +1043,207 @@ function OrderStatusBadge({ status }) {
     }}>{ORDER_STATUS_LABELS[status] || status}</span>
   );
 }
-function MyOrdersPage({ onLogout }) {
+/* ------------------------------------------------------------------ */
+/*  Профайл                                                             */
+/* ------------------------------------------------------------------ */
+const sectionTitleStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 };
+const PROFILE_SECTIONS = [
+  { key: "info", label: "Профайл", Icon: User },
+  { key: "orders", label: "Миний захиалгууд", Icon: Package },
+  { key: "address", label: "Хаягийн мэдээлэл", Icon: MapPin },
+  { key: "delete", label: "Бүртгэл устгах", Icon: Trash2 },
+];
+
+function ProfilePage({ user, section, setSection, onLogout, onUserUpdate }) {
+  return (
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 20px 90px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <aside style={{ width: 220, flexShrink: 0 }}>
+        {PROFILE_SECTIONS.map(({ key, label, Icon }) => (
+          <button key={key} onClick={() => setSection(key)} style={{
+            display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+            background: section === key ? T.ink : "transparent", color: section === key ? T.cream : T.ink,
+            border: "none", borderRadius: 10, padding: "11px 14px", marginBottom: 4,
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+          }}>
+            <Icon size={16} /> {label}
+          </button>
+        ))}
+        <button onClick={onLogout} style={{
+          display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+          background: "transparent", color: T.cherry, border: "none", borderRadius: 10, padding: "11px 14px",
+          marginTop: 10, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+        }}>
+          <LogOut size={16} /> Гарах
+        </button>
+      </aside>
+      <div style={{ flex: 1, minWidth: 280 }}>
+        {section === "info" && <ProfileInfoSection user={user} onUserUpdate={onUserUpdate} />}
+        {section === "orders" && (
+          <div>
+            <h1 style={sectionTitleStyle}>Миний захиалгууд</h1>
+            <MyOrdersPage />
+          </div>
+        )}
+        {section === "address" && <ProfileAddressSection user={user} onUserUpdate={onUserUpdate} />}
+        {section === "delete" && <ProfileDeleteSection />}
+      </div>
+    </div>
+  );
+}
+
+function ProfileInfoSection({ user, onUserUpdate }) {
+  const [name, setName] = useState(user.name || "");
+  const [phone, setPhone] = useState(user.phone || "");
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || "");
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setError(""); setNotice("");
+    try {
+      const url = await uploadAvatar(file, user.id);
+      const updated = await updateProfile({ avatarUrl: url });
+      setAvatarUrl(url);
+      onUserUpdate(updated);
+      setNotice("Зураг шинэчлэгдлээ");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true); setError(""); setNotice("");
+    try {
+      const updated = await updateProfile({ name: name.trim() || user.name, phone });
+      onUserUpdate(updated);
+      setNotice("Мэдээлэл хадгалагдлаа");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <h1 style={sectionTitleStyle}>Профайл</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 26 }}>
+        <div style={{
+          width: 76, height: 76, borderRadius: "50%", overflow: "hidden", background: T.card,
+          border: `1px solid ${T.line}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 28, fontWeight: 700, color: T.inkSoft }}>{(name || "?").trim().charAt(0).toUpperCase()}</span>}
+        </div>
+        <label style={{ ...primaryBtn, cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}>
+          {uploading ? "Оруулж байна…" : "Зураг солих"}
+          <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploading} style={{ display: "none" }} />
+        </label>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360 }}>
+        <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+        <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Имэйл: {user.email}</div>
+        {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+        {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
+        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
+          {saving ? "Хадгалж байна…" : "Хадгалах"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ProfileAddressSection({ user, onUserUpdate }) {
+  const [address, setAddress] = useState(user.address || "");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSave = async () => {
+    setSaving(true); setError(""); setNotice("");
+    try {
+      const updated = await updateProfile({ address: address.trim() });
+      onUserUpdate(updated);
+      setNotice("Хаяг хадгалагдлаа");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <h1 style={sectionTitleStyle}>Хаягийн мэдээлэл</h1>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
+        <textarea placeholder="Дэлгэрэнгүй хаяг (дүүрэг, хороо, байр, орц г.м)" value={address}
+          onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical" }} />
+        {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+        {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
+        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
+          {saving ? "Хадгалж байна…" : "Хадгалах"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ProfileDeleteSection() {
+  const [confirming, setConfirming] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleDelete = async () => {
+    setLoading(true); setError("");
+    try {
+      await deleteAccount();
+      window.location.href = "/";
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h1 style={sectionTitleStyle}>Бүртгэл устгах</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 18, maxWidth: 480 }}>
+        Бүртгэлээ устгавал таны хувийн мэдээлэл, захиалгын түүх рүү дахин хандах боломжгүй болно. Энэ үйлдлийг буцаах боломжгүй.
+      </p>
+      {!confirming ? (
+        <button onClick={() => setConfirming(true)} style={{
+          background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px",
+          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
+        }}>Бүртгэл устгах</button>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380 }}>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.cherry, fontWeight: 600 }}>Та итгэлтэй байна уу?</div>
+          {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={handleDelete} disabled={loading} style={{
+              background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px",
+              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
+            }}>{loading ? "Устгаж байна…" : "Тийм, устгах"}</button>
+            <button onClick={() => setConfirming(false)} style={{
+              background: "none", color: T.ink, border: `1px solid ${T.line}`, borderRadius: 999, padding: "11px 20px",
+              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
+            }}>Болих</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
 
@@ -1054,17 +1256,7 @@ function MyOrdersPage({ onLogout }) {
   }, []);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 20px 90px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22, flexWrap: "wrap", gap: 10 }}>
-        <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, margin: 0 }}>Миний захиалгууд</h1>
-        <button onClick={onLogout} style={{
-          display: "flex", alignItems: "center", gap: 6, background: "none", border: `1px solid ${T.line}`,
-          borderRadius: 999, padding: "8px 16px", color: T.ink, cursor: "pointer",
-          fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600,
-        }}>
-          <LogOut size={15} /> Гарах
-        </button>
-      </div>
+    <div>
       {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
       {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
       {status === "ready" && orders.length === 0 && (
@@ -1441,8 +1633,10 @@ export default function App() {
     body = <TrainingPage />;
   } else if (view.name === "bestseller") {
     body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
-  } else if (view.name === "orders") {
-    body = user ? <MyOrdersPage onLogout={handleLogout} /> : <InfoPage title="Миний захиалгууд" note="Захиалгаа харахын тулд эхлээд нэвтэрнэ үү." />;
+  } else if (view.name === "profile") {
+    body = user
+      ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} />
+      : <InfoPage title="Профайл" note="Профайлаа харахын тулд эхлээд нэвтэрнэ үү." />;
   }
 
   return (
