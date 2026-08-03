@@ -876,9 +876,12 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 const DELIVERY_FEE = 15000;
 
-function Checkout({ cart, subtotal, onConfirm, onBack }) {
+function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
   const { products } = useContext(DataContext);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", receiptType: "individual", registerNumber: "", deliveryMethod: "pickup" });
+  const [form, setForm] = useState({
+    name: user?.name || "", phone: user?.phone || "", address: user?.address || "",
+    receiptType: "individual", registerNumber: "", deliveryMethod: "pickup",
+  });
   const [submitting, setSubmitting] = useState(false);
   const deliveryFee = form.deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
@@ -1626,7 +1629,7 @@ export default function App() {
   } else if (view.name === "wishlist") {
     body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} />;
   } else if (view.name === "checkout") {
-    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} />;
+    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} user={user} />;
   } else if (view.name === "confirmation") {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
   } else if (view.name === "training") {
