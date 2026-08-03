@@ -515,6 +515,7 @@ function productFormHtml(p) {
     const pct = (1 - impliedUnit / p.unit_price) * 100;
     if (pct > 0) boxDiscount = Math.round(pct * 10) / 10;
   }
+  const hasBox = !!(p.box_price || p.box_stock || p.box_per_box);
   return `
     <div class="form-grid form-grid-2">
       <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}"></div>
@@ -531,16 +532,27 @@ function productFormHtml(p) {
       <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxPrice()" value="${p.unit_price||''}"></div>
       <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.unit_original_price||''}"></div>
       <div class="fg full"><label>Нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
-      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px"><label style="color:var(--cherry)">Хайрцгаар</label></div>
-      <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
-      <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice()" value="${p.box_per_box||''}"></div>
-      <div class="fg"><label>Бөөний хямдрал (%)</label><input type="number" step="0.1" id="pf-box-discount" oninput="recalcFromDiscount()" placeholder="жишээ: 3.3" value="${boxDiscount}"></div>
-      <div class="fg"><label>Ширхэгийн үнэ хайрцагт (₮)</label><input type="number" id="pf-box-unit-price" oninput="recalcFromUnitPrice()" placeholder="жишээ: 39500" value="${p.unit_price && p.box_per_box && p.box_price ? Math.round(p.box_price / p.box_per_box) : ''}"></div>
-      <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
-      <div class="fg full" id="pf-box-preview" style="font-size:12px;color:var(--ink-soft);margin-top:-6px"></div>
-      <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.box_original_price||''}"></div>
-      <div class="fg"><label>Нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--cherry)">
+          <input type="checkbox" id="pf-box-enable" ${hasBox ? 'checked' : ''} onchange="toggleBoxSection()">
+          Хайрцгаар мөн зарах
+        </label>
+      </div>
+      <div id="pf-box-fields" style="display:${hasBox ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1">
+        <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
+        <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice()" value="${p.box_per_box||''}"></div>
+        <div class="fg"><label>Бөөний хямдрал (%)</label><input type="number" step="0.1" id="pf-box-discount" oninput="recalcFromDiscount()" placeholder="жишээ: 3.3" value="${boxDiscount}"></div>
+        <div class="fg"><label>Ширхэгийн үнэ хайрцагт (₮)</label><input type="number" id="pf-box-unit-price" oninput="recalcFromUnitPrice()" placeholder="жишээ: 39500" value="${p.unit_price && p.box_per_box && p.box_price ? Math.round(p.box_price / p.box_per_box) : ''}"></div>
+        <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
+        <div class="fg full" id="pf-box-preview" style="font-size:12px;color:var(--ink-soft);margin-top:-6px"></div>
+        <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.box_original_price||''}"></div>
+        <div class="fg"><label>Нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+      </div>
     </div>`;
+}
+function toggleBoxSection() {
+  const enabled = document.getElementById('pf-box-enable').checked;
+  document.getElementById('pf-box-fields').style.display = enabled ? 'grid' : 'none';
 }
 function applyBoxPrice(discountedUnit, perBox) {
   const boxPrice = Math.round(discountedUnit * perBox);
@@ -608,6 +620,7 @@ async function saveProduct(id) {
         images.push(img.url);
       }
     }
+    const boxEnabled = document.getElementById('pf-box-enable').checked;
     const row = {
       name,
       brand_id: parseInt(document.getElementById('pf-brand').value, 10),
@@ -622,11 +635,11 @@ async function saveProduct(id) {
       unit_price: Number(document.getElementById('pf-unit-price').value) || 0,
       unit_original_price: Number(document.getElementById('pf-unit-original-price').value) || null,
       unit_stock: parseInt(document.getElementById('pf-unit-stock').value, 10) || 0,
-      box_label: document.getElementById('pf-box-label').value || '1 хайрцаг',
-      box_price: Number(document.getElementById('pf-box-price').value) || 0,
-      box_original_price: Number(document.getElementById('pf-box-original-price').value) || null,
-      box_per_box: parseInt(document.getElementById('pf-box-per').value, 10) || 1,
-      box_stock: parseInt(document.getElementById('pf-box-stock').value, 10) || 0,
+      box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
+      box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
+      box_original_price: boxEnabled ? (Number(document.getElementById('pf-box-original-price').value) || null) : null,
+      box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
+      box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-stock').value, 10) || 0) : 0,
     };
     const { error } = id
       ? await sb.from('products').update(row).eq('id', id)
