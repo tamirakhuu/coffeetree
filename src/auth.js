@@ -36,6 +36,14 @@ export async function loginWithEmail(email, password) {
   return data;
 }
 
+export async function loginWithFacebook() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "facebook",
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) throw new Error(translate(error.message));
+}
+
 export async function logout() {
   await supabase.auth.signOut();
 }

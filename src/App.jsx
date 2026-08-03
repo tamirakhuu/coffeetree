@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, logout, shapeAuthUser } from "./auth.js";
+import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser } from "./auth.js";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -645,6 +645,15 @@ function AuthModal({ open, onClose }) {
   const [notice, setNotice] = useState("");
   if (!open) return null;
 
+  const handleFacebook = async () => {
+    setError(""); setNotice("");
+    try {
+      await loginWithFacebook();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setError(""); setNotice("");
@@ -719,6 +728,20 @@ function AuthModal({ open, onClose }) {
             cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
           }}>{loading ? "Түр хүлээнэ үү…" : (mode === "login" ? "Нэвтрэх" : "Бүртгүүлэх")}</button>
         </form>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
+          <div style={{ flex: 1, height: 1, background: T.line }} />
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>эсвэл</span>
+          <div style={{ flex: 1, height: 1, background: T.line }} />
+        </div>
+
+        <button type="button" onClick={handleFacebook} style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          background: "#1877F2", color: "#fff", border: "none", borderRadius: 10,
+          padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
+        }}>
+          <Facebook size={17} /> Facebook-ээр {mode === "login" ? "нэвтрэх" : "бүртгүүлэх"}
+        </button>
       </div>
     </div>
   );
