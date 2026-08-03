@@ -107,6 +107,20 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .mobile-topbar{display:none}
 .sidebar-backdrop{display:none}
 
+#printReceipt{display:none}
+.receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px}
+.receipt-hr{border-top:1px dashed #000;margin:6px 0}
+@media print{
+  body.printing-receipt > *{visibility:hidden}
+  body.printing-receipt #printReceipt,
+  body.printing-receipt #printReceipt *{visibility:visible}
+  body.printing-receipt #printReceipt{
+    display:block;position:fixed;top:0;left:0;width:100%;padding:6px;
+    font-family:'Ubuntu',monospace;color:#000;
+  }
+  @page{size:80mm auto;margin:2mm}
+}
+
 @media (max-width: 860px) {
   body{display:block}
   .mobile-topbar{
@@ -153,6 +167,8 @@ tr:hover td{background:rgba(255,255,255,.4)}
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<div id="printReceipt"></div>
 
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -790,7 +806,7 @@ function renderOrders() {
       ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:10.5px;color:var(--ink-soft);margin-top:3px">+${fmt(o.delivery_fee || 0)}</div>${o.address ? `<div style="font-size:11px;color:var(--ink);margin-top:4px;max-width:170px;white-space:normal">📍 ${o.address}</div>` : ''}`
       : `<span class="badge" style="background:var(--green-light);color:#2F4A22">Очиж авах</span>`;
     return `<tr style="${isDelivery ? 'background:#F5F9FF' : ''}">
-      <td class="mono">${o.order_number}</td>
+      <td class="mono"><button onclick="openOrderDetail('${o.order_number}')" style="background:none;border:none;padding:0;color:var(--cherry);font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Ubuntu',monospace;font-size:13px">${o.order_number}</button></td>
       <td>${o.customer_name||'-'}</td>
       <td class="mono">${o.phone||'-'}</td>
       <td style="font-size:12px">${receiptText}</td>
@@ -819,6 +835,72 @@ async function updateOrderBoxCount(orderNumber, value) {
   const o = orders.find(x => x.order_number === orderNumber);
   if (o) o.box_count = box_count;
   toast('✅ Хайрцгийн тоо шинэчлэгдлээ');
+}
+
+function openOrderDetail(orderNumber) {
+  const o = orders.find(x => x.order_number === orderNumber);
+  if (!o) return;
+  const items = orderItems.filter(i => i.order_number === orderNumber);
+  const isDelivery = o.delivery_method === 'delivery';
+  const unitQty = items.filter(i => i.option_type === 'unit').reduce((s, i) => s + (i.qty || 0), 0);
+  const boxQty = items.filter(i => i.option_type === 'box').reduce((s, i) => s + (i.qty || 0), 0);
+  const itemsRows = items.map(i => `
+    <tr>
+      <td>${i.product_name}<div style="font-size:11px;color:var(--ink-soft)">${i.option_label} × ${i.qty}</div></td>
+      <td class="mono" style="text-align:right">${fmt(i.line_total)}</td>
+    </tr>`).join('');
+  const body = `
+    <div style="display:grid;gap:4px;margin-bottom:16px;font-size:13px">
+      <div><b>Хэрэглэгч:</b> ${o.customer_name || '-'}</div>
+      <div><b>Утас:</b> ${o.phone || '-'}</div>
+      <div><b>И-баримт:</b> ${o.receipt_type === 'company' ? `Байгууллага (${o.register_number || '-'})` : 'Хувь хүн'}</div>
+      <div><b>Хүргэлт:</b> ${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</div>
+      ${isDelivery ? `<div><b>Хаяг:</b> ${o.address || '-'}</div>` : ''}
+      <div><b>Хайрцаг:</b> ${boxQty} · <b>Ширхэг:</b> ${unitQty} ${o.box_count ? `· <b>Гараар оруулсан хайрцаг:</b> ${o.box_count}` : ''}</div>
+      <div><b>Огноо:</b> ${new Date(o.created_at).toLocaleString('mn-MN')}</div>
+      <div><b>Төлөв:</b> ${statusLabel(o.status)}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr><th style="text-align:left;font-size:10.5px;color:var(--ink-soft);padding-bottom:6px">БАРАА</th><th style="text-align:right;font-size:10.5px;color:var(--ink-soft);padding-bottom:6px">ДҮН</th></tr></thead>
+      <tbody>${itemsRows}</tbody>
+    </table>
+    <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13px">
+      <div style="display:flex;justify-content:space-between"><span>Барааны дүн</span><span class="mono">${fmt(o.subtotal)}</span></div>
+      ${isDelivery ? `<div style="display:flex;justify-content:space-between"><span>Хүргэлтийн хураамж</span><span class="mono">${fmt(o.delivery_fee || 0)}</span></div>` : ''}
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>Нийт</span><span class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
+    </div>`;
+  openModal(`Захиалга ${o.order_number}`, body,
+    `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">🖨️ Хэвлэх</button>`);
+}
+
+function printOrderReceipt(orderNumber) {
+  const o = orders.find(x => x.order_number === orderNumber);
+  if (!o) return;
+  const items = orderItems.filter(i => i.order_number === orderNumber);
+  const isDelivery = o.delivery_method === 'delivery';
+  const itemsLines = items.map(i =>
+    `<div class="receipt-row"><span>${i.product_name} (${i.option_label}) ×${i.qty}</span><span>${fmt(i.line_total)}</span></div>`
+  ).join('');
+  const html = `
+    <div style="text-align:center;font-weight:700;font-size:14px;margin-bottom:4px">CUPPA</div>
+    <div style="text-align:center;font-size:10px;margin-bottom:8px">Захиалга: ${o.order_number}</div>
+    <div class="receipt-hr"></div>
+    <div class="receipt-row"><span>Хэрэглэгч</span><span>${o.customer_name || '-'}</span></div>
+    <div class="receipt-row"><span>Утас</span><span>${o.phone || '-'}</span></div>
+    <div class="receipt-row"><span>Хүргэлт</span><span>${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</span></div>
+    ${isDelivery ? `<div style="font-size:10.5px;margin:4px 0">Хаяг: ${o.address || '-'}</div>` : ''}
+    <div class="receipt-hr"></div>
+    ${itemsLines}
+    <div class="receipt-hr"></div>
+    <div class="receipt-row"><span>Барааны дүн</span><span>${fmt(o.subtotal)}</span></div>
+    ${isDelivery ? `<div class="receipt-row"><span>Хүргэлт</span><span>${fmt(o.delivery_fee || 0)}</span></div>` : ''}
+    <div class="receipt-row" style="font-weight:700"><span>НИЙТ</span><span>${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
+    <div class="receipt-hr"></div>
+    <div style="text-align:center;font-size:10px;margin-top:6px">${new Date(o.created_at).toLocaleString('mn-MN')}</div>`;
+  document.getElementById('printReceipt').innerHTML = html;
+  document.body.classList.add('printing-receipt');
+  window.print();
+  setTimeout(() => document.body.classList.remove('printing-receipt'), 500);
 }
 
 checkAuth();
