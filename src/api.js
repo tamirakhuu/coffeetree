@@ -9,6 +9,23 @@ function shapeProduct(r) {
   };
 }
 
+// Зарим ангиллын барааг ширхэгээр авахад, тоо нь хайрцгийн хэмжээнд хүрвэл
+// (жишээ нь Нунтаг 12ш, Сироп 6ш) илүү хямд хайрцгийн үнээр автоматаар
+// тооцно — хэрэглэгч тусгайлан "Хайрцгаар" сонголт хийх шаардлагагүй.
+export const BULK_BOX_QTY = { "Нунтаг": 12, "Сироп": 6 };
+
+export function computeLineTotal(product, categoryName, optionType, qty) {
+  if (optionType === "unit") {
+    const boxQty = BULK_BOX_QTY[categoryName];
+    if (boxQty && product.box?.price > 0 && qty >= boxQty) {
+      const boxes = Math.floor(qty / boxQty);
+      const rem = qty % boxQty;
+      return boxes * product.box.price + rem * product.unit.price;
+    }
+  }
+  return product[optionType].price * qty;
+}
+
 // Ангилал, брэнд, бараа — бүгд нээлттэй уншигддаг (public read RLS policy)
 export async function fetchBootstrap() {
   const [{ data: categories, error: ce }, { data: subcategories, error: se },
@@ -30,14 +47,18 @@ export async function fetchBootstrap() {
 
 // Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
 // "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
-export async function submitOrder({ form, cart, products, userId }) {
+export async function submitOrder({ form, cart, products, categories, userId }) {
   const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
   // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
 
-  const subtotal = validItems.reduce((sum, { item, product }) => sum + product[item.optionType].price * item.qty, 0);
+  const catNameById = new Map((categories || []).map((c) => [c.id, c.name]));
+  const lineTotalFor = (item, product) =>
+    computeLineTotal(product, catNameById.get(product.categoryId), item.optionType, item.qty);
+
+  const subtotal = validItems.reduce((sum, { item, product }) => sum + lineTotalFor(item, product), 0);
   const deliveryMethod = form.deliveryMethod === "delivery" ? "delivery" : "pickup";
   const deliveryFee = deliveryMethod === "delivery" ? 15000 : 0;
 
@@ -66,7 +87,7 @@ export async function submitOrder({ form, cart, products, userId }) {
       option_label: option.label,
       unit_price: option.price,
       qty: item.qty,
-      line_total: option.price * item.qty,
+      line_total: lineTotalFor(item, product),
     };
   });
   const { error: itemsErr } = await supabase.from("order_items").insert(itemRows);

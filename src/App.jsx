@@ -5,7 +5,7 @@ import {
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, BULK_BOX_QTY } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
 
@@ -431,6 +431,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
+  const bulkBoxQty = product.box?.price > 0 ? BULK_BOX_QTY[productCategory?.name] : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
@@ -497,10 +498,17 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
           </div>
           )}
 
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: bulkBoxQty ? 6 : 20 }}>
             Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "unit" ? "ширхэг" : "хайрцаг"} байна
             {optionType === "box" && <> · 1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
           </div>
+          {optionType === "unit" && bulkBoxQty && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
+              {qty >= bulkBoxQty
+                ? `🎉 ${bulkBoxQty}+ ширхэгт хайрцгийн хямд үнээр тооцогдож байна`
+                : `${bulkBoxQty} ширхэг авбал хайрцгийн хямд үнээр тооцно`}
+            </div>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
             {outOfStock ? (
@@ -520,7 +528,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                   padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 }}>
-                  <ShoppingBag size={16} /> Сагслах · {money(option.price * qty)}
+                  <ShoppingBag size={16} /> Сагслах · {money(computeLineTotal(product, productCategory?.name, optionType, qty))}
                 </button>
               </>
             )}
@@ -561,7 +569,7 @@ const stepBtn = { border: "none", background: "none", padding: "9px 12px", curso
 /*  Cart Drawer                                                        */
 /* ------------------------------------------------------------------ */
 function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCheckout }) {
-  const { products } = useContext(DataContext);
+  const { products, categories } = useContext(DataContext);
 
   return (
     <>
@@ -584,6 +592,7 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
             const option = product[item.optionType];
+            const catName = categories.find((c) => c.id === product.categoryId)?.name;
             return (
               <div key={item.productId + item.optionType} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
                 {product.images && product.images.length ? (
@@ -600,7 +609,7 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
                       <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, width: 22, textAlign: "center" }}>{item.qty}</span>
                       <button onClick={() => updateQty(item.productId, item.optionType, Math.min(option.stock || item.qty, item.qty + 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Plus size={11} /></button>
                     </div>
-                    <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600, color: T.ink }}>{money(option.price * item.qty)}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600, color: T.ink }}>{money(computeLineTotal(product, catName, item.optionType, item.qty))}</span>
                   </div>
                 </div>
                 <button onClick={() => removeItem(item.productId, item.optionType)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkSoft, alignSelf: "flex-start" }}><Trash2 size={15} /></button>
@@ -879,7 +888,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 const DELIVERY_FEE = 15000;
 
 function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
-  const { products } = useContext(DataContext);
+  const { products, categories } = useContext(DataContext);
   const [form, setForm] = useState({
     name: user?.name || "", phone: user?.phone || "", address: user?.address || "",
     receiptType: "individual", registerNumber: "", deliveryMethod: "pickup",
@@ -947,11 +956,11 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
-            const option = product[item.optionType];
+            const catName = categories.find((c) => c.id === product.categoryId)?.name;
             return (
               <div key={item.productId + item.optionType} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
                 <span>{product.name} × {item.qty}</span>
-                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(option.price * item.qty)}</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(computeLineTotal(product, catName, item.optionType, item.qty))}</span>
               </div>
             );
           })}
@@ -1476,8 +1485,10 @@ export default function App() {
 
   const subtotal = useMemo(() => cart.reduce((sum, i) => {
     const p = data.products.find((x) => x.id === i.productId);
-    return p ? sum + p[i.optionType].price * i.qty : sum;
-  }, 0), [cart, data.products]);
+    if (!p) return sum;
+    const catName = data.categories.find((c) => c.id === p.categoryId)?.name;
+    return sum + computeLineTotal(p, catName, i.optionType, i.qty);
+  }, 0), [cart, data.products, data.categories]);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   const openProduct = (p) => setView({ name: "product", productId: p.id, returnTo: view });
@@ -1491,7 +1502,7 @@ export default function App() {
   const handleConfirm = async (form) => {
     if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     try {
-      const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
+      const orderNumber = await submitOrder({ form, cart, products: data.products, categories: data.categories, userId: user.id });
       setOrderNumber(orderNumber);
       // Захиалсан хэмжээгээр нөөцийг дэлгүүрийн UI дээр шууд бууруулна
       setData((prev) => ({

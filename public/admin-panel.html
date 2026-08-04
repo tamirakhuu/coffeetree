@@ -263,7 +263,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-report">
-    <div class="page-header"><div><h1>Тайлан</h1><p>Агуулах ⇄ дэлгүүрийн шилжилтийн түүх</p></div></div>
+    <div class="page-header"><div><h1>Тайлан</h1><p>Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div></div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-val" id="rp-to-store">0</div><div class="stat-label">Агуулахаас татсан (нийт)</div></div>
       <div class="stat-card"><div class="stat-val" id="rp-to-warehouse">0</div><div class="stat-label">Агуулах руу буцаасан (нийт)</div></div>
@@ -272,7 +272,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     </div>
     <div class="card">
       <div class="card-head">
-        <div class="card-title">Шилжилтийн түүх</div>
+        <div class="card-title">Таталт/Буцаалтын түүх</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input id="reportSearch" oninput="renderReport()" placeholder="Барааны нэрээр хайх..."
             style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:200px">
@@ -963,7 +963,7 @@ function renderReport() {
       <td class="mono">${t.qty}</td>
       <td style="font-size:12px">${t.admin_email || '-'}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="6" class="empty">Шилжилтийн түүх алга байна</td></tr>`;
+  }).join('') || `<tr><td colspan="6" class="empty">Таталт/Буцаалтын түүх алга байна</td></tr>`;
 }
 
 async function updateOrderStatus(orderNumber, status) {
