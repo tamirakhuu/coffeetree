@@ -64,6 +64,7 @@
     box_per_box int default 1,
     box_stock int default 0,
     warehouse_box_stock int default 0, -- агуулах дахь нөөц (хайрцаг) — эндээс дэлгүүрийн box_stock рүү татдаг
+    bulk_qty int, -- бөөний үнэ бодогдож эхлэх ширхэгийн тоо (барааны хувиар өөр өөр байдаг)
     created_at timestamptz default now()
   );
 

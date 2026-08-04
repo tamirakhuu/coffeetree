@@ -6,21 +6,18 @@ function shapeProduct(r) {
     origin: r.origin, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
     unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.unit_stock },
     box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.box_stock },
+    bulkQty: r.bulk_qty || null,
   };
 }
 
-// Зарим ангиллын барааг ширхэгээр авахад, тоо нь хайрцгийн хэмжээнд хүрвэл
-// (жишээ нь Нунтаг 12ш, Сироп 6ш) илүү хямд хайрцгийн үнээр автоматаар
-// тооцно — хэрэглэгч тусгайлан "Хайрцгаар" сонголт хийх шаардлагагүй.
-export const BULK_BOX_QTY = { "Нунтаг": 12, "Сироп": 6 };
-
-export function computeLineTotal(product, categoryName, optionType, qty) {
+// Барааг ширхэгээр авахад, тоо нь тухайн барааны "бөөний тоо"-нд хүрвэл
+// (админ бараа бүрээр тохируулдаг — жишээ нь FORTE кофе 3ш, сироп 6ш,
+// нэг удаагийн аяга 1000ш гэх мэт өөр өөр байдаг) хайрцгийн нэгжийн үнээр
+// (box_price / box_per_box) бүх ширхэгийг нь автоматаар тооцно.
+export function computeLineTotal(product, optionType, qty) {
   if (optionType === "unit") {
-    const boxQty = BULK_BOX_QTY[categoryName];
+    const boxQty = product.bulkQty;
     if (boxQty && product.box?.price > 0 && product.box?.perBox > 0 && qty >= boxQty) {
-      // Хайрцгийн хэмжээнд хүрмэгц бүх ширхэг (13, 14, ... гэх мэт ч гэсэн)
-      // хайрцагт ногдох нэгжийн үнээр тооцогдоно — "1 хайрцаг + үлдэгдэл ширхэг
-      // энгийн үнээр" гэж хуваахгүй.
       const bulkUnitPrice = product.box.price / product.box.perBox;
       return Math.round(bulkUnitPrice * qty);
     }
@@ -49,16 +46,15 @@ export async function fetchBootstrap() {
 
 // Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
 // "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
-export async function submitOrder({ form, cart, products, categories, userId }) {
+export async function submitOrder({ form, cart, products, userId }) {
   const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
   // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
 
-  const catNameById = new Map((categories || []).map((c) => [c.id, c.name]));
   const lineTotalFor = (item, product) =>
-    computeLineTotal(product, catNameById.get(product.categoryId), item.optionType, item.qty);
+    computeLineTotal(product, item.optionType, item.qty);
 
   const subtotal = validItems.reduce((sum, { item, product }) => sum + lineTotalFor(item, product), 0);
   const deliveryMethod = form.deliveryMethod === "delivery" ? "delivery" : "pickup";

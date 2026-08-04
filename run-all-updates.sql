@@ -171,6 +171,11 @@ end $$;
 alter table products add column if not exists warehouse_unit_stock int default 0;
 alter table products add column if not exists warehouse_box_stock int default 0;
 
+-- Бөөний үнэ бодогдож эхлэх ширхэгийн тоо (жишээ нь: FORTE кофе 3ш, сироп 6ш,
+-- зарим повдер 12ш, нэг удаагийн аяга 1000ш — бараа бүрээр өөр өөр байдаг тул
+-- ангиллаар биш барааны хувиар админ гараар тохируулна)
+alter table products add column if not exists bulk_qty int;
+
 -- ---------------------------------------------------------------------
 -- 13) Агуулах ⇄ дэлгүүрийн шилжилтийн түүх (Тайлан хуудсанд харуулна)
 -- ---------------------------------------------------------------------
