@@ -121,6 +121,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .sidebar-backdrop{display:none}
 
 #printReceipt{display:none}
+#printInventory{display:none}
 .receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px}
 .receipt-hr{border-top:1px dashed #000;margin:6px 0}
 @media print{
@@ -131,7 +132,17 @@ tr:hover td{background:rgba(255,255,255,.4)}
     display:block;position:fixed;top:0;left:0;width:100%;padding:6px;
     font-family:'Ubuntu',monospace;color:#000;
   }
-  @page{size:80mm auto;margin:2mm}
+  body.printing-inventory > *{visibility:hidden}
+  body.printing-inventory #printInventory,
+  body.printing-inventory #printInventory *{visibility:visible}
+  body.printing-inventory #printInventory{
+    display:block;position:fixed;top:0;left:0;width:100%;padding:16px;
+    font-family:'Ubuntu',sans-serif;color:#000;
+  }
+  body.printing-inventory #printInventory table{width:100%;border-collapse:collapse;margin-bottom:18px}
+  body.printing-inventory #printInventory th,
+  body.printing-inventory #printInventory td{border:1px solid #999;padding:6px 10px;font-size:12px;text-align:left}
+  body.printing-inventory #printInventory h2{font-size:14px;margin:14px 0 6px}
 }
 
 @media (max-width: 860px) {
@@ -182,6 +193,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <div id="printReceipt"></div>
+<div id="printInventory"></div>
 
 <div class="modal-bg" id="modalBg">
   <div class="modal" id="modalBox">
@@ -295,10 +307,32 @@ tr:hover td{background:rgba(255,255,255,.4)}
             <option value="to_store">Агуулахаас → Дэлгүүр (татсан)</option>
             <option value="to_warehouse">Дэлгүүрээс → Агуулах (буцаасан)</option>
           </select>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="date" id="reportDateFrom" onchange="renderReport()"
+              style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+            <span style="color:var(--ink-soft);font-size:12px">–</span>
+            <input type="date" id="reportDateTo" onchange="renderReport()"
+              style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+          </div>
         </div>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th>Огноо</th><th>Бараа</th><th>Төрөл</th><th>Чиглэл</th><th>Тоо</th><th>Хийсэн</th></tr></thead><tbody id="reportTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head">
+        <div class="card-title">Барааны нөөцийн тайлан</div>
+        <button class="btn btn-outline btn-sm" onclick="printInventorySummary()">🖨️ Хэвлэх</button>
+      </div>
+      <div style="padding:16px 20px 4px;font-family:'Ubuntu',sans-serif;font-size:13px;font-weight:700;color:var(--ink)">Брэндээр</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Брэнд</th><th>Барааны тоо</th><th>Ширхэгийн нөөц</th><th>Хайрцгийн нөөц</th></tr></thead><tbody id="reportByBrand"></tbody></table>
+      </div>
+      <div style="padding:16px 20px 4px;font-family:'Ubuntu',sans-serif;font-size:13px;font-weight:700;color:var(--ink)">Ангиллаар</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Ангилал</th><th>Барааны тоо</th><th>Ширхэгийн нөөц</th><th>Хайрцгийн нөөц</th></tr></thead><tbody id="reportByCategory"></tbody></table>
       </div>
     </div>
   </div>
@@ -1021,18 +1055,27 @@ function renderOrders() {
 function renderReport() {
   const query = (document.getElementById('reportSearch')?.value || '').trim().toLowerCase();
   const direction = document.getElementById('reportDirection')?.value || '';
-  const filtered = stockTransfers.filter(t =>
-    (!query || (t.product_name || '').toLowerCase().includes(query)) &&
-    (!direction || t.direction === direction)
-  );
+  const dateFrom = document.getElementById('reportDateFrom')?.value || '';
+  const dateTo = document.getElementById('reportDateTo')?.value || '';
+  const filtered = stockTransfers.filter(t => {
+    const d = (t.created_at || '').slice(0, 10); // 'YYYY-MM-DD'
+    return (!query || (t.product_name || '').toLowerCase().includes(query))
+      && (!direction || t.direction === direction)
+      && (!dateFrom || d >= dateFrom)
+      && (!dateTo || d <= dateTo);
+  });
 
-  const toStoreTotal = stockTransfers.filter(t => t.direction === 'to_store').reduce((sum, t) => sum + t.qty, 0);
-  const toWarehouseTotal = stockTransfers.filter(t => t.direction === 'to_warehouse').reduce((sum, t) => sum + t.qty, 0);
+  // Дээд статистикийн карт нь идэвхтэй огнооны шүүлтүүрийг л харгалзана
+  // (Агуулахад үлдсэн нийт нөөц бол одоогийн бодит үлдэгдэл тул үргэлж бүхэлдээ)
+  const toStoreTotal = filtered.filter(t => t.direction === 'to_store').reduce((sum, t) => sum + t.qty, 0);
+  const toWarehouseTotal = filtered.filter(t => t.direction === 'to_warehouse').reduce((sum, t) => sum + t.qty, 0);
   const warehouseLeft = products.reduce((sum, p) => sum + (p.warehouse_unit_stock || 0) + (p.warehouse_box_stock || 0), 0);
   document.getElementById('rp-to-store').textContent = toStoreTotal;
   document.getElementById('rp-to-warehouse').textContent = toWarehouseTotal;
   document.getElementById('rp-warehouse-left').textContent = warehouseLeft;
-  document.getElementById('rp-count').textContent = stockTransfers.length;
+  document.getElementById('rp-count').textContent = filtered.length;
+
+  renderInventorySummary();
 
   const tb = document.getElementById('reportTable');
   tb.innerHTML = filtered.map(t => {
@@ -1127,8 +1170,69 @@ function printOrderReceipt(orderNumber) {
     <div style="text-align:center;font-size:10px;margin-top:6px">${new Date(o.created_at).toLocaleString('mn-MN')}</div>`;
   document.getElementById('printReceipt').innerHTML = html;
   document.body.classList.add('printing-receipt');
+  setPrintPageSize('80mm auto', '2mm');
   window.print();
-  setTimeout(() => document.body.classList.remove('printing-receipt'), 500);
+  setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
+}
+
+// Хэвлэх бүрт хуудасны хэмжээ өөр байдаг тул (баримт: 80mm тасалбар,
+// тайлан: энгийн A4) @page дүрмийг тухайн бүрд нь динамикаар оруулж/арилгана
+function setPrintPageSize(size, margin) {
+  let style = document.getElementById('dynamicPageStyle');
+  if (!style) { style = document.createElement('style'); style.id = 'dynamicPageStyle'; document.head.appendChild(style); }
+  style.textContent = `@page { size: ${size}; margin: ${margin}; }`;
+}
+function clearPrintPageSize() {
+  document.getElementById('dynamicPageStyle')?.remove();
+}
+
+// Дэлгүүрийн бүх барааг брэнд, ангиллаар нь бүлэглэж нийт (ширхэг/хайрцаг)
+// нөөцийг нэгтгэнэ — Тайлан хуудсанд харуулах болон хэвлэхэд ашиглана
+function computeInventorySummary() {
+  const byBrand = new Map();
+  const byCategory = new Map();
+  const bump = (map, key) => {
+    if (!map.has(key)) map.set(key, { count: 0, unit: 0, box: 0 });
+    return map.get(key);
+  };
+  products.forEach(p => {
+    const brandName = brands.find(b => b.id === p.brand_id)?.name || 'Тодорхойгүй брэнд';
+    const catName = categories.find(c => c.id === p.category_id)?.name || 'Тодорхойгүй ангилал';
+    const bEntry = bump(byBrand, brandName);
+    bEntry.count++; bEntry.unit += p.unit_stock || 0; bEntry.box += p.box_stock || 0;
+    const cEntry = bump(byCategory, catName);
+    cEntry.count++; cEntry.unit += p.unit_stock || 0; cEntry.box += p.box_stock || 0;
+  });
+  const toSortedRows = (map) => [...map.entries()].sort((a, b) => (b[1].unit + b[1].box) - (a[1].unit + a[1].box));
+  return { byBrand: toSortedRows(byBrand), byCategory: toSortedRows(byCategory) };
+}
+function inventorySummaryRowsHtml(rows) {
+  return rows.map(([name, v]) => `<tr><td><b>${name}</b></td><td class="mono">${v.count}</td><td class="mono">${v.unit}</td><td class="mono">${v.box}</td></tr>`).join('')
+    || `<tr><td colspan="4" class="empty">Мэдээлэл алга байна</td></tr>`;
+}
+function renderInventorySummary() {
+  const { byBrand, byCategory } = computeInventorySummary();
+  document.getElementById('reportByBrand').innerHTML = inventorySummaryRowsHtml(byBrand);
+  document.getElementById('reportByCategory').innerHTML = inventorySummaryRowsHtml(byCategory);
+}
+function printInventorySummary() {
+  const { byBrand, byCategory } = computeInventorySummary();
+  const tableHtml = (title, rows) => `
+    <h2>${title}</h2>
+    <table>
+      <thead><tr><th>Нэр</th><th>Барааны тоо</th><th>Ширхэгийн нөөц</th><th>Хайрцгийн нөөц</th></tr></thead>
+      <tbody>${inventorySummaryRowsHtml(rows)}</tbody>
+    </table>`;
+  const html = `
+    <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:2px">CUPPA — Барааны нөөцийн тайлан</div>
+    <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
+    ${tableHtml('Брэндээр', byBrand)}
+    ${tableHtml('Ангиллаар', byCategory)}`;
+  document.getElementById('printInventory').innerHTML = html;
+  document.body.classList.add('printing-inventory');
+  setPrintPageSize('A4', '14mm');
+  window.print();
+  setTimeout(() => { document.body.classList.remove('printing-inventory'); clearPrintPageSize(); }, 500);
 }
 
 checkAuth();

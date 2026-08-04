@@ -587,7 +587,7 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={20} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "10px 20px" }}>
-          {cart.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, marginTop: 30, textAlign: "center" }}>Сагс хоосон байна.</div>}
+          {cart.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, marginTop: 30, textAlign: "center" }}>Таны сагс хоосон байна.</div>}
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
@@ -1060,7 +1060,7 @@ function OrderStatusBadge({ status }) {
 /* ------------------------------------------------------------------ */
 const sectionTitleStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 };
 const PROFILE_SECTIONS = [
-  { key: "info", label: "Профайл", Icon: User },
+  { key: "info", label: "Миний мэдээлэл", Icon: User },
   { key: "orders", label: "Миний захиалгууд", Icon: Package },
   { key: "address", label: "Хаягийн мэдээлэл", Icon: MapPin },
   { key: "delete", label: "Бүртгэл устгах", Icon: Trash2 },
@@ -1125,7 +1125,7 @@ function ProfileInfoSection({ user, onUserUpdate }) {
 
   return (
     <div>
-      <h1 style={sectionTitleStyle}>Профайл</h1>
+      <h1 style={sectionTitleStyle}>Миний мэдээлэл</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360 }}>
         <div>
           <div style={fieldLabelStyle}>Нэр</div>
@@ -1640,7 +1640,7 @@ export default function App() {
   } else if (view.name === "profile") {
     body = user
       ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} />
-      : <InfoPage title="Профайл" note="Профайлаа харахын тулд эхлээд нэвтэрнэ үү." />;
+      : <InfoPage title="Миний мэдээлэл" note="Өөрийн мэдээллээ харахын тулд эхлээд нэвтэрнэ үү." />;
   }
 
   return (
