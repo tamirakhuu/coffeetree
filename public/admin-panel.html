@@ -452,10 +452,10 @@ function renderProducts() {
       <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
       <td>${brand?.name||'-'}</td>
       <td>${cat?.name||'-'}</td>
-      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''}</div></td>
-      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''}</div></td>
+      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
+      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span></div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
-      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openTransferStock(${p.id})">📦 Татах</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">${query ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
@@ -539,7 +539,8 @@ function productFormHtml(p) {
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'1 ширхэг'}"></div>
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxPrice()" value="${p.unit_price||''}"></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.unit_original_price||''}"></div>
-        <div class="fg full"><label>Нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
+        <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
+        <div class="fg"><label>Агуулахын нөөц</label><input type="number" id="pf-unit-warehouse" value="${p.warehouse_unit_stock||''}"></div>
       </div>
       <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--cherry)">
@@ -555,7 +556,8 @@ function productFormHtml(p) {
         <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
         <div class="fg full" id="pf-box-preview" style="font-size:12px;color:var(--ink-soft);margin-top:-6px"></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.box_original_price||''}"></div>
-        <div class="fg"><label>Нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+        <div class="fg"><label>Дэлгүүрийн нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+        <div class="fg"><label>Агуулахын нөөц (хайрцаг)</label><input type="number" id="pf-box-warehouse" value="${p.warehouse_box_stock||''}"></div>
       </div>
     </div>`;
 }
@@ -649,11 +651,13 @@ async function saveProduct(id) {
       unit_price: unitEnabled ? (Number(document.getElementById('pf-unit-price').value) || 0) : 0,
       unit_original_price: unitEnabled ? (Number(document.getElementById('pf-unit-original-price').value) || null) : null,
       unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-stock').value, 10) || 0) : 0,
+      warehouse_unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-warehouse').value, 10) || 0) : 0,
       box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
       box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
       box_original_price: boxEnabled ? (Number(document.getElementById('pf-box-original-price').value) || null) : null,
       box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
       box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-stock').value, 10) || 0) : 0,
+      warehouse_box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-warehouse').value, 10) || 0) : 0,
     };
     const { error } = id
       ? await sb.from('products').update(row).eq('id', id)
@@ -665,6 +669,59 @@ async function saveProduct(id) {
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
   }
+}
+
+// Агуулахаас дэлгүүр рүү нөөц шилжүүлэх: тоог ганц л удаа оруулбал агуулахаас
+// хасаад дэлгүүрт нэмнэ (өмнө нь 2 газар тус тусад нь гараар засдаг байсан)
+function openTransferStock(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const hasUnit = !!(p.unit_price || p.unit_stock || p.warehouse_unit_stock);
+  const hasBox = !!(p.box_price || p.box_stock || p.warehouse_box_stock);
+  const body = `
+    <p style="margin-bottom:10px"><b>${p.name}</b></p>
+    <div class="form-grid">
+      ${hasUnit ? `<div class="fg full">
+        <label>Ширхэгээр татах (Агуулах: ${p.warehouse_unit_stock||0} → Дэлгүүр: ${p.unit_stock||0})</label>
+        <input type="number" id="ts-unit-qty" placeholder="Татах тоо" min="0">
+      </div>` : ''}
+      ${hasBox ? `<div class="fg full">
+        <label>Хайрцгаар татах (Агуулах: ${p.warehouse_box_stock||0} → Дэлгүүр: ${p.box_stock||0})</label>
+        <input type="number" id="ts-box-qty" placeholder="Татах тоо" min="0">
+      </div>` : ''}
+    </div>`;
+  openModal('Агуулахаас татах', body,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="submitTransferStock(${id})">Татах</button>`);
+}
+
+async function submitTransferStock(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const unitQtyEl = document.getElementById('ts-unit-qty');
+  const boxQtyEl = document.getElementById('ts-box-qty');
+  const unitQty = unitQtyEl ? (parseInt(unitQtyEl.value, 10) || 0) : 0;
+  const boxQty = boxQtyEl ? (parseInt(boxQtyEl.value, 10) || 0) : 0;
+  if (!unitQty && !boxQty) { toast('Татах тоогоо оруулна уу', 'err'); return; }
+  if (unitQty > (p.warehouse_unit_stock||0) || boxQty > (p.warehouse_box_stock||0)) {
+    toast('Агуулахын нөөцөөс их тоо татах гэж байна', 'err'); return;
+  }
+  const row = {};
+  if (unitQty) {
+    row.warehouse_unit_stock = Math.max((p.warehouse_unit_stock||0) - unitQty, 0);
+    row.unit_stock = (p.unit_stock||0) + unitQty;
+  }
+  if (boxQty) {
+    row.warehouse_box_stock = Math.max((p.warehouse_box_stock||0) - boxQty, 0);
+    row.box_stock = (p.box_stock||0) + boxQty;
+  }
+  const btn = document.querySelector('#modalFoot .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Татаж байна…'; }
+  const { error } = await sb.from('products').update(row).eq('id', id);
+  if (btn) { btn.disabled = false; btn.textContent = 'Татах'; }
+  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+  closeModal();
+  toast('✅ Агуулахаас амжилттай татагдлаа');
+  await loadAll();
 }
 
 function confirmDeleteProduct(id) {

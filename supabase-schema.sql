@@ -56,11 +56,13 @@
     unit_price numeric default 0,
     unit_original_price numeric, -- хямдрахаас өмнөх үнэ (зөвхөн хямдралтай үед бөглөнө)
     unit_stock int default 0,
+    warehouse_unit_stock int default 0, -- агуулах дахь нөөц (ширхэг) — эндээс дэлгүүрийн unit_stock рүү татдаг
     box_label text,
     box_price numeric default 0,
     box_original_price numeric, -- хямдрахаас өмнөх үнэ (зөвхөн хямдралтай үед бөглөнө)
     box_per_box int default 1,
     box_stock int default 0,
+    warehouse_box_stock int default 0, -- агуулах дахь нөөц (хайрцаг) — эндээс дэлгүүрийн box_stock рүү татдаг
     created_at timestamptz default now()
   );
 
