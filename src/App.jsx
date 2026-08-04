@@ -506,7 +506,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
               {qty >= bulkBoxQty
                 ? ` ${bulkBoxQty}+ ширхэгт бөөний үнээр тооцогдож байна`
-                : `${bulkBoxQty} ширхэг авбал бөөний үнээр тооцно`}
+                : `${bulkBoxQty} ширхэг буюу хайрцагаар нь авбал бөөний үнээр тооцно`}
             </div>
           )}
 

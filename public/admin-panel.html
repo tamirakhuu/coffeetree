@@ -88,9 +88,22 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .img-add-tile:hover{border-color:var(--cherry);color:var(--cherry)}
 .img-add-tile span{font-size:20px}
 .img-hint{font-size:11px;color:var(--ink-soft)}
+
+.form-section{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:16px;background:rgba(255,255,255,.4)}
+.form-section-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.form-section-title{display:flex;align-items:center;gap:10px;font-family:'Ubuntu',sans-serif;font-size:13.5px;font-weight:700;color:var(--ink)}
+.form-hint{font-size:11px;color:var(--ink-soft);line-height:1.5;grid-column:1/-1;margin-top:-4px}
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:background .15s;pointer-events:none}
+.toggle-slider:before{content:"";position:absolute;height:14px;width:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle-switch input:checked + .toggle-slider{background:var(--moss)}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(16px)}
+
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(36,28,20,.5);z-index:300;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
 .modal{background:var(--paper);border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal.modal-lg{max-width:780px}
 .modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
 .modal-title{font-family:'Ubuntu',sans-serif;font-size:17px;font-weight:700;color:var(--ink)}
 .modal-close{width:30px;height:30px;border-radius:8px;background:var(--card);border:none;cursor:pointer;font-size:15px}
@@ -171,7 +184,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
 <div id="printReceipt"></div>
 
 <div class="modal-bg" id="modalBg">
-  <div class="modal">
+  <div class="modal" id="modalBox">
     <div class="modal-head">
       <div class="modal-title" id="modalTitle">–</div>
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -422,10 +435,11 @@ function toast(msg, type='success', duration) {
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, duration || 3000);
 }
-function openModal(title, body, foot) {
+function openModal(title, body, foot, wide) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modalFoot').innerHTML = foot;
+  document.getElementById('modalBox').classList.toggle('modal-lg', !!wide);
   document.getElementById('modalBg').classList.add('open');
 }
 function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
@@ -560,38 +574,43 @@ function productFormHtml(p) {
       <div class="fg"><label>Шошго</label><select id="pf-tag"><option value="" ${!p.tag?'selected':''}>Байхгүй</option><option value="шинэ" ${p.tag==='шинэ'?'selected':''}>шинэ</option><option value="бестселлэр" ${p.tag==='бестселлэр'?'selected':''}>бестселлэр</option><option value="хямдралтай" ${p.tag==='хямдралтай'?'selected':''}>хямдралтай</option></select></div>
       <div class="fg full"><label>Зургууд</label><div id="pf-images-wrap">${imagesSectionHtml()}</div></div>
       <div class="fg full"><label>Тайлбар</label><textarea id="pf-desc">${p.description||''}</textarea></div>
-      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--cherry)">
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-head">
+        <label class="toggle-switch">
           <input type="checkbox" id="pf-unit-enable" ${hasUnit ? 'checked' : ''} onchange="toggleUnitSection()">
-          Ширхэгээр зарах
+          <span class="toggle-slider"></span>
         </label>
+        <span class="form-section-title">🔢 Ширхэгээр зарах</span>
       </div>
-      <div id="pf-unit-fields" style="display:${hasUnit ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1">
+      <div id="pf-unit-fields" class="form-grid form-grid-2" style="display:${hasUnit ? 'grid' : 'none'}">
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'ширхэг'}"></div>
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxPrice()" value="${p.unit_price||''}"></div>
-        <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.unit_original_price||''}"></div>
+        <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"></div>
+        <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
         <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
         <div class="fg"><label>Агуулахын нөөц</label><input type="number" id="pf-unit-warehouse" value="${p.warehouse_unit_stock||''}"></div>
-        <div class="fg full">
-          <label>Бөөний үнэ бодогдож эхлэх тоо (ширхэг)</label>
-          <input type="number" id="pf-bulk-qty" placeholder="жишээ: FORTE кофед 3, сиропт 6, нэг удаагийн аягад 1000" value="${p.bulk_qty||''}">
-          <div style="font-size:11px;color:var(--ink-soft);margin-top:3px">Хоосон бол бөөний хямдрал тооцохгүй. Бөглөвөл энэ тооноос дээш ширхэг авахад хайрцгийн үнээр (доорх "Хайрцгаар" үнэ ÷ хайрцагт багтах тоо) бүх ширхэгийг нь автоматаар тооцно — тул "Хайрцгаар мөн зарах" хэсэгт үнээ бөглөсөн байх шаардлагатай.</div>
-        </div>
+        <div class="form-hint">"Бөөнөөр эхлэх тоо" бөглөвөл тэр тооноос дээш авахад доорх "Хайрцгаар" үнээр (÷ хайрцагт багтах тоо) бүх ширхэгийг автоматаар тооцно.</div>
       </div>
-      <div class="fg full" style="border-top:1px dashed var(--line);padding-top:10px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--cherry)">
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-head">
+        <label class="toggle-switch">
           <input type="checkbox" id="pf-box-enable" ${hasBox ? 'checked' : ''} onchange="toggleBoxSection()">
-          Хайрцгаар мөн зарах
+          <span class="toggle-slider"></span>
         </label>
+        <span class="form-section-title">📦 Хайрцгаар мөн зарах</span>
       </div>
-      <div id="pf-box-fields" style="display:${hasBox ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1">
+      <div id="pf-box-fields" class="form-grid form-grid-2" style="display:${hasBox ? 'grid' : 'none'}">
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
         <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice()" value="${p.box_per_box||''}"></div>
         <div class="fg"><label>Бөөний хямдрал (%)</label><input type="number" step="0.1" id="pf-box-discount" oninput="recalcFromDiscount()" placeholder="жишээ: 3.3" value="${boxDiscount}"></div>
         <div class="fg"><label>Ширхэгийн үнэ хайрцагт (₮)</label><input type="number" id="pf-box-unit-price" oninput="recalcFromUnitPrice()" placeholder="жишээ: 39500" value="${p.unit_price && p.box_per_box && p.box_price ? Math.round(p.box_price / p.box_per_box) : ''}"></div>
         <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
-        <div class="fg full" id="pf-box-preview" style="font-size:12px;color:var(--ink-soft);margin-top:-6px"></div>
-        <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол бөглөнө" value="${p.box_original_price||''}"></div>
+        <div class="fg" id="pf-box-preview-wrap"><label>&nbsp;</label><div id="pf-box-preview" style="font-size:12px;color:var(--ink-soft)"></div></div>
+        <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.box_original_price||''}"></div>
         <div class="fg"><label>Дэлгүүрийн нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
         <div class="fg"><label>Агуулахын нөөц (хайрцаг)</label><input type="number" id="pf-box-warehouse" value="${p.warehouse_box_stock||''}"></div>
       </div>
@@ -642,13 +661,13 @@ function refreshSubDatalist() {
 
 function openAddProduct() {
   if (!brands.length || !categories.length) { toast('Эхлээд дор хаяж нэг брэнд, ангилал үүсгэнэ үү', 'err'); return; }
-  openModal('Бараа нэмэх', productFormHtml(), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(null)">Нэмэх</button>`);
+  openModal('Бараа нэмэх', productFormHtml(), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(null)">Нэмэх</button>`, true);
   recalcBoxPrice();
 }
 function openEditProduct(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
-  openModal('Бараа засах', productFormHtml(p), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(${id})">Хадгалах</button>`);
+  openModal('Бараа засах', productFormHtml(p), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(${id})">Хадгалах</button>`, true);
   recalcBoxPrice();
 }
 
@@ -1020,7 +1039,7 @@ function openOrderDetail(orderNumber) {
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>Нийт</span><span class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
     </div>`;
   openModal(`Захиалга ${o.order_number}`, body,
-    `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">🖨️ Хэвлэх</button>`);
+    `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">🖨️ Хэвлэх</button>`, true);
 }
 
 function printOrderReceipt(orderNumber) {
