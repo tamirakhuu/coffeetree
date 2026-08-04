@@ -505,8 +505,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
           {optionType === "unit" && bulkBoxQty && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
               {qty >= bulkBoxQty
-                ? `🎉 ${bulkBoxQty}+ ширхэгт хайрцгийн хямд үнээр тооцогдож байна`
-                : `${bulkBoxQty} ширхэг авбал хайрцгийн хямд үнээр тооцно`}
+                ? ` ${bulkBoxQty}+ ширхэгт бөөний үнээр тооцогдож байна`
+                : `${bulkBoxQty} ширхэг авбал бөөний үнээр тооцно`}
             </div>
           )}
 

@@ -17,10 +17,12 @@ export const BULK_BOX_QTY = { "Нунтаг": 12, "Сироп": 6 };
 export function computeLineTotal(product, categoryName, optionType, qty) {
   if (optionType === "unit") {
     const boxQty = BULK_BOX_QTY[categoryName];
-    if (boxQty && product.box?.price > 0 && qty >= boxQty) {
-      const boxes = Math.floor(qty / boxQty);
-      const rem = qty % boxQty;
-      return boxes * product.box.price + rem * product.unit.price;
+    if (boxQty && product.box?.price > 0 && product.box?.perBox > 0 && qty >= boxQty) {
+      // Хайрцгийн хэмжээнд хүрмэгц бүх ширхэг (13, 14, ... гэх мэт ч гэсэн)
+      // хайрцагт ногдох нэгжийн үнээр тооцогдоно — "1 хайрцаг + үлдэгдэл ширхэг
+      // энгийн үнээр" гэж хуваахгүй.
+      const bulkUnitPrice = product.box.price / product.box.perBox;
+      return Math.round(bulkUnitPrice * qty);
     }
   }
   return product[optionType].price * qty;
