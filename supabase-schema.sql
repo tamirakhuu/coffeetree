@@ -65,6 +65,7 @@
     box_stock int default 0,
     warehouse_box_stock int default 0, -- агуулах дахь нөөц (хайрцаг) — эндээс дэлгүүрийн box_stock рүү татдаг
     bulk_qty int, -- бөөний үнэ бодогдож эхлэх ширхэгийн тоо (барааны хувиар өөр өөр байдаг)
+    unified_stock boolean default false, -- хайрцгаар ирж, ширхэгээр задарч зардаг бол box_stock-ыг unit_stock-оос автоматаар тооцно
     created_at timestamptz default now()
   );
 
@@ -132,11 +133,30 @@
   -- функцээр дамжуулан аюулгүйгээр нөөцөө хасуулж чадна, 0-ээс доош орохгүй)
   create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
+  declare
+    v_unified boolean;
+    v_per_box int;
+    v_new_unit int;
   begin
-    if p_option_type = 'box' then
-      update products set box_stock = greatest(box_stock - p_qty, 0) where id = p_product_id;
+    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id;
+    if v_unified and coalesce(v_per_box, 0) > 0 then
+      -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
+      -- ширхэгээр хадгалагддаг тул unit_stock-оос хасаад, box_stock-ыг
+      -- түүнээс нь дахин (floor) тооцно
+      if p_option_type = 'box' then
+        update products set unit_stock = greatest(unit_stock - (p_qty * v_per_box), 0)
+          where id = p_product_id returning unit_stock into v_new_unit;
+      else
+        update products set unit_stock = greatest(unit_stock - p_qty, 0)
+          where id = p_product_id returning unit_stock into v_new_unit;
+      end if;
+      update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
     else
-      update products set unit_stock = greatest(unit_stock - p_qty, 0) where id = p_product_id;
+      if p_option_type = 'box' then
+        update products set box_stock = greatest(box_stock - p_qty, 0) where id = p_product_id;
+      else
+        update products set unit_stock = greatest(unit_stock - p_qty, 0) where id = p_product_id;
+      end if;
     end if;
   end;
   $$ language plpgsql security definer;

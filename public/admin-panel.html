@@ -498,7 +498,7 @@ function renderProducts() {
       <td>${brand?.name||'-'}</td>
       <td>${cat?.name||'-'}</td>
       <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
-      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span></div></td>
+      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span>${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openTransferStock(${p.id})">Шилжүүлэх</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
@@ -589,7 +589,7 @@ function productFormHtml(p) {
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxPrice()" value="${p.unit_price||''}"></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"></div>
         <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
-        <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" value="${p.unit_stock||''}"></div>
+        <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" oninput="recalcUnifiedStock()" value="${p.unit_stock||''}"></div>
         <div class="fg"><label>Агуулахын нөөц</label><input type="number" id="pf-unit-warehouse" value="${p.warehouse_unit_stock||''}"></div>
         <div class="form-hint">"Бөөнөөр эхлэх тоо" бөглөвөл тэр тооноос дээш авахад доорх "Хайрцгаар" үнээр (÷ хайрцагт багтах тоо) бүх ширхэгийг автоматаар тооцно.</div>
       </div>
@@ -604,14 +604,27 @@ function productFormHtml(p) {
         <span class="form-section-title">📦 Хайрцгаар мөн зарах</span>
       </div>
       <div id="pf-box-fields" class="form-grid form-grid-2" style="display:${hasBox ? 'grid' : 'none'}">
+        <div class="fg full" style="flex-direction:row;align-items:center;gap:10px;background:var(--cream);border-radius:8px;padding:10px 12px">
+          <label class="toggle-switch">
+            <input type="checkbox" id="pf-unified-enable" ${p.unified_stock ? 'checked' : ''} onchange="toggleUnifiedStock()">
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <div style="font-family:'Ubuntu',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink)">🔗 Нэгдсэн нөөц</div>
+            <div style="font-size:11px;color:var(--ink-soft)">Хайрцгийг задалж лангуунд ширхэгээр өрдөг бол асаана. Асаавал "Дэлгүүрийн нөөц (хайрцаг)" утга ширхэгийн нөөцөөс автоматаар тооцогдож, "Шилжүүлэх" үед хайрцгийн тоо шууд ширхэг болж нэмэгдэнэ.</div>
+          </div>
+        </div>
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
-        <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice()" value="${p.box_per_box||''}"></div>
+        <div class="fg"><label>1 хайрцагт хэдэн ширхэг</label><input type="number" id="pf-box-per" oninput="recalcBoxPrice(); recalcUnifiedStock()" value="${p.box_per_box||''}"></div>
         <div class="fg"><label>Бөөний хямдрал (%)</label><input type="number" step="0.1" id="pf-box-discount" oninput="recalcFromDiscount()" placeholder="жишээ: 3.3" value="${boxDiscount}"></div>
         <div class="fg"><label>Ширхэгийн үнэ хайрцагт (₮)</label><input type="number" id="pf-box-unit-price" oninput="recalcFromUnitPrice()" placeholder="жишээ: 39500" value="${p.unit_price && p.box_per_box && p.box_price ? Math.round(p.box_price / p.box_per_box) : ''}"></div>
         <div class="fg"><label>Үнэ (₮) — хайрцаг бүхэлдээ</label><input type="number" id="pf-box-price" value="${p.box_price||''}"></div>
         <div class="fg" id="pf-box-preview-wrap"><label>&nbsp;</label><div id="pf-box-preview" style="font-size:12px;color:var(--ink-soft)"></div></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.box_original_price||''}"></div>
-        <div class="fg"><label>Дэлгүүрийн нөөц (хайрцаг)</label><input type="number" id="pf-box-stock" value="${p.box_stock||''}"></div>
+        <div class="fg">
+          <label>Дэлгүүрийн нөөц (хайрцаг)</label>
+          <input type="number" id="pf-box-stock" ${p.unified_stock ? 'readonly' : ''} style="${p.unified_stock ? 'background:var(--paper);color:var(--ink-soft)' : ''}" value="${p.unified_stock ? Math.floor((p.unit_stock||0) / (p.box_per_box||1)) : (p.box_stock||'')}">
+        </div>
         <div class="fg"><label>Агуулахын нөөц (хайрцаг)</label><input type="number" id="pf-box-warehouse" value="${p.warehouse_box_stock||''}"></div>
       </div>
     </div>`;
@@ -623,6 +636,22 @@ function toggleUnitSection() {
 function toggleBoxSection() {
   const enabled = document.getElementById('pf-box-enable').checked;
   document.getElementById('pf-box-fields').style.display = enabled ? 'grid' : 'none';
+}
+// "Нэгдсэн нөөц" асаавал "Дэлгүүрийн нөөц (хайрцаг)" талбарыг гараар засварлахгүй,
+// ширхэгийн нөөцөөс автоматаар (floor) тооцдог болгоно
+function toggleUnifiedStock() {
+  const unified = document.getElementById('pf-unified-enable').checked;
+  const boxStockInput = document.getElementById('pf-box-stock');
+  boxStockInput.readOnly = unified;
+  boxStockInput.style.background = unified ? 'var(--paper)' : '';
+  boxStockInput.style.color = unified ? 'var(--ink-soft)' : '';
+  if (unified) recalcUnifiedStock();
+}
+function recalcUnifiedStock() {
+  if (!document.getElementById('pf-unified-enable')?.checked) return;
+  const unitStock = parseInt(document.getElementById('pf-unit-stock').value, 10) || 0;
+  const perBox = parseInt(document.getElementById('pf-box-per').value, 10) || 0;
+  document.getElementById('pf-box-stock').value = perBox > 0 ? Math.floor(unitStock / perBox) : 0;
 }
 function applyBoxPrice(discountedUnit, perBox) {
   const boxPrice = Math.round(discountedUnit * perBox);
@@ -714,6 +743,7 @@ async function saveProduct(id) {
       box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
       box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-stock').value, 10) || 0) : 0,
       warehouse_box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-warehouse').value, 10) || 0) : 0,
+      unified_stock: boxEnabled ? document.getElementById('pf-unified-enable').checked : false,
     };
     const { error } = id
       ? await sb.from('products').update(row).eq('id', id)
@@ -735,8 +765,9 @@ function openTransferStock(id) {
   if (!p) return;
   const hasUnit = !!(p.unit_price || p.unit_stock || p.warehouse_unit_stock);
   const hasBox = !!(p.box_price || p.box_stock || p.warehouse_box_stock);
+  const unified = !!(p.unified_stock && p.box_per_box > 0);
   const body = `
-    <p style="margin-bottom:10px"><b>${p.name}</b></p>
+    <p style="margin-bottom:10px"><b>${p.name}</b>${unified ? ' <span class="badge" style="background:var(--green-light);color:#2F4A22">🔗 нэгдсэн нөөц</span>' : ''}</p>
     <div class="fg full" style="margin-bottom:12px">
       <label>Чиглэл</label>
       <select id="ts-direction">
@@ -745,12 +776,12 @@ function openTransferStock(id) {
       </select>
     </div>
     <div class="form-grid">
-      ${hasUnit ? `<div class="fg full">
+      ${hasUnit && !unified ? `<div class="fg full">
         <label>Ширхэгээр (Агуулах: ${p.warehouse_unit_stock||0} ⇄ Дэлгүүр: ${p.unit_stock||0})</label>
         <input type="number" id="ts-unit-qty" placeholder="Шилжүүлэх тоо" min="0">
       </div>` : ''}
       ${hasBox ? `<div class="fg full">
-        <label>Хайрцгаар (Агуулах: ${p.warehouse_box_stock||0} ⇄ Дэлгүүр: ${p.box_stock||0})</label>
+        <label>Хайрцгаар (Агуулах: ${p.warehouse_box_stock||0} ⇄ Дэлгүүр: ${p.box_stock||0})${unified ? ' — задалж ширхэгээр орно' : ''}</label>
         <input type="number" id="ts-box-qty" placeholder="Шилжүүлэх тоо" min="0">
       </div>` : ''}
     </div>`;
@@ -761,6 +792,8 @@ function openTransferStock(id) {
 async function submitTransferStock(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
+  const unified = !!(p.unified_stock && p.box_per_box > 0);
+  const perBox = p.box_per_box || 1;
   const direction = document.getElementById('ts-direction').value; // to_store | to_warehouse
   const unitQtyEl = document.getElementById('ts-unit-qty');
   const boxQtyEl = document.getElementById('ts-box-qty');
@@ -768,22 +801,48 @@ async function submitTransferStock(id) {
   const boxQty = boxQtyEl ? (parseInt(boxQtyEl.value, 10) || 0) : 0;
   if (!unitQty && !boxQty) { toast('Шилжүүлэх тоогоо оруулна уу', 'err'); return; }
 
-  const fromUnit = direction === 'to_store' ? (p.warehouse_unit_stock||0) : (p.unit_stock||0);
-  const fromBox = direction === 'to_store' ? (p.warehouse_box_stock||0) : (p.box_stock||0);
-  if (unitQty > fromUnit || boxQty > fromBox) {
-    toast(direction === 'to_store' ? 'Агуулахын нөөцөөс их тоо татах гэж байна' : 'Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна', 'err');
-    return;
+  // Агуулахын нөөц (ширхэг/хайрцаг) нэгдсэн эсэхээс үл хамааран үргэлж бодит
+  // тоо тул "татах" чиглэлд агуулахаас шалгана; "буцаах" чиглэлд нэгдсэн
+  // бараанд newUnitStock<0 шалгалтаар доор нь шалгана, бусдад box/unit-ээр
+  if (direction === 'to_store') {
+    if (unitQty > (p.warehouse_unit_stock||0) || boxQty > (p.warehouse_box_stock||0)) {
+      toast('Агуулахын нөөцөөс их тоо татах гэж байна', 'err');
+      return;
+    }
+  } else if (!unified) {
+    if (unitQty > (p.unit_stock||0) || boxQty > (p.box_stock||0)) {
+      toast('Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна', 'err');
+      return;
+    }
   }
 
   const row = {};
   const logs = [];
   if (direction === 'to_store') {
-    if (unitQty) { row.warehouse_unit_stock = (p.warehouse_unit_stock||0) - unitQty; row.unit_stock = (p.unit_stock||0) + unitQty; logs.push({ option_type: 'unit', qty: unitQty }); }
-    if (boxQty) { row.warehouse_box_stock = (p.warehouse_box_stock||0) - boxQty; row.box_stock = (p.box_stock||0) + boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
+    if (unitQty) { row.warehouse_unit_stock = (p.warehouse_unit_stock||0) - unitQty; logs.push({ option_type: 'unit', qty: unitQty }); }
+    if (boxQty) { row.warehouse_box_stock = (p.warehouse_box_stock||0) - boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
+    if (unified) {
+      // Хайрцгаар ирсэн ч дэлгүүрт задарч ширхэгээр л зарагддаг тул
+      // хоёул unit_stock рүү орно, box_stock-ыг доор нь дахин тооцно
+      row.unit_stock = (p.unit_stock||0) + unitQty + boxQty * perBox;
+    } else {
+      if (unitQty) row.unit_stock = (p.unit_stock||0) + unitQty;
+      if (boxQty) row.box_stock = (p.box_stock||0) + boxQty;
+    }
   } else {
-    if (unitQty) { row.unit_stock = (p.unit_stock||0) - unitQty; row.warehouse_unit_stock = (p.warehouse_unit_stock||0) + unitQty; logs.push({ option_type: 'unit', qty: unitQty }); }
-    if (boxQty) { row.box_stock = (p.box_stock||0) - boxQty; row.warehouse_box_stock = (p.warehouse_box_stock||0) + boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
+    if (unitQty) row.warehouse_unit_stock = (p.warehouse_unit_stock||0) + unitQty;
+    if (boxQty) { row.warehouse_box_stock = (p.warehouse_box_stock||0) + boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
+    if (unitQty) logs.push({ option_type: 'unit', qty: unitQty });
+    if (unified) {
+      const newUnitStock = (p.unit_stock||0) - unitQty - boxQty * perBox;
+      if (newUnitStock < 0) { toast('Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна', 'err'); return; }
+      row.unit_stock = newUnitStock;
+    } else {
+      if (unitQty) row.unit_stock = (p.unit_stock||0) - unitQty;
+      if (boxQty) row.box_stock = (p.box_stock||0) - boxQty;
+    }
   }
+  if (unified && row.unit_stock !== undefined) row.box_stock = Math.floor(row.unit_stock / perBox);
 
   const btn = document.querySelector('#modalFoot .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Шилжүүлж байна…'; }

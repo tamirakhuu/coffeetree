@@ -177,6 +177,45 @@ alter table products add column if not exists warehouse_box_stock int default 0;
 alter table products add column if not exists bulk_qty int;
 
 -- ---------------------------------------------------------------------
+-- 14) "Нэгдсэн нөөц" — хайрцгаар ирсэн барааг задалж ширхэгээр зарж байгаа
+--     барааны хайрцгийн нөөцийг ширхэгийн нөөцөөс автоматаар тооцно
+--     (жишээ нь: сироп, повдер зэрэг агуулахаас дандаа хайрцгаар ирж,
+--     лангуунд ширхэгээр өрөгддөг бараа)
+-- ---------------------------------------------------------------------
+alter table products add column if not exists unified_stock boolean default false;
+
+create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
+returns void as $$
+declare
+  v_unified boolean;
+  v_per_box int;
+  v_new_unit int;
+begin
+  select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id;
+  if v_unified and coalesce(v_per_box, 0) > 0 then
+    -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
+    -- ширхэгээр хадгалагддаг тул unit_stock-оос хасаад, box_stock-ыг
+    -- түүнээс нь дахин (floor) тооцно
+    if p_option_type = 'box' then
+      update products set unit_stock = greatest(unit_stock - (p_qty * v_per_box), 0)
+        where id = p_product_id returning unit_stock into v_new_unit;
+    else
+      update products set unit_stock = greatest(unit_stock - p_qty, 0)
+        where id = p_product_id returning unit_stock into v_new_unit;
+    end if;
+    update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
+  else
+    if p_option_type = 'box' then
+      update products set box_stock = greatest(box_stock - p_qty, 0) where id = p_product_id;
+    else
+      update products set unit_stock = greatest(unit_stock - p_qty, 0) where id = p_product_id;
+    end if;
+  end if;
+end;
+$$ language plpgsql security definer;
+grant execute on function decrement_stock(bigint, text, int) to authenticated, anon;
+
+-- ---------------------------------------------------------------------
 -- 13) Агуулах ⇄ дэлгүүрийн шилжилтийн түүх (Тайлан хуудсанд харуулна)
 -- ---------------------------------------------------------------------
 create table if not exists stock_transfers (
