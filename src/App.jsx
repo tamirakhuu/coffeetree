@@ -5,7 +5,7 @@ import {
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
 
@@ -1420,6 +1420,21 @@ export default function App() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Барааны нөөц (унит/хайрцаг) өөр хэрэглэгчийн захиалга эсвэл admin-ийн
+  // өөрчлөлтөөс болж өөрчлөгдөх бүрт refresh хийхгүйгээр шууд шинэчлэгдэнэ
+  useEffect(() => {
+    const channel = supabase.channel("products-stock")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, (payload) => {
+        const updated = shapeProduct(payload.new);
+        setData((prev) => ({
+          ...prev,
+          products: prev.products.map((p) => (p.id === updated.id ? updated : p)),
+        }));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const loadCartWishlist = (key) => {
     try { const raw = localStorage.getItem(`cuppa:cart:${key}`); setCart(raw ? JSON.parse(raw) : []); } catch (e) { setCart([]); }

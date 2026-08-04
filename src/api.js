@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 
-function shapeProduct(r) {
+export function shapeProduct(r) {
   return {
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
     origin: r.origin, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
@@ -44,6 +44,14 @@ export async function fetchBootstrap() {
   return { categories: cats, brands, products: products.map(shapeProduct) };
 }
 
+// Аль хэдийн амжилттай хассан нөөцийг буцаах (захиалга цуцлагдах үед)
+async function rollbackReserved(reserved) {
+  await Promise.all(reserved.map(({ item, product }) =>
+    supabase.rpc("restore_stock", { p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty })
+      .then(({ error }) => { if (error) console.error("Нөөц буцаахад алдаа гарлаа:", error.message); })
+  ));
+}
+
 // Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
 // "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
 export async function submitOrder({ form, cart, products, userId }) {
@@ -52,6 +60,26 @@ export async function submitOrder({ form, cart, products, userId }) {
   const validItems = cart
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
+  if (!validItems.length) throw new Error("Сагс хоосон байна.");
+
+  // Захиалга үүсгэхээс ӨМНӨ нөөцийг атомикаар шалгаж хасна (decrement_stock
+  // нь SQL дотроо "UPDATE ... WHERE stock >= qty" хэлбэртэй, нэг мөрийг
+  // түгжиж хасдаг тул 2 хүн сүүлийн ширхэгийг зэрэг захиалахад зөвхөн нэг
+  // нь амжина). Аль нэг бараа дутвал өмнө нь амжилттай хассан зүйлээ буцаагаад
+  // захиалга огт үүсгэхгүй.
+  const reserved = [];
+  for (const entry of validItems) {
+    const { item, product } = entry;
+    const { data: ok, error } = await supabase.rpc("decrement_stock", {
+      p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty,
+    });
+    if (error) { await rollbackReserved(reserved); throw new Error(error.message); }
+    if (!ok) {
+      await rollbackReserved(reserved);
+      throw new Error(`"${product.name}" барааны нөөц дуусчихжээ. Сагсаа шинэчилж дахин оролдоно уу.`);
+    }
+    reserved.push(entry);
+  }
 
   const lineTotalFor = (item, product) =>
     computeLineTotal(product, item.optionType, item.qty);
@@ -73,7 +101,7 @@ export async function submitOrder({ form, cart, products, userId }) {
     delivery_method: deliveryMethod,
     delivery_fee: deliveryFee,
   });
-  if (orderErr) throw new Error(orderErr.message);
+  if (orderErr) { await rollbackReserved(reserved); throw new Error(orderErr.message); }
 
   const itemRows = validItems.map(({ item, product }) => {
     const option = product[item.optionType];
@@ -89,14 +117,12 @@ export async function submitOrder({ form, cart, products, userId }) {
     };
   });
   const { error: itemsErr } = await supabase.from("order_items").insert(itemRows);
-  if (itemsErr) throw new Error(itemsErr.message);
-
-  // Барааны нөөцөөс хасах — захиалга аль хэдийн үүссэн тул алдаа гарсан ч
-  // захиалгыг цуцлахгүй, зөвхөн log хийж өнгөрнө
-  await Promise.all(validItems.map(({ item, product }) =>
-    supabase.rpc("decrement_stock", { p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty })
-      .then(({ error }) => { if (error) console.error("Нөөц хасахад алдаа гарлаа:", error.message); })
-  ));
+  if (itemsErr) {
+    // Захиалга аль хэдийн бүртгэгдсэн тул үүнийг бас цуцалж, нөөцөө буцаана
+    await supabase.from("orders").delete().eq("order_number", orderNumber);
+    await rollbackReserved(reserved);
+    throw new Error(itemsErr.message);
+  }
 
   return orderNumber;
 }

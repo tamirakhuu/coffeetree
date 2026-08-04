@@ -128,39 +128,75 @@
   $$ language sql security definer stable;
   grant execute on function is_admin() to authenticated, anon;
 
-  -- Захиалга өгөхөд барааны нөөцөөс хасах (security definer тул анон/
-  -- нэвтэрсэн хэрэглэгч products хүснэгтийг шууд UPDATE хийх эрхгүй ч энэ
-  -- функцээр дамжуулан аюулгүйгээр нөөцөө хасуулж чадна, 0-ээс доош орохгүй)
+  -- Захиалга баталгаажихаас ӨМНӨ нөөцийг атомикаар шалгаж хасах (security
+  -- definer тул анон/нэвтэрсэн хэрэглэгч products хүснэгтийг шууд UPDATE
+  -- хийх эрхгүй ч энэ функцээр дамжуулан аюулгүйгээр нөөцөө хасуулж чадна).
+  -- Нэг SQL UPDATE ... WHERE stock >= qty бүхэлдээ нэг мөрөнд түгжигддэг тул
+  -- 2 хүн сүүлийн ширхэгийг зэрэг авах гэвэл зөвхөн нэг нь амжина. Хангалттай
+  -- нөөцгүй бол false буцаана — дуудсан тал захиалгаа үүсгэхгүй.
   create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
+  returns boolean as $$
+  declare
+    v_unified boolean;
+    v_per_box int;
+    v_new_unit int;
+  begin
+    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
+    if v_unified and coalesce(v_per_box, 0) > 0 then
+      -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
+      -- ширхэгээр хадгалагддаг тул unit_stock-оос хасаад, box_stock-ыг
+      -- түүнээс нь дахин (floor) тооцно
+      if p_option_type = 'box' then
+        update products set unit_stock = unit_stock - (p_qty * v_per_box)
+          where id = p_product_id and unit_stock >= p_qty * v_per_box
+          returning unit_stock into v_new_unit;
+      else
+        update products set unit_stock = unit_stock - p_qty
+          where id = p_product_id and unit_stock >= p_qty
+          returning unit_stock into v_new_unit;
+      end if;
+      if v_new_unit is null then return false; end if;
+      update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
+      return true;
+    else
+      if p_option_type = 'box' then
+        update products set box_stock = box_stock - p_qty where id = p_product_id and box_stock >= p_qty;
+      else
+        update products set unit_stock = unit_stock - p_qty where id = p_product_id and unit_stock >= p_qty;
+      end if;
+      return found;
+    end if;
+  end;
+  $$ language plpgsql security definer;
+  grant execute on function decrement_stock(bigint, text, int) to authenticated, anon;
+
+  -- Захиалга үүсгэх (эсвэл дараагийн бараа хангалтгүй болж цуцлах) явцад
+  -- аль хэдийн амжилттай хассан нөөцөө буцаах rollback функц
+  create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
   declare
     v_unified boolean;
     v_per_box int;
     v_new_unit int;
   begin
-    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id;
+    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
-      -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
-      -- ширхэгээр хадгалагддаг тул unit_stock-оос хасаад, box_stock-ыг
-      -- түүнээс нь дахин (floor) тооцно
       if p_option_type = 'box' then
-        update products set unit_stock = greatest(unit_stock - (p_qty * v_per_box), 0)
-          where id = p_product_id returning unit_stock into v_new_unit;
+        update products set unit_stock = unit_stock + (p_qty * v_per_box) where id = p_product_id returning unit_stock into v_new_unit;
       else
-        update products set unit_stock = greatest(unit_stock - p_qty, 0)
-          where id = p_product_id returning unit_stock into v_new_unit;
+        update products set unit_stock = unit_stock + p_qty where id = p_product_id returning unit_stock into v_new_unit;
       end if;
       update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
     else
       if p_option_type = 'box' then
-        update products set box_stock = greatest(box_stock - p_qty, 0) where id = p_product_id;
+        update products set box_stock = box_stock + p_qty where id = p_product_id;
       else
-        update products set unit_stock = greatest(unit_stock - p_qty, 0) where id = p_product_id;
+        update products set unit_stock = unit_stock + p_qty where id = p_product_id;
       end if;
     end if;
   end;
   $$ language plpgsql security definer;
-  grant execute on function decrement_stock(bigint, text, int) to authenticated, anon;
+  grant execute on function restore_stock(bigint, text, int) to authenticated, anon;
 
   create policy "public read categories" on categories for select using (true);
   create policy "public read subcategories" on subcategories for select using (true);
@@ -261,7 +297,9 @@
     using (bucket_id = 'product-images' and is_admin());
 
   -- ---------------------------------------------------------------------
-  -- 6) Realtime: admin panel-д шинэ захиалга ирэхэд refresh хийхгүйгээр
-  --    мэдэгдэл өгөх боломжтой болгоно
+  -- 6) Realtime: admin panel-д шинэ захиалга ирэхэд, мөн хэрэглэгчийн
+  --    хуудсан дээр барааны нөөц өөрчлөгдөхөд refresh хийхгүйгээр
+  --    шинэчлэгдэх боломжтой болгоно
   -- ---------------------------------------------------------------------
   alter publication supabase_realtime add table orders;
+  alter publication supabase_realtime add table products;
