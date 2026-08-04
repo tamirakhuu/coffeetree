@@ -1141,7 +1141,6 @@ function ProfileInfoSection({ user, onUserUpdate }) {
 
 function ProfileAddressSection({ user, onUserUpdate }) {
   const [address, setAddress] = useState(user.address || "");
-  const [locationUrl] = useState(user.locationUrl || "");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -1149,7 +1148,7 @@ function ProfileAddressSection({ user, onUserUpdate }) {
   const handleSave = async () => {
     setSaving(true); setError(""); setNotice("");
     try {
-      const updated = await updateProfile({ address: address.trim(), locationUrl });
+      const updated = await updateProfile({ address: address.trim() });
       onUserUpdate(updated);
       setNotice("Хаяг хадгалагдлаа");
     } catch (err) {
@@ -1168,15 +1167,6 @@ function ProfileAddressSection({ user, onUserUpdate }) {
           <textarea placeholder="Дүүрэг, хороо, байр, орц г.м" value={address}
             onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...profileInputStyle, resize: "vertical" }} />
         </div>
-
-        {locationUrl && (
-          <a href={locationUrl} target="_blank" rel="noopener noreferrer" style={{
-            display: "flex", alignItems: "center", gap: 8, color: T.moss,
-            fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textDecoration: "none",
-          }}>
-            <MapPin size={14} /> Google Maps дээр харах
-          </a>
-        )}
 
         {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
         {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
