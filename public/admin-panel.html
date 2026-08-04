@@ -115,6 +115,12 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .toast.success{border-left:3px solid var(--moss)}
 .toast.err{border-left:3px solid var(--red)}
 .chip{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--ink-soft);margin:2px 4px 2px 0}
+.stocktake-brand{font-family:'Ubuntu',sans-serif;font-weight:700;font-size:14px;color:var(--ink);margin-top:14px}
+.stocktake-brand:first-child{margin-top:0}
+.stocktake-category{font-family:'Ubuntu',sans-serif;font-weight:600;font-size:12px;color:var(--moss);margin:8px 0 3px 18px;text-transform:uppercase;letter-spacing:.03em}
+.stocktake-product{display:flex;align-items:baseline;gap:6px;margin:3px 0;margin-left:36px;font-size:13px;color:var(--ink)}
+.stocktake-dots{flex:1;border-bottom:1px dotted var(--line);height:1px;margin-bottom:4px}
+.stocktake-qty{font-weight:700;font-family:'Ubuntu',sans-serif;min-width:24px;text-align:right}
 .empty{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px}
 .icon-emoji{font-size:16px}
 .mobile-topbar{display:none}
@@ -334,6 +340,17 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div class="table-wrap">
         <table><thead><tr><th>Ангилал</th><th>Барааны тоо</th><th>Ширхэгийн нөөц</th><th>Хайрцгийн нөөц</th></tr></thead><tbody id="reportByCategory"></tbody></table>
       </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Тооллогын хуудас</div>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Брэнд → Ангилал → Бараа тус бүрийн дэлгүүрт байгаа нийт үлдэгдэл (ширхэгээр)</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="printStocktakeSheet()">🖨️ Хэвлэх</button>
+      </div>
+      <div id="stocktakeTree" style="padding:16px 20px;max-height:480px;overflow-y:auto"></div>
     </div>
   </div>
 
@@ -1076,6 +1093,7 @@ function renderReport() {
   document.getElementById('rp-count').textContent = filtered.length;
 
   renderInventorySummary();
+  renderStocktakeTree();
 
   const tb = document.getElementById('reportTable');
   tb.innerHTML = filtered.map(t => {
@@ -1228,6 +1246,71 @@ function printInventorySummary() {
     <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
     ${tableHtml('Брэндээр', byBrand)}
     ${tableHtml('Ангиллаар', byCategory)}`;
+  document.getElementById('printInventory').innerHTML = html;
+  document.body.classList.add('printing-inventory');
+  setPrintPageSize('A4', '14mm');
+  window.print();
+  setTimeout(() => { document.body.classList.remove('printing-inventory'); clearPrintPageSize(); }, 500);
+}
+
+// Барааны дэлгүүрт байгаа (агуулах биш) нийт үлдэгдлийг ганц "ширхэг"-ээр
+// илэрхийлнэ. "Нэгдсэн нөөц" барааны хувьд box_stock нь unit_stock-оос
+// аль хэдийн тооцогдсон дүрслэл тул давхардуулахгүй; бусад барааны хувьд
+// хайрцгийг ширхэг болгож хөрвүүлж unit_stock дээр нэмнэ.
+function totalUnitsInStore(p) {
+  if (p.unified_stock) return p.unit_stock || 0;
+  return (p.unit_stock || 0) + (p.box_stock || 0) * (p.box_per_box || 1);
+}
+
+// Тооллогын хуудас: Брэнд → Ангилал → Бараа тус бүрийн ширхэгээр тооцсон
+// үлдэгдэл, цагаан толгойн дарааллаар эрэмблэсэн (хэвлэхэд тогтвортой байх)
+function computeStocktakeSheet() {
+  const byBrand = new Map();
+  products.forEach(p => {
+    const brandName = brands.find(b => b.id === p.brand_id)?.name || 'Тодорхойгүй брэнд';
+    const catName = categories.find(c => c.id === p.category_id)?.name || 'Тодорхойгүй ангилал';
+    if (!byBrand.has(brandName)) byBrand.set(brandName, new Map());
+    const byCat = byBrand.get(brandName);
+    if (!byCat.has(catName)) byCat.set(catName, []);
+    byCat.get(catName).push({ name: p.name, qty: totalUnitsInStore(p) });
+  });
+  const collator = new Intl.Collator('mn');
+  return [...byBrand.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([brand, byCat]) => ({
+    brand,
+    categories: [...byCat.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([cat, items]) => ({
+      cat, items: items.sort((a, b) => collator.compare(a.name, b.name)),
+    })),
+  }));
+}
+function renderStocktakeTree() {
+  const data = computeStocktakeSheet();
+  const html = data.map(({ brand, categories }) => `
+    <div class="stocktake-brand">${brand}</div>
+    ${categories.map(({ cat, items }) => `
+      <div class="stocktake-category">${cat}</div>
+      ${items.map(i => `<div class="stocktake-product"><span>${i.name}</span><span class="stocktake-dots"></span><span class="stocktake-qty">${i.qty}</span></div>`).join('')}
+    `).join('')}
+  `).join('') || `<div class="empty">Бараа алга байна</div>`;
+  document.getElementById('stocktakeTree').innerHTML = html;
+}
+function printStocktakeSheet() {
+  const data = computeStocktakeSheet();
+  const sectionsHtml = data.map(({ brand, categories }) => `
+    <div style="font-weight:700;font-size:15px;margin-top:16px">${brand}</div>
+    ${categories.map(({ cat, items }) => `
+      <div style="font-weight:600;font-size:12px;margin:8px 0 3px 18px;color:#333;text-transform:uppercase;letter-spacing:.03em">${cat}</div>
+      ${items.map(i => `
+        <div style="display:flex;align-items:baseline;margin:4px 0;margin-left:36px;font-size:13px">
+          <span>${i.name}</span>
+          <span style="flex:1;border-bottom:1px dotted #999;height:1px;margin:0 6px"></span>
+          <span style="font-weight:700;min-width:24px;text-align:right">${i.qty}</span>
+        </div>`).join('')}
+    `).join('')}
+  `).join('') || `<div>Бараа алга байна</div>`;
+  const html = `
+    <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:2px">CUPPA — Тооллогын хуудас</div>
+    <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
+    ${sectionsHtml}`;
   document.getElementById('printInventory').innerHTML = html;
   document.body.classList.add('printing-inventory');
   setPrintPageSize('A4', '14mm');
