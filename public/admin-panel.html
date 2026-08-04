@@ -201,6 +201,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <button class="nav-item" data-page="categories" onclick="navTo('categories')">🏷️ Ангилал</button>
     <button class="nav-item" data-page="brands" onclick="navTo('brands')">🏪 Брэнд</button>
     <button class="nav-item" data-page="orders" onclick="navTo('orders')">🧾 Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="report" onclick="navTo('report')">📈 Тайлан</button>
   </div>
   <div class="sidebar-foot">
     <button class="nav-item" onclick="doLogout()">🚪 Гарах</button>
@@ -261,6 +262,34 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>И-баримт</th><th>Хүргэлт</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
   </div>
 
+  <div class="page" id="page-report">
+    <div class="page-header"><div><h1>Тайлан</h1><p>Агуулах ⇄ дэлгүүрийн шилжилтийн түүх</p></div></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="rp-to-store">0</div><div class="stat-label">Агуулахаас татсан (нийт)</div></div>
+      <div class="stat-card"><div class="stat-val" id="rp-to-warehouse">0</div><div class="stat-label">Агуулах руу буцаасан (нийт)</div></div>
+      <div class="stat-card"><div class="stat-val" id="rp-warehouse-left">0</div><div class="stat-label">Агуулахад үлдсэн нийт нөөц</div></div>
+      <div class="stat-card"><div class="stat-val" id="rp-count">0</div><div class="stat-label">Нийт бүртгэгдсэн шилжилт</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Шилжилтийн түүх</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="reportSearch" oninput="renderReport()" placeholder="Барааны нэрээр хайх..."
+            style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:200px">
+          <select id="reportDirection" onchange="renderReport()"
+            style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+            <option value="">Бүх чиглэл</option>
+            <option value="to_store">Агуулахаас → Дэлгүүр (татсан)</option>
+            <option value="to_warehouse">Дэлгүүрээс → Агуулах (буцаасан)</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Огноо</th><th>Бараа</th><th>Төрөл</th><th>Чиглэл</th><th>Тоо</th><th>Хийсэн</th></tr></thead><tbody id="reportTable"></tbody></table>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -272,7 +301,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧', Cupwithstraw:'🥤'};
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
-let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [];
+let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [];
 
 const IMAGE_BUCKET = 'product-images';
 const MAX_PRODUCT_IMAGES = 3;
@@ -341,17 +370,19 @@ async function doLogout() {
 }
 
 async function loadAll() {
-  const [c, s, b, p, o, oi] = await Promise.all([
+  const [c, s, b, p, o, oi, st] = await Promise.all([
     sb.from('categories').select('*').order('id'),
     sb.from('subcategories').select('*'),
     sb.from('brands').select('*').order('id'),
     sb.from('products').select('*').order('id', { ascending: false }),
     sb.from('orders').select('*').order('created_at', { ascending: false }),
     sb.from('order_items').select('*'),
+    sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
   ]);
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
-  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders();
+  stockTransfers = st.data || [];
+  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport();
   checkLowStock();
 }
 
@@ -455,7 +486,7 @@ function renderProducts() {
       <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
       <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span></div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openTransferStock(${p.id})">📦 Татах</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openTransferStock(${p.id})">Шилжүүлэх</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">${query ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
@@ -671,8 +702,9 @@ async function saveProduct(id) {
   }
 }
 
-// Агуулахаас дэлгүүр рүү нөөц шилжүүлэх: тоог ганц л удаа оруулбал агуулахаас
-// хасаад дэлгүүрт нэмнэ (өмнө нь 2 газар тус тусад нь гараар засдаг байсан)
+// Агуулах ⇄ дэлгүүрийн хооронд нөөц шилжүүлэх: тоог ганц л удаа оруулбал
+// (өмнө нь 2 газар тус тусад нь гараар засдаг байсан) чиглэлээсээ хамааран
+// нэг талаас хасаад нөгөө талд нэмнэ, мөн Тайлан хуудсанд харагдах түүх бичнэ
 function openTransferStock(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
@@ -680,47 +712,69 @@ function openTransferStock(id) {
   const hasBox = !!(p.box_price || p.box_stock || p.warehouse_box_stock);
   const body = `
     <p style="margin-bottom:10px"><b>${p.name}</b></p>
+    <div class="fg full" style="margin-bottom:12px">
+      <label>Чиглэл</label>
+      <select id="ts-direction">
+        <option value="to_store">Агуулахаас → Дэлгүүр рүү (татах)</option>
+        <option value="to_warehouse">Дэлгүүрээс → Агуулах руу (буцаах)</option>
+      </select>
+    </div>
     <div class="form-grid">
       ${hasUnit ? `<div class="fg full">
-        <label>Ширхэгээр татах (Агуулах: ${p.warehouse_unit_stock||0} → Дэлгүүр: ${p.unit_stock||0})</label>
-        <input type="number" id="ts-unit-qty" placeholder="Татах тоо" min="0">
+        <label>Ширхэгээр (Агуулах: ${p.warehouse_unit_stock||0} ⇄ Дэлгүүр: ${p.unit_stock||0})</label>
+        <input type="number" id="ts-unit-qty" placeholder="Шилжүүлэх тоо" min="0">
       </div>` : ''}
       ${hasBox ? `<div class="fg full">
-        <label>Хайрцгаар татах (Агуулах: ${p.warehouse_box_stock||0} → Дэлгүүр: ${p.box_stock||0})</label>
-        <input type="number" id="ts-box-qty" placeholder="Татах тоо" min="0">
+        <label>Хайрцгаар (Агуулах: ${p.warehouse_box_stock||0} ⇄ Дэлгүүр: ${p.box_stock||0})</label>
+        <input type="number" id="ts-box-qty" placeholder="Шилжүүлэх тоо" min="0">
       </div>` : ''}
     </div>`;
-  openModal('Агуулахаас татах', body,
-    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="submitTransferStock(${id})">Татах</button>`);
+  openModal('Барааны шилжилт', body,
+    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="submitTransferStock(${id})">Шилжүүлэх</button>`);
 }
 
 async function submitTransferStock(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
+  const direction = document.getElementById('ts-direction').value; // to_store | to_warehouse
   const unitQtyEl = document.getElementById('ts-unit-qty');
   const boxQtyEl = document.getElementById('ts-box-qty');
   const unitQty = unitQtyEl ? (parseInt(unitQtyEl.value, 10) || 0) : 0;
   const boxQty = boxQtyEl ? (parseInt(boxQtyEl.value, 10) || 0) : 0;
-  if (!unitQty && !boxQty) { toast('Татах тоогоо оруулна уу', 'err'); return; }
-  if (unitQty > (p.warehouse_unit_stock||0) || boxQty > (p.warehouse_box_stock||0)) {
-    toast('Агуулахын нөөцөөс их тоо татах гэж байна', 'err'); return;
+  if (!unitQty && !boxQty) { toast('Шилжүүлэх тоогоо оруулна уу', 'err'); return; }
+
+  const fromUnit = direction === 'to_store' ? (p.warehouse_unit_stock||0) : (p.unit_stock||0);
+  const fromBox = direction === 'to_store' ? (p.warehouse_box_stock||0) : (p.box_stock||0);
+  if (unitQty > fromUnit || boxQty > fromBox) {
+    toast(direction === 'to_store' ? 'Агуулахын нөөцөөс их тоо татах гэж байна' : 'Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна', 'err');
+    return;
   }
+
   const row = {};
-  if (unitQty) {
-    row.warehouse_unit_stock = Math.max((p.warehouse_unit_stock||0) - unitQty, 0);
-    row.unit_stock = (p.unit_stock||0) + unitQty;
+  const logs = [];
+  if (direction === 'to_store') {
+    if (unitQty) { row.warehouse_unit_stock = (p.warehouse_unit_stock||0) - unitQty; row.unit_stock = (p.unit_stock||0) + unitQty; logs.push({ option_type: 'unit', qty: unitQty }); }
+    if (boxQty) { row.warehouse_box_stock = (p.warehouse_box_stock||0) - boxQty; row.box_stock = (p.box_stock||0) + boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
+  } else {
+    if (unitQty) { row.unit_stock = (p.unit_stock||0) - unitQty; row.warehouse_unit_stock = (p.warehouse_unit_stock||0) + unitQty; logs.push({ option_type: 'unit', qty: unitQty }); }
+    if (boxQty) { row.box_stock = (p.box_stock||0) - boxQty; row.warehouse_box_stock = (p.warehouse_box_stock||0) + boxQty; logs.push({ option_type: 'box', qty: boxQty }); }
   }
-  if (boxQty) {
-    row.warehouse_box_stock = Math.max((p.warehouse_box_stock||0) - boxQty, 0);
-    row.box_stock = (p.box_stock||0) + boxQty;
-  }
+
   const btn = document.querySelector('#modalFoot .btn-primary');
-  if (btn) { btn.disabled = true; btn.textContent = 'Татаж байна…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Шилжүүлж байна…'; }
   const { error } = await sb.from('products').update(row).eq('id', id);
-  if (btn) { btn.disabled = false; btn.textContent = 'Татах'; }
-  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+  if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Шилжүүлэх'; } toast('Алдаа: ' + error.message, 'err'); return; }
+
+  const { data: { user } } = await sb.auth.getUser();
+  const logRows = logs.map(l => ({
+    product_id: id, product_name: p.name, option_type: l.option_type,
+    direction, qty: l.qty, admin_email: user?.email || null,
+  }));
+  if (logRows.length) await sb.from('stock_transfers').insert(logRows);
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Шилжүүлэх'; }
   closeModal();
-  toast('✅ Агуулахаас амжилттай татагдлаа');
+  toast(direction === 'to_store' ? '✅ Агуулахаас амжилттай татагдлаа' : '✅ Дэлгүүрээс агуулах руу буцаагдлаа');
   await loadAll();
 }
 
@@ -879,6 +933,39 @@ function renderOrders() {
     </tr>`;
   }).join('') || `<tr><td colspan="9" class="empty">Захиалга алга байна</td></tr>`;
 }
+
+function renderReport() {
+  const query = (document.getElementById('reportSearch')?.value || '').trim().toLowerCase();
+  const direction = document.getElementById('reportDirection')?.value || '';
+  const filtered = stockTransfers.filter(t =>
+    (!query || (t.product_name || '').toLowerCase().includes(query)) &&
+    (!direction || t.direction === direction)
+  );
+
+  const toStoreTotal = stockTransfers.filter(t => t.direction === 'to_store').reduce((sum, t) => sum + t.qty, 0);
+  const toWarehouseTotal = stockTransfers.filter(t => t.direction === 'to_warehouse').reduce((sum, t) => sum + t.qty, 0);
+  const warehouseLeft = products.reduce((sum, p) => sum + (p.warehouse_unit_stock || 0) + (p.warehouse_box_stock || 0), 0);
+  document.getElementById('rp-to-store').textContent = toStoreTotal;
+  document.getElementById('rp-to-warehouse').textContent = toWarehouseTotal;
+  document.getElementById('rp-warehouse-left').textContent = warehouseLeft;
+  document.getElementById('rp-count').textContent = stockTransfers.length;
+
+  const tb = document.getElementById('reportTable');
+  tb.innerHTML = filtered.map(t => {
+    const dirBadge = t.direction === 'to_store'
+      ? `<span class="badge" style="background:var(--green-light);color:#2F4A22">Агуулах → Дэлгүүр</span>`
+      : `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Дэлгүүр → Агуулах</span>`;
+    return `<tr>
+      <td class="mono" style="font-size:11px">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+      <td>${t.product_name}</td>
+      <td>${t.option_type === 'box' ? 'Хайрцаг' : 'Ширхэг'}</td>
+      <td>${dirBadge}</td>
+      <td class="mono">${t.qty}</td>
+      <td style="font-size:12px">${t.admin_email || '-'}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" class="empty">Шилжилтийн түүх алга байна</td></tr>`;
+}
+
 async function updateOrderStatus(orderNumber, status) {
   const { error } = await sb.from('orders').update({ status }).eq('order_number', orderNumber);
   if (error) { toast('Төлөв солиход алдаа гарлаа', 'err'); return; }
