@@ -4,52 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Нууцлалын бодлого — CUPPA</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Inter', -apple-system, sans-serif; max-width: 720px; margin: 0 auto; padding: 50px 24px 100px; line-height: 1.7; color: #241C15; background: #EFE3CF; }
-  h1 { font-family: Georgia, serif; font-size: 28px; margin-bottom: 6px; }
-  .updated { color: #5C4E3E; font-size: 13px; margin-bottom: 34px; }
-  h2 { font-size: 18px; margin-top: 34px; margin-bottom: 10px; color: #7A2E2E; }
-  p, li { font-size: 14.5px; color: #241C15; }
-  ul { padding-left: 20px; }
-  a { color: #7A2E2E; }
+  *{box-sizing:border-box}
+  body{font-family:'Ubuntu',sans-serif;margin:0;color:#241C15;background:#ffffff}
+  header{background:rgba(36,28,20,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(255,255,255,.08)}
+  .header-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center}
+  .header-inner a{display:flex;align-items:center}
+  .header-inner img{height:26px;display:block}
+  main{max-width:720px;margin:0 auto;padding:50px 24px 100px;line-height:1.7}
+  h1{font-family:'Ubuntu',sans-serif;font-weight:700;font-size:28px;margin:0 0 6px}
+  .updated{color:#5C4E3E;font-size:13px;margin-bottom:34px}
+  h2{font-size:18px;font-weight:700;margin-top:34px;margin-bottom:10px;color:#7A2E2E}
+  p,li{font-size:14.5px;color:#241C15}
+  ul{padding-left:20px}
+  a{color:#7A2E2E}
+  .back{font-size:13px;text-decoration:none}
 </style>
 </head>
 <body>
-  <h1>Нууцлалын бодлого</h1>
-  <div class="updated">Сүүлд шинэчилсэн: 2026 он</div>
+  <header>
+    <div class="header-inner">
+      <a href="/"><img src="/cuppa-logo.png" alt="CUPPA"></a>
+    </div>
+  </header>
+  <main>
+    <a class="back" href="/">← CUPPA руу буцах</a>
+    <h1 style="margin-top:20px">Нууцлалын бодлого</h1>
+    <div class="updated">Сүүлд шинэчилсэн: 2026 он</div>
 
-  <p>CUPPA (цаашид "бид" гэх) нь энэхүү вебсайтаар (cuppamn.vercel.app) дамжуулан таны хувийн мэдээллийг хэрхэн цуглуулж, ашиглаж, хамгаалдаг талаар энэ баримт бичигт тайлбарласан болно.</p>
+    <p>CUPPA (цаашид "бид" гэх) нь энэхүү вебсайтаар (cuppamn.vercel.app) дамжуулан таны хувийн мэдээллийг хэрхэн цуглуулж, ашиглаж, хамгаалдаг талаар энэ баримт бичигт тайлбарласан болно.</p>
 
-  <h2>1. Бидний цуглуулдаг мэдээлэл</h2>
-  <ul>
-    <li>Бүртгэл үүсгэхэд: нэр, имэйл хаяг</li>
-    <li>Facebook/Google-ээр нэвтрэхэд: тухайн платформоос зөвшөөрсөн үндсэн профайл мэдээлэл (нэр, имэйл)</li>
-    <li>Захиалга өгөхөд: хүлээн авагчийн нэр, утасны дугаар, хүргэлтийн хаяг</li>
-  </ul>
+    <h2>1. Бидний цуглуулдаг мэдээлэл</h2>
+    <ul>
+      <li>Бүртгэл үүсгэхэд: нэр, имэйл хаяг</li>
+      <li>Facebook/Google-ээр нэвтрэхэд: тухайн платформоос зөвшөөрсөн үндсэн профайл мэдээлэл (нэр, имэйл)</li>
+      <li>Захиалга өгөхөд: хүлээн авагчийн нэр, утасны дугаар, хүргэлтийн хаяг</li>
+    </ul>
 
-  <h2>2. Мэдээллийг хэрхэн ашигладаг</h2>
-  <ul>
-    <li>Таны бүртгэлийг үүсгэж, нэвтрэлтийг баталгаажуулах</li>
-    <li>Захиалгыг боловсруулж, хүргэх</li>
-    <li>Захиалгын явцын талаар тантай холбогдох</li>
-  </ul>
-  <p>Бид таны мэдээллийг гуравдагч этгээдэд худалдахгүй, задруулахгүй.</p>
+    <h2>2. Мэдээллийг хэрхэн ашигладаг</h2>
+    <ul>
+      <li>Таны бүртгэлийг үүсгэж, нэвтрэлтийг баталгаажуулах</li>
+      <li>Захиалгыг боловсруулж, хүргэх</li>
+      <li>Захиалгын явцын талаар тантай холбогдох</li>
+    </ul>
+    <p>Бид таны мэдээллийг гуравдагч этгээдэд худалдахгүй, задруулахгүй.</p>
 
-  <h2>3. Мэдээллийн хадгалалт</h2>
-  <p>Таны мэдээлэл Supabase (аюулгүй cloud database) дээр хадгалагдана. Нэвтрэлтийн мэдээлэл (нууц үг) шифрлэгдсэн байдлаар хадгалагддаг.</p>
+    <h2>3. Мэдээллийн хадгалалт</h2>
+    <p>Таны мэдээлэл Supabase (аюулгүй cloud database) дээр хадгалагдана. Нэвтрэлтийн мэдээлэл (нууц үг) шифрлэгдсэн байдлаар хадгалагддаг.</p>
 
-  <h2>4. Facebook/Google нэвтрэлт</h2>
-  <p>Та Facebook эсвэл Google ашиглан бүртгүүлэхэд, бид зөвхөн таны нэр болон имэйл хаягийг л хүлээн авдаг. Бид таны Facebook/Google данс дээрх бусад мэдээлэлд хандах эрхгүй.</p>
+    <h2>4. Facebook/Google нэвтрэлт</h2>
+    <p>Та Facebook эсвэл Google ашиглан бүртгүүлэхэд, бид зөвхөн таны нэр болон имэйл хаягийг л хүлээн авдаг. Бид таны Facebook/Google данс дээрх бусад мэдээлэлд хандах эрхгүй.</p>
 
-  <h2>5. Таны эрх</h2>
-  <ul>
-    <li>Өөрийн мэдээллээ харах, засах эрхтэй</li>
-    <li>Бүртгэлээ устгуулах хүсэлт гаргах эрхтэй (доорх холбоос харна уу)</li>
-  </ul>
+    <h2>5. Таны эрх</h2>
+    <ul>
+      <li>Өөрийн мэдээллээ харах, засах эрхтэй</li>
+      <li>Бүртгэлээ устгуулах хүсэлт гаргах эрхтэй (доорх холбоос харна уу)</li>
+    </ul>
 
-  <h2>6. Холбоо барих</h2>
-  <p>Асуулт байвал бидэнтэй холбогдоно уу: <a href="mailto:cuppabrandmanager@gmail.com">cuppabrandmanager@gmail.com</a></p>
+    <h2>6. Холбоо барих</h2>
+    <p>Асуулт байвал бидэнтэй холбогдоно уу: <a href="mailto:cuppabrandmanager@gmail.com">cuppabrandmanager@gmail.com</a></p>
 
-  <p><a href="/data-deletion.html">Мэдээлэл устгах заавар</a> | <a href="/terms.html">Үйлчилгээний нөхцөл</a></p>
+    <p><a href="/data-deletion.html">Мэдээлэл устгах заавар</a> | <a href="/terms.html">Үйлчилгээний нөхцөл</a></p>
+  </main>
 </body>
 </html>

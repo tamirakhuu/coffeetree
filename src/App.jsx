@@ -747,6 +747,10 @@ function AuthModal({ open, onClose }) {
   );
 }
 const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none", boxSizing: "border-box" };
+// Профайл хуудас цагаан дэвсгэр дээр байрладаг тул inputStyle-ийн цагаан
+// background нь бараг харагдахгүй болдог — тод дэвсгэр + label нэмж ялгаруулна
+const fieldLabelStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5 };
+const profileInputStyle = { ...inputStyle, width: "100%", background: T.cream, border: `1.5px solid ${T.line}` };
 const eyeBtnStyle = {
   position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
   background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
@@ -1115,9 +1119,15 @@ function ProfileInfoSection({ user, onUserUpdate }) {
   return (
     <div>
       <h1 style={sectionTitleStyle}>Профайл</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360 }}>
-        <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
-        <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360 }}>
+        <div>
+          <div style={fieldLabelStyle}>Нэр</div>
+          <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={profileInputStyle} />
+        </div>
+        <div>
+          <div style={fieldLabelStyle}>Утасны дугаар</div>
+          <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={profileInputStyle} />
+        </div>
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Имэйл: {user.email}</div>
         {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
         {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
@@ -1131,25 +1141,10 @@ function ProfileInfoSection({ user, onUserUpdate }) {
 
 function ProfileAddressSection({ user, onUserUpdate }) {
   const [address, setAddress] = useState(user.address || "");
-  const [locationUrl, setLocationUrl] = useState(user.locationUrl || "");
-  const [locating, setLocating] = useState(false);
+  const [locationUrl] = useState(user.locationUrl || "");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) { setError("Таны браузер байршил тогтоох боломжгүй байна."); return; }
-    setLocating(true); setError(""); setNotice("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocationUrl(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
-        setLocating(false);
-      },
-      () => { setError("Байршил тогтооход алдаа гарлаа. Байршлын зөвшөөрөл олгосон эсэхээ шалгана уу."); setLocating(false); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
 
   const handleSave = async () => {
     setSaving(true); setError(""); setNotice("");
@@ -1168,17 +1163,11 @@ function ProfileAddressSection({ user, onUserUpdate }) {
     <div>
       <h1 style={sectionTitleStyle}>Хаягийн мэдээлэл</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
-        <textarea placeholder="Дэлгэрэнгүй хаяг (дүүрэг, хороо, байр, орц г.м)" value={address}
-          onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical" }} />
-
-        <button type="button" onClick={handleDetectLocation} disabled={locating} style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "none",
-          border: `1px solid ${T.line}`, borderRadius: 10, padding: "11px 14px",
-          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, color: T.ink,
-          cursor: locating ? "not-allowed" : "pointer", opacity: locating ? 0.7 : 1,
-        }}>
-          <MapPin size={16} /> {locating ? "Байршил тогтоож байна…" : "Миний байршлыг ашиглах"}
-        </button>
+        <div>
+          <div style={fieldLabelStyle}>Дэлгэрэнгүй хаяг</div>
+          <textarea placeholder="Дүүрэг, хороо, байр, орц г.м" value={address}
+            onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...profileInputStyle, resize: "vertical" }} />
+        </div>
 
         {locationUrl && (
           <a href={locationUrl} target="_blank" rel="noopener noreferrer" style={{
@@ -1691,7 +1680,6 @@ export default function App() {
             <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
               <a href="/terms.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</a>
               <a href="/privacy.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</a>
-              <a href="/data-deletion.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Мэдээлэл устгах</a>
             </div>
           </div>
         </footer>
