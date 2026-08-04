@@ -12,11 +12,18 @@ function translate(msg) {
   return ERROR_MESSAGES[msg] || msg;
 }
 
-// updateUser()/storage.upload() зэрэг session шаарддаг үйлдлийн өмнө дуудна.
-// getSession() нь access_token хугацаа дуусаж байвал автоматаар шинэчилдэг
-// тул энэ шалгалт нь "Auth session missing" race condition-ыг ихэвчлэн засна.
+// updateUser() зэрэг session шаарддаг үйлдлийн өмнө дуудна. getSession() нь
+// зөвхөн локал storage-аас уншдаг тул access_token дуусах дөхсөн/дууссан үед
+// хуучирсан session буцааж болно — тиймээс тухайн тохиолдолд refreshSession()-г
+// шууд дуудаж, серверээс шинэ token авахыг оролддог.
 async function requireSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  let { data: { session } } = await supabase.auth.getSession();
+  const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;
+  const soonExpired = !session || !expiresAt || expiresAt - Date.now() < 60_000;
+  if (soonExpired) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    if (refreshed?.session) session = refreshed.session;
+  }
   if (!session) throw new Error(translate("Auth session missing!"));
   return session;
 }
