@@ -381,8 +381,8 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
             <option value="default">Санал болгох</option>
             <option value="new">Шинэ эхэндээ</option>
-            <option value="price_asc">Үнэ: багаас их</option>
-            <option value="price_desc">Үнэ: ихээс бага</option>
+            <option value="price_asc">Үнэ багаас их</option>
+            <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
@@ -404,23 +404,18 @@ const subBtn = (active) => ({
   cursor: "pointer", marginBottom: 4,
 });
 
-/* ------------------------------------------------------------------ */
 /*  Product Detail                                                     */
-/* ------------------------------------------------------------------ */
 const availableOptionTypes = (product) =>
   product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
 
 // Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump" };
 
-// Кофены бараа дээр "Бутлалсан" сонговол тухайн бэлтгэх аргад тохирох
-// бутлалтын хэмжээг лавлагаа болгож харуулна (бараа бүрээр ялгаатай биш,
-// ерөнхий кофе бэлтгэх мэдлэг тул статик жагсаалт)
 const BREW_METHODS = [
-  { key: "espresso", name: "Espresso Machine", grindMn: "Нарийн", compare: "элсэн чихэр" },
-  { key: "mokapot", name: "Mokapot", grindMn: "Нарийн-дундаж", compare: "давс" },
-  { key: "autodrip", name: "Autodrip", grindMn: "Дундаж", compare: "шар будаа" },
-  { key: "frenchpress", name: "French Press", grindMn: "Бүдүүн", compare: "далайн давс" },
+  { key: "espresso", name: "Espresso / Delonghi", grindMn: "Fine", compare: "0.260мм" },
+  { key: "mokapot", name: "Mokapot", grindMn: "Medium-Fine", compare: "0.350мм" },
+  { key: "autodrip", name: "Drip/ Pour Over", grindMn: "Medium", compare: "0.700мм" },
+  { key: "frenchpress", name: "Aero Press", grindMn: "Coarse", compare: "0.400мм" },
 ];
 
 function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onToggleWish }) {
@@ -448,7 +443,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
-  const grindNote = isCoffee ? (grindForm === "ground" ? "Бутлалсан" : "Үрээр") : undefined;
+  const grindNote = isCoffee ? (grindForm === "ground" ? "Бутласан" : "Үрээр") : undefined;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
