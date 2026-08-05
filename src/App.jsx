@@ -425,10 +425,11 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [grindForm, setGrindForm] = useState("whole");
+  const [brewMethod, setBrewMethod] = useState(null);
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0); setGrindForm("whole");
+    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null);
   }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
@@ -443,7 +444,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
-  const grindNote = isCoffee ? (grindForm === "ground" ? "Бутласан" : "Үрээр") : undefined;
+  const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
+  const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
@@ -565,18 +567,22 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                   <div style={{ ...sideLabel, marginBottom: 10 }}>Та өөрийн машинд таарсан бутлалтаа сонгоно уу</div>
                   <div className="cuppa-brew-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {BREW_METHODS.map((m) => (
-                      <div key={m.key} style={{ border: `1px solid ${T.line}`, borderRadius: 10, padding: "12px 14px", background: T.card }}>
+                      <button key={m.key} type="button" onClick={() => setBrewMethod(brewMethod === m.key ? null : m.key)} style={{
+                        textAlign: "left", cursor: "pointer", borderRadius: 10, padding: "12px 14px",
+                        border: `1.5px solid ${brewMethod === m.key ? T.cherry : T.line}`,
+                        background: brewMethod === m.key ? T.cream : T.card,
+                        boxShadow: brewMethod === m.key ? `0 0 0 3px ${T.cherry}22` : "none",
+                        position: "relative",
+                      }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                           <Coffee size={15} color={T.moss} />
                           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 13, color: T.ink }}>{m.name}</span>
                         </div>
-                        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: product.sub ? 2 : 0 }}>
+                        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft }}>
                           Бутлалт: <b style={{ color: T.ink }}>{m.grindMn}</b> ({m.compare})
                         </div>
-                        {product.sub && (
-                          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft }}>Хууралт: <b style={{ color: T.ink }}>{product.sub}</b></div>
-                        )}
-                      </div>
+                        {brewMethod === m.key && <div style={{ position: "absolute", top: 10, right: 10, color: T.cherry }}><Check size={14} /></div>}
+                      </button>
                     ))}
                   </div>
                 </div>
