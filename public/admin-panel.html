@@ -1159,7 +1159,7 @@ function openOrderDetail(orderNumber) {
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>Нийт</span><span class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
     </div>`;
   openModal(`Захиалга ${o.order_number}`, body,
-    `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">🖨️ Хэвлэх</button>`, true);
+    `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">Хэвлэх</button>`, true);
 }
 
 function printOrderReceipt(orderNumber) {
