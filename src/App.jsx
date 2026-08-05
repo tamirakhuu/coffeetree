@@ -567,7 +567,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
               </div>
               {grindForm === "ground" && (
                 <div>
-                  <div style={{ ...sideLabel, marginBottom: 10 }}>Бэлтгэх аргаараа тохирсон бутлалт сонгоно уу</div>
+                  <div style={{ ...sideLabel, marginBottom: 10 }}>Та өөрийн машинд таарсан бутлалтаа сонгоно уу</div>
                   <div className="cuppa-brew-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {BREW_METHODS.map((m) => (
                       <div key={m.key} style={{ border: `1px solid ${T.line}`, borderRadius: 10, padding: "12px 14px", background: T.card }}>
@@ -579,7 +579,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                           Бутлалт: <b style={{ color: T.ink }}>{m.grindMn}</b> ({m.compare})
                         </div>
                         {product.sub && (
-                          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft }}>Шарал: <b style={{ color: T.ink }}>{product.sub}</b></div>
+                          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft }}>Хууралт: <b style={{ color: T.ink }}>{product.sub}</b></div>
                         )}
                       </div>
                     ))}
