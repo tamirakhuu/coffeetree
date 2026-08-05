@@ -82,7 +82,7 @@ function ProductArt({ product, height = 190 }) {
       {product.tag && (
         <span style={{
           position: "absolute", top: hasImage ? 10 : 80, left: 12, fontFamily: "'Ubuntu', sans-serif",
-          fontSize: 11, letterSpacing: "0.06em", color: T.ink, background: T.gold,
+          fontSize: 11, letterSpacing: "0.06em", color: T.paper, background: T.gold,
           padding: "3px 9px", borderRadius: 999, fontWeight: 600, textTransform: "uppercase",
         }}>
           {product.tag === "хямдралтай" && discountPercent(product.unit) != null
@@ -247,10 +247,10 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
         </nav>
 
         <form className={`cuppa-search-form${searchOpen ? " cuppa-search-open" : ""}`} onSubmit={(e) => { e.preventDefault(); onSearch(q); setSearchOpen(false); }}
-          style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.1)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
+          style={{ display: "flex", alignItems: "center", background: "rgba(253, 252, 252, 0.43)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..." autoFocus={searchOpen}
-            style={{ background: "transparent", border: "none", outline: "none", color: T.cream, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
+            style={{ background: "transparent", border: "none", outline: "none", color: T.paper, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
         </form>
 
         <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -323,7 +323,7 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
             background: outOfStock ? T.line : T.cherry, color: outOfStock ? T.inkSoft : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
             fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>
-            {outOfStock ? "Дууссан" : (<><Plus size={13} /> Сагслах</>)}
+            {outOfStock ? "Дууссан" : (<> Сагслах</>)}
           </button>
         </div>
       </div>
@@ -982,7 +982,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
             width: "100%", marginTop: 16, background: valid ? T.cherry : T.line, color: "#fff", border: "none",
             borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
             cursor: valid ? "pointer" : "not-allowed",
-          }}>{submitting ? "Илгээж байна…" : "Захиалга баталгаажуулах"}</button>
+          }}>{submitting ? "Түр хүлээнэ үү..." : "Төлбөр төлөх"}</button>
         </div>
       </div>
     </div>
@@ -995,7 +995,7 @@ function Confirmation({ orderNumber, onContinue }) {
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.moss, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
         <Check size={30} color="#fff" />
       </div>
-      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Захиалга амжилттай!</h1>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Төлбөр төлөлт амжилттай!</h1>
       <p style={{ fontFamily: "'Ubuntu', sans-serif", color: T.inkSoft, marginBottom: 6 }}>Захиалгын дугаар</p>
       <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.cherry, marginBottom: 30 }}>{orderNumber}</div>
       <button onClick={onContinue} style={{
