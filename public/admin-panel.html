@@ -330,7 +330,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="card" style="margin-top:20px">
       <div class="card-head">
         <div class="card-title">Барааны нөөцийн тайлан</div>
-        <button class="btn btn-outline btn-sm" onclick="printInventorySummary()">🖨️ Хэвлэх</button>
+        <button class="btn btn-outline btn-sm" onclick="printInventorySummary()">Хэвлэх</button>
       </div>
       <div style="padding:16px 20px 4px;font-family:'Ubuntu',sans-serif;font-size:13px;font-weight:700;color:var(--ink)">Брэндээр</div>
       <div class="table-wrap">
@@ -348,7 +348,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
           <div class="card-title">Тооллогын хуудас</div>
           <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Брэнд → Ангилал → Бараа тус бүрийн дэлгүүрт байгаа нийт үлдэгдэл (ширхэгээр)</p>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="printStocktakeSheet()">🖨️ Хэвлэх</button>
+        <button class="btn btn-outline btn-sm" onclick="printStocktakeSheet()">Хэвлэх</button>
       </div>
       <div id="stocktakeTree" style="padding:16px 20px;max-height:480px;overflow-y:auto"></div>
     </div>
@@ -362,7 +362,7 @@ const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const ICON_EMOJI = { Coffee:'☕', Leaf:'🍃', Droplet:'💧', Snowflake:'❄️', Wrench:'🔧', Cupwithstraw:'🥤'};
+const ICON_EMOJI = { CoffeeBean:'☕', TeaLeaf:'🍃', Syrup:'💧', Sauce:'🍯', Powder:'❄️', Smoothie:'🥤', Wrench:'🔧' };
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
 let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [];

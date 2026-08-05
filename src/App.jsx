@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
-  ChevronLeft, ChevronRight, Check, Coffee, Leaf, Droplet, Snowflake, Wrench,
+  ChevronLeft, ChevronRight, Check, Coffee, Wrench,
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
+import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon } from "./categoryIcons.jsx";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -30,7 +31,15 @@ const T = {
 const FONT_IMPORT =
   "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');";
 
-const ICONS = { Coffee, Leaf, Droplet, Snowflake, Wrench };
+const ICONS = {
+  CoffeeBean: CoffeeBeanIcon,
+  TeaLeaf: TeaLeafIcon,
+  Syrup: SyrupIcon,
+  Sauce: SauceIcon,
+  Powder: PowderIcon,
+  Smoothie: SmoothieIcon,
+  Wrench, // Бариста хэрэгсэл — custom svg байхгүй тул lucide хэвээр
+};
 const ICON_KEYS = Object.keys(ICONS);
 
 const money = (n) => Math.round(n || 0).toLocaleString("mn-MN") + "₮";
@@ -164,7 +173,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
       <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
         <div style={sideLabel}>Ангилал</div>
         {categories.map((c) => {
-          const Icon = ICONS[c.icon] || Coffee;
+          const Icon = ICONS[c.icon] || CoffeeBeanIcon;
           const active = activeCategory?.id === c.id;
           return (
             <button key={c.id} onClick={() => onGoCategory(c.id)} onMouseEnter={() => setActiveCat(c.id)}
@@ -892,7 +901,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
           {categories.map((c) => {
-            const Icon = ICONS[c.icon] || Coffee;
+            const Icon = ICONS[c.icon] || CoffeeBeanIcon;
             return (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
                 background: "rgba(255,255,255,.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
@@ -1394,8 +1403,8 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
             <option value="default">Санал болгох</option>
-            <option value="price_asc">Үнэ: багаас их</option>
-            <option value="price_desc">Үнэ: ихээс бага</option>
+            <option value="price_asc">Үнэ багаас их</option>
+            <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>

@@ -96,6 +96,12 @@ create policy "admin delete order_items" on order_items for delete using (is_adm
 -- ---------------------------------------------------------------------
 -- 5) Захиалга өгөхөд барааны нөөцөөс хасах функц
 -- ---------------------------------------------------------------------
+-- ⚠️ Буцаах утга (void/boolean) хувилбар хооронд шилжсэн байж болзошгүй тул
+-- (доор 15-р алхамд дахин тодорхойлогдоно) create or replace хийхээсээ өмнө
+-- эхлээд заавал drop хийнэ — Postgres буцаах төрлийг create or replace-ээр
+-- өөрчлүүлдэггүй тул үгүй бол алдаа өгнө
+drop function if exists decrement_stock(bigint, text, int);
+
 create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
 returns void as $$
 begin
@@ -256,6 +262,18 @@ begin
 end;
 $$ language plpgsql security definer;
 grant execute on function restore_stock(bigint, text, int) to authenticated, anon;
+
+-- ---------------------------------------------------------------------
+-- 15) Ангиллын дүрсийг custom SVG-тэй тохируулсан шинэ түлхүүрүүд рүү
+--     шилжүүлэх (нэрээр таарч байвал л шинэчилнэ, шинээр нэмсэн ангилал
+--     дээр нөлөөлөхгүй)
+-- ---------------------------------------------------------------------
+update categories set icon = 'CoffeeBean' where name = 'Кофе';
+update categories set icon = 'Syrup' where name = 'Сироп';
+update categories set icon = 'Sauce' where name = 'Соус';
+update categories set icon = 'Powder' where name = 'Нунтаг';
+update categories set icon = 'Smoothie' where name = 'Смүүти';
+update categories set icon = 'TeaLeaf' where name = 'Цай';
 
 -- ---------------------------------------------------------------------
 -- 13) Агуулах ⇄ дэлгүүрийн шилжилтийн түүх (Тайлан хуудсанд харуулна)

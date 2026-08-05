@@ -240,11 +240,12 @@
   on conflict (email) do nothing;
 
   insert into categories (name, icon) values
-    ('Кофе', 'Coffee'),
-    ('Цай', 'Leaf'),
-    ('Сироп', 'Droplet'),
-    ('Соус', 'Droplet'),
-    ('Нунтаг', 'Snowflake'),
+    ('Кофе', 'CoffeeBean'),
+    ('Цай', 'TeaLeaf'),
+    ('Сироп', 'Syrup'),
+    ('Соус', 'Sauce'),
+    ('Нунтаг', 'Powder'),
+    ('Смүүти', 'Smoothie'),
     ('Бариста хэрэгсэл', 'Wrench');
 
   -- Дэд ангилал — санал болгож буй эхлэл, дараа нь Admin panel-аасаа хялбар
