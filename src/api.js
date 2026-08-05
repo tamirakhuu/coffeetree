@@ -110,7 +110,7 @@ export async function submitOrder({ form, cart, products, userId }) {
       product_id: product.id,
       product_name: product.name,
       option_type: item.optionType,
-      option_label: option.label,
+      option_label: item.note ? `${option.label} · ${item.note}` : option.label,
       unit_price: option.price,
       qty: item.qty,
       line_total: lineTotalFor(item, product),

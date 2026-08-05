@@ -413,16 +413,27 @@ const availableOptionTypes = (product) =>
 // Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump" };
 
+// Кофены бараа дээр "Бутлалсан" сонговол тухайн бэлтгэх аргад тохирох
+// бутлалтын хэмжээг лавлагаа болгож харуулна (бараа бүрээр ялгаатай биш,
+// ерөнхий кофе бэлтгэх мэдлэг тул статик жагсаалт)
+const BREW_METHODS = [
+  { key: "espresso", name: "Espresso Machine", grindMn: "Нарийн", compare: "элсэн чихэр" },
+  { key: "mokapot", name: "Mokapot", grindMn: "Нарийн-дундаж", compare: "давс" },
+  { key: "autodrip", name: "Autodrip", grindMn: "Дундаж", compare: "шар будаа" },
+  { key: "frenchpress", name: "French Press", grindMn: "Бүдүүн", compare: "далайн давс" },
+];
+
 function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onToggleWish }) {
   const { brands, categories, products } = useContext(DataContext);
   const availableTypes = availableOptionTypes(product);
   const [optionType, setOptionType] = useState(() => availableTypes[0] || "unit");
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
+  const [grindForm, setGrindForm] = useState("whole");
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0);
+    setQty(1); setActiveImg(0); setGrindForm("whole");
   }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
@@ -431,11 +442,13 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
+  const isCoffee = productCategory?.name === "Кофе";
   const bulkBoxQty = product.box?.price > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
+  const grindNote = isCoffee ? (grindForm === "ground" ? "Бутлалсан" : "Үрээр") : undefined;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
@@ -523,7 +536,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                   <span style={{ width: 40, textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600 }}>{qty}</span>
                   <button onClick={() => setQty(Math.min(option.stock, qty + 1))} style={stepBtn}><Plus size={14} /></button>
                 </div>
-                <button onClick={() => onAddToCart(product, optionType, qty)} style={{
+                <button onClick={() => onAddToCart(product, optionType, qty, grindNote)} style={{
                   flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
                   padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -537,6 +550,44 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: isWished ? T.cherry : T.ink, flexShrink: 0,
             }}><Heart size={18} fill={isWished ? T.cherry : "none"} /></button>
           </div>
+
+          {isCoffee && (
+            <div style={{ marginTop: 26, paddingTop: 22, borderTop: `1px solid ${T.line}` }}>
+              <div style={sideLabel}>Бэлтгэх хэлбэр</div>
+              <div style={{ display: "flex", gap: 10, marginBottom: grindForm === "ground" ? 18 : 0 }}>
+                {[{ key: "whole", label: "Үрээр" }, { key: "ground", label: "Бутлалсан" }].map((g) => (
+                  <button key={g.key} onClick={() => setGrindForm(g.key)} style={{
+                    flex: 1, padding: "11px 16px", borderRadius: 999, cursor: "pointer",
+                    border: `1.5px solid ${grindForm === g.key ? T.cherry : T.line}`,
+                    background: grindForm === g.key ? T.cherry : "transparent",
+                    color: grindForm === g.key ? "#fff" : T.ink,
+                    fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
+                  }}>{g.label}</button>
+                ))}
+              </div>
+              {grindForm === "ground" && (
+                <div>
+                  <div style={{ ...sideLabel, marginBottom: 10 }}>Бэлтгэх аргаараа тохирсон бутлалт сонгоно уу</div>
+                  <div className="cuppa-brew-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {BREW_METHODS.map((m) => (
+                      <div key={m.key} style={{ border: `1px solid ${T.line}`, borderRadius: 10, padding: "12px 14px", background: T.card }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <Coffee size={15} color={T.moss} />
+                          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 13, color: T.ink }}>{m.name}</span>
+                        </div>
+                        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: product.sub ? 2 : 0 }}>
+                          Бутлалт: <b style={{ color: T.ink }}>{m.grindMn}</b> ({m.compare})
+                        </div>
+                        {product.sub && (
+                          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft }}>Шарал: <b style={{ color: T.ink }}>{product.sub}</b></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {suggestedPump && (
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
@@ -593,7 +644,7 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
             if (!product) return null;
             const option = product[item.optionType];
             return (
-              <div key={item.productId + item.optionType} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
+              <div key={item.productId + item.optionType + (item.note || "")} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
                 {product.images && product.images.length ? (
                   <img src={product.images[0]} alt={product.name} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: T.card }} />
                 ) : (
@@ -601,17 +652,17 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
                 )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{product.name}</div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.moss, margin: "3px 0" }}>{option.label}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.moss, margin: "3px 0" }}>{option.label}{item.note ? ` · ${item.note}` : ""}</div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", border: `1px solid ${T.line}`, borderRadius: 999 }}>
-                      <button onClick={() => updateQty(item.productId, item.optionType, Math.max(1, item.qty - 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Minus size={11} /></button>
+                      <button onClick={() => updateQty(item.productId, item.optionType, item.note, Math.max(1, item.qty - 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Minus size={11} /></button>
                       <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, width: 22, textAlign: "center" }}>{item.qty}</span>
-                      <button onClick={() => updateQty(item.productId, item.optionType, Math.min(option.stock || item.qty, item.qty + 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Plus size={11} /></button>
+                      <button onClick={() => updateQty(item.productId, item.optionType, item.note, Math.min(option.stock || item.qty, item.qty + 1))} style={{ ...stepBtn, padding: "4px 8px" }}><Plus size={11} /></button>
                     </div>
                     <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 600, color: T.ink }}>{money(computeLineTotal(product, item.optionType, item.qty))}</span>
                   </div>
                 </div>
-                <button onClick={() => removeItem(item.productId, item.optionType)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkSoft, alignSelf: "flex-start" }}><Trash2 size={15} /></button>
+                <button onClick={() => removeItem(item.productId, item.optionType, item.note)} style={{ background: "none", border: "none", cursor: "pointer", color: T.inkSoft, alignSelf: "flex-start" }}><Trash2 size={15} /></button>
               </div>
             );
           })}
@@ -956,8 +1007,8 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
             return (
-              <div key={item.productId + item.optionType} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
-                <span>{product.name} × {item.qty}</span>
+              <div key={item.productId + item.optionType + (item.note || "")} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
+                <span>{product.name}{item.note ? ` · ${item.note}` : ""} × {item.qty}</span>
                 <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(computeLineTotal(product, item.optionType, item.qty))}</span>
               </div>
             );
@@ -1480,19 +1531,19 @@ export default function App() {
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
 
-  const addToCart = (product, optionType, qty) => {
+  const addToCart = (product, optionType, qty, note) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.productId === product.id && i.optionType === optionType);
+      const existing = prev.find((i) => i.productId === product.id && i.optionType === optionType && (i.note || "") === (note || ""));
       if (existing) return prev.map((i) => i === existing ? { ...i, qty: Math.min(product[optionType].stock || i.qty, i.qty + qty) } : i);
-      return [...prev, { productId: product.id, optionType, qty }];
+      return [...prev, { productId: product.id, optionType, qty, note: note || undefined }];
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
   const quickAdd = (product) => addToCart(product, "unit", 1);
-  const updateQty = (productId, optionType, qty) =>
-    setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType ? { ...i, qty } : i));
-  const removeItem = (productId, optionType) =>
-    setCart((prev) => prev.filter((i) => !(i.productId === productId && i.optionType === optionType)));
+  const updateQty = (productId, optionType, note, qty) =>
+    setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
+  const removeItem = (productId, optionType, note) =>
+    setCart((prev) => prev.filter((i) => !(i.productId === productId && i.optionType === optionType && (i.note || "") === (note || ""))));
   const toggleWish = (id) =>
     setWishlist((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
