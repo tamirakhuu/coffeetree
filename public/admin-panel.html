@@ -362,6 +362,15 @@ const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// number talbar dээр focus-той үед mouse wheel эргүүлэхэд утга нь санамсаргүй
+// нэмэгдэж/хасагддаг browser-ийн стандарт зан төлөвийг унтраана — scroll хийх
+// гэж байгаад санаандгүй тоог өөрчилчихгүйн тулд focus-ийг шууд авчихна
+document.addEventListener('wheel', () => {
+  if (document.activeElement && document.activeElement.tagName === 'INPUT' && document.activeElement.type === 'number') {
+    document.activeElement.blur();
+  }
+}, { passive: true });
+
 const ICON_EMOJI = { CoffeeBean:'☕', TeaLeaf:'🍃', Syrup:'💧', Sauce:'🍯', Powder:'❄️', Smoothie:'🥤', Wrench:'🔧' };
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
@@ -641,7 +650,6 @@ function productFormHtml(p) {
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"></div>
         <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
         <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" oninput="recalcUnifiedStock()" value="${p.unit_stock||''}"></div>
-        <div class="fg"><label>Агуулахын нөөц</label><input type="number" id="pf-unit-warehouse" value="${p.warehouse_unit_stock||''}"></div>
         <div class="form-hint">"Бөөнөөр эхлэх тоо" бөглөвөл тэр тооноос дээш авахад доорх "Хайрцгаар" үнээр (÷ хайрцагт багтах тоо) бүх ширхэгийг автоматаар тооцно.</div>
       </div>
     </div>
@@ -786,7 +794,6 @@ async function saveProduct(id) {
       unit_price: unitEnabled ? (Number(document.getElementById('pf-unit-price').value) || 0) : 0,
       unit_original_price: unitEnabled ? (Number(document.getElementById('pf-unit-original-price').value) || null) : null,
       unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-stock').value, 10) || 0) : 0,
-      warehouse_unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-warehouse').value, 10) || 0) : 0,
       bulk_qty: unitEnabled ? (parseInt(document.getElementById('pf-bulk-qty').value, 10) || null) : null,
       box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
       box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
