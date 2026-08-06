@@ -468,7 +468,7 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
             {catMenuOpen && (
               <div style={{
                 position: "absolute", top: "calc(100% + 8px)", right: 0, background: T.card, border: `1px solid ${T.line}`,
-                borderRadius: 12, padding: 8, boxShadow: "0 16px 40px rgba(0,0,0,.2)", zIndex: 60, minWidth: 190,
+                borderRadius: 12, padding: 8, boxShadow: "0 16px 40px rgba(0,0,0,.2)", zIndex: 60, minWidth: 160,
               }}>
                 <button onClick={() => { setCategoryFilter(null); setCatMenuOpen(false); }} style={catItemStyle(!categoryFilter)}>Бүх ангилал</button>
                 {categoriesInBrand.map((c) => {
