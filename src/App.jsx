@@ -515,7 +515,7 @@ const availableOptionTypes = (product) =>
   product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
 
 // Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
-const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump" };
+const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
 
 const BREW_METHODS = [
   { key: "espresso", name: "Espresso / Delonghi", grindMn: "Fine", compare: "0.260мм" },
