@@ -333,7 +333,7 @@ function Badge({ n }) {
 /* ------------------------------------------------------------------ */
 /*  Product Card                                                       */
 /* ------------------------------------------------------------------ */
-function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
+function ProductCard({ product, onOpen, isWished, onToggleWish }) {
   const { brands } = useContext(DataContext);
   const brand = brands.find((b) => b.id === product.brandId);
   // Зарим бараа зөвхөн хайрцгаар зардаг (ширхэгээр зарахгүй) тул үргэлж
@@ -341,7 +341,6 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   // идэвхтэй эхний сонголтыг (ширхэг эсвэл хайрцаг) ашиглана
   const optionType = availableOptionTypes(product)[0] || "unit";
   const option = product[optionType];
-  const outOfStock = (option.stock || 0) <= 0;
   return (
     <div className="cuppa-product-card" style={{
       background: "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
@@ -365,12 +364,10 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(option.price)}</span>
-          <button onClick={() => onQuickAdd(product)} disabled={outOfStock} style={{
-            background: outOfStock ? T.line : T.cherry, color: outOfStock ? T.inkSoft : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
-            fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
-          }}>
-            {outOfStock ? "Дууссан" : (<> Сагслах</>)}
-          </button>
+          <button onClick={() => onOpen(product)} style={{
+            background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+          }}>Дэлгэрэнгүй</button>
         </div>
       </div>
     </div>
