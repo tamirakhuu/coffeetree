@@ -1020,12 +1020,10 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <div>
             <h1 className="cuppa-hero-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>байршуулах</h1>
 
-            {categories[0] && (
-              <button onClick={() => setView({ name: "category", categoryId: categories[0].id })} style={{
-                background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
-                fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
-              }}>Дэлгүүр үзэх <ArrowRight size={16} /></button>
-            )}
+            <button onClick={() => setView({ name: "discounts" })} style={{
+              background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
+              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+            }}>Бүх хямдрал <ArrowRight size={16} /></button>
           </div>
           <HeroSlideshow products={products} onOpen={onOpen} />
         </div>
@@ -1549,6 +1547,84 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Discounts Page — "хямдралтай" шошготой бүх бараа, ангилал+брэндээр  */
+/*  шүүх боломжтой                                                      */
+/* ------------------------------------------------------------------ */
+function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
+  const { products, brands, categories } = useContext(DataContext);
+  const [brandFilter, setBrandFilter] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState([]);
+  const [sortBy, setSortBy] = useState("default");
+
+  const discounted = products.filter((p) => p.tag === "хямдралтай");
+  const brandsInDiscount = brands.filter((b) => discounted.some((p) => p.brandId === b.id));
+  const categoriesInDiscount = categories.filter((c) => discounted.some((p) => p.categoryId === c.id));
+  let items = discounted;
+  if (categoryFilter.length) items = items.filter((p) => categoryFilter.includes(p.categoryId));
+  if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
+  if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
+
+  return (
+    <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Бүх хямдрал</div>
+
+        <div style={{ marginBottom: 26 }}>
+          <div style={sideLabel}>Ангилал</div>
+          {categoriesInDiscount.map((c) => (
+            <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+              <input type="checkbox" checked={categoryFilter.includes(c.id)}
+                onChange={() => setCategoryFilter(categoryFilter.includes(c.id) ? categoryFilter.filter((x) => x !== c.id) : [...categoryFilter, c.id])}
+                style={{ accentColor: T.cherry }} />
+              {c.name}
+            </label>
+          ))}
+          {categoriesInDiscount.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Ангилал алга</div>
+          )}
+        </div>
+
+        <div>
+          <div style={sideLabel}>Брэнд</div>
+          {brandsInDiscount.map((b) => (
+            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+              <input type="checkbox" checked={brandFilter.includes(b.id)}
+                onChange={() => setBrandFilter(brandFilter.includes(b.id) ? brandFilter.filter((x) => x !== b.id) : [...brandFilter, b.id])}
+                style={{ accentColor: T.cherry }} />
+              {b.name}
+            </label>
+          ))}
+          {brandsInDiscount.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Брэнд алга</div>
+          )}
+        </div>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 280 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+            style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
+            <option value="default">Санал болгох</option>
+            <option value="price_asc">Үнэ багаас их</option>
+            <option value="price_desc">Үнэ ихээс бага</option>
+          </select>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+          {items.map((p) => (
+            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+          ))}
+          {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Хямдралтай бүтээгдэхүүн олдсонгүй.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const BRANCHES = [
   {
     name: "Саруул зах",
@@ -1834,6 +1910,8 @@ export default function App() {
     body = <TrainingPage />;
   } else if (view.name === "bestseller") {
     body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
+  } else if (view.name === "discounts") {
+    body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
   } else if (view.name === "profile") {
     body = user
       ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} />
