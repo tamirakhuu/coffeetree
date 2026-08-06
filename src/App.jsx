@@ -336,7 +336,12 @@ function Badge({ n }) {
 function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
   const { brands } = useContext(DataContext);
   const brand = brands.find((b) => b.id === product.brandId);
-  const outOfStock = (product.unit.stock || 0) <= 0;
+  // Зарим бараа зөвхөн хайрцгаар зардаг (ширхэгээр зарахгүй) тул үргэлж
+  // "unit"-ийг харуулбал 0₮/Дууссан гэж буруу харагдана — тухайн барааны
+  // идэвхтэй эхний сонголтыг (ширхэг эсвэл хайрцаг) ашиглана
+  const optionType = availableOptionTypes(product)[0] || "unit";
+  const option = product[optionType];
+  const outOfStock = (option.stock || 0) <= 0;
   return (
     <div className="cuppa-product-card" style={{
       background: "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
@@ -359,7 +364,7 @@ function ProductCard({ product, onOpen, onQuickAdd, isWished, onToggleWish }) {
         </div>
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(product.unit.price)}</span>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(option.price)}</span>
           <button onClick={() => onQuickAdd(product)} disabled={outOfStock} style={{
             background: outOfStock ? T.line : T.cherry, color: outOfStock ? T.inkSoft : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
             fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: outOfStock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5,
@@ -381,8 +386,8 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub === subFilter);
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
-  if (sortBy === "price_asc") items = [...items].sort((a, b) => a.unit.price - b.unit.price);
-  if (sortBy === "price_desc") items = [...items].sort((a, b) => b.unit.price - a.unit.price);
+  if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
 
   const brandsInCat = brands.filter((b) => products.some((p) => p.categoryId === categoryId && p.brandId === b.id));
@@ -462,8 +467,8 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 
   let items = products.filter((p) => p.brandId === brandId);
   if (categoryFilter) items = items.filter((p) => p.categoryId === categoryFilter);
-  if (sortBy === "price_asc") items = [...items].sort((a, b) => a.unit.price - b.unit.price);
-  if (sortBy === "price_desc") items = [...items].sort((a, b) => b.unit.price - a.unit.price);
+  if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
 
   const categoriesInBrand = categories.filter((c) => products.some((p) => p.brandId === brandId && p.categoryId === c.id));
@@ -538,6 +543,13 @@ const subBtn = (active) => ({
 /*  Product Detail                                                     */
 const availableOptionTypes = (product) =>
   product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
+// Ширхэгээр зарахгүй (зөвхөн хайрцгаар зардаг) бараа үнээр эрэмбэлэхэд
+// unit.price=0-ийг ашиглавал үргэлж хамгийн хямд/үнэтэй мэт буруу эрэмбэлэгддэг
+// тул тухайн барааны идэвхтэй эхний сонголтын үнийг ашиглана
+const displayPrice = (product) => {
+  const t = availableOptionTypes(product)[0];
+  return t ? product[t].price : 0;
+};
 
 // Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
@@ -732,7 +744,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                 )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{suggestedPump.name}</div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(suggestedPump.unit.price)}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(displayPrice(suggestedPump))}</div>
                 </div>
                 <button onClick={() => onQuickAdd(suggestedPump)} style={{
                   background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px",
@@ -1493,8 +1505,8 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const bestsellers = products.filter((p) => p.tag === "бестселлэр");
   const brandsInBest = brands.filter((b) => bestsellers.some((p) => p.brandId === b.id));
   let items = brandFilter.length ? bestsellers.filter((p) => brandFilter.includes(p.brandId)) : bestsellers;
-  if (sortBy === "price_asc") items = [...items].sort((a, b) => a.unit.price - b.unit.price);
-  if (sortBy === "price_desc") items = [...items].sort((a, b) => b.unit.price - a.unit.price);
+  if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
@@ -1668,7 +1680,10 @@ export default function App() {
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
-  const quickAdd = (product) => addToCart(product, "unit", 1);
+  // Ширхэгээр зарахгүй (зөвхөн хайрцгаар зардаг) бараан дээр "unit"-ийг
+  // шууд хатуу бичсэн байвал байхгүй сонголтоор сагсанд нэмэгдэж алдаа
+  // гаргадаг байсан тул тухайн барааны идэвхтэй эхний сонголтыг ашиглана
+  const quickAdd = (product) => addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
   const updateQty = (productId, optionType, note, qty) =>
     setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
   const removeItem = (productId, optionType, note) =>
