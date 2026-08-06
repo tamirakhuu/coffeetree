@@ -44,10 +44,26 @@ const ICONS = {
 const ICON_KEYS = Object.keys(ICONS);
 
 // Ангиллын icon нь эсвэл угсарсан түлхүүр (CoffeeBean, Syrup, ...), эсвэл
-// админ admin panel-аас өөрөө оруулсан зургийн URL байж болно
+// админ admin panel-аас өөрөө оруулсан зургийн URL байж болно. Оруулсан
+// зургийг <img>-ээр шууд харуулбал СВГ дотор нь бичигдсэн өнгөөрөө (жишээ
+// нь хар) үлдэж, бусад icon шиг context (hover, cherry өнгө гэх мэт) дагаж
+// хувирахгүй тул CSS mask ашиглаж — icon-ы ХЭЛБЭРийг тодруулаад, өнгийг нь
+// background-color-оор (currentColor-той адил динамикаар) дүүргэнэ
 function CategoryIcon({ icon, size = 20, color }) {
   if (icon && /^https?:\/\//.test(icon)) {
-    return <img src={icon} alt="" style={{ width: size, height: size, objectFit: "contain", display: "inline-block", flexShrink: 0 }} />;
+    return (
+      <span
+        role="img"
+        style={{
+          display: "inline-block", width: size, height: size, flexShrink: 0,
+          backgroundColor: color || "currentColor",
+          WebkitMaskImage: `url(${icon})`, maskImage: `url(${icon})`,
+          WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat",
+          WebkitMaskPosition: "center", maskPosition: "center",
+          WebkitMaskSize: "contain", maskSize: "contain",
+        }}
+      />
+    );
   }
   const Icon = ICONS[icon] || CoffeeBeanIcon;
   return <Icon size={size} color={color} />;
