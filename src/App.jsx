@@ -8,7 +8,7 @@ import {
 import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
-import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon } from "./categoryIcons.jsx";
+import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -39,8 +39,19 @@ const ICONS = {
   Powder: PowderIcon,
   Smoothie: SmoothieIcon,
   Wrench: TamperIcon,
+  PaperCup: PaperCupIcon,
 };
 const ICON_KEYS = Object.keys(ICONS);
+
+// Ангиллын icon нь эсвэл угсарсан түлхүүр (CoffeeBean, Syrup, ...), эсвэл
+// админ admin panel-аас өөрөө оруулсан зургийн URL байж болно
+function CategoryIcon({ icon, size = 20, color }) {
+  if (icon && /^https?:\/\//.test(icon)) {
+    return <img src={icon} alt="" style={{ width: size, height: size, objectFit: "contain", display: "inline-block", flexShrink: 0 }} />;
+  }
+  const Icon = ICONS[icon] || CoffeeBeanIcon;
+  return <Icon size={size} color={color} />;
+}
 
 const money = (n) => Math.round(n || 0).toLocaleString("mn-MN") + "₮";
 const discountPercent = (option) => {
@@ -168,7 +179,6 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
       <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
         <div style={sideLabel}>Бүтээгдэхүүн</div>
         {categories.map((c) => {
-          const Icon = ICONS[c.icon] || CoffeeBeanIcon;
           const active = activeCategory?.id === c.id;
           return (
             <button key={c.id} onClick={() => onGoCategory(c.id)} onMouseEnter={() => setActiveCat(c.id)}
@@ -178,7 +188,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
                 border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Ubuntu', sans-serif",
                 fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
               }}>
-              <Icon size={15} /> {c.name}
+              <CategoryIcon icon={c.icon} size={15} /> {c.name}
             </button>
           );
         })}
@@ -472,10 +482,9 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               }}>
                 <button onClick={() => { setCategoryFilter(null); setCatMenuOpen(false); }} style={catItemStyle(!categoryFilter)}>Бүх ангилал</button>
                 {categoriesInBrand.map((c) => {
-                  const Icon = ICONS[c.icon] || CoffeeBeanIcon;
                   return (
                     <button key={c.id} onClick={() => { setCategoryFilter(c.id); setCatMenuOpen(false); }} style={catItemStyle(categoryFilter === c.id)}>
-                      <Icon size={15} /> {c.name}
+                      <CategoryIcon icon={c.icon} size={15} /> {c.name}
                     </button>
                   );
                 })}
@@ -997,20 +1006,17 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 10px" }}>
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
-          {categories.map((c) => {
-            const Icon = ICONS[c.icon] || CoffeeBeanIcon;
-            return (
-              <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
-                background: "rgba(255,255,255,.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,.5)", borderRadius: 14, padding: "26px 14px",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
-                boxShadow: "0 2px 10px rgba(36,28,20,.08)", transition: "transform .15s ease, box-shadow .15s ease",
-              }}>
-                <Icon size={26} color={T.cherry} />
-                <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
-              </button>
-            );
-          })}
+          {categories.map((c) => (
+            <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
+              background: "rgba(255,255,255,.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,.5)", borderRadius: 14, padding: "26px 14px",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(36,28,20,.08)", transition: "transform .15s ease, box-shadow .15s ease",
+            }}>
+              <CategoryIcon icon={c.icon} size={26} color={T.cherry} />
+              <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
+            </button>
+          ))}
         </div>
       </section>
 
