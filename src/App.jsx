@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
-  ChevronLeft, ChevronRight, Check, Coffee, Wrench,
+  ChevronLeft, ChevronRight, Check, Coffee,
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
-import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon } from "./categoryIcons.jsx";
+import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon } from "./categoryIcons.jsx";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -38,7 +38,7 @@ const ICONS = {
   Sauce: SauceIcon,
   Powder: PowderIcon,
   Smoothie: SmoothieIcon,
-  Wrench, // Бариста хэрэгсэл — custom svg байхгүй тул lucide хэвээр
+  Wrench: TamperIcon,
 };
 const ICON_KEYS = Object.keys(ICONS);
 
@@ -49,13 +49,10 @@ const discountPercent = (option) => {
 };
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
-/*  Data context — backend-ээс татсан ангилал/брэнд/бараа              */
+/* backend-ээс татсан ангилал/брэнд/бараа              */
 
 const DataContext = createContext({ categories: [], brands: [], products: [] });
 
-/* ------------------------------------------------------------------ */
-/*  Small building blocks                                               */
-/* ------------------------------------------------------------------ */
 function StampBadge({ label, size = 56 }) {
   return (
     <div style={{
@@ -145,9 +142,9 @@ function ScrollToTopButton() {
 /* ------------------------------------------------------------------ */
 /*  Header                                                              */
 /* ------------------------------------------------------------------ */
-function NavButton({ onClick, active, children }) {
+const NavButton = React.forwardRef(function NavButton({ onClick, active, children }, ref) {
   return (
-    <button onClick={onClick}
+    <button ref={ref} onClick={onClick}
       style={{
         background: active ? "rgba(255,255,255,0.08)" : "transparent", border: "none", color: T.cream, opacity: 0.85,
         fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
@@ -157,21 +154,19 @@ function NavButton({ onClick, active, children }) {
       onMouseLeave={(e) => (e.currentTarget.style.background = active ? "rgba(255,255,255,0.08)" : "transparent")}
     >{children}</button>
   );
-}
+});
 
-function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory, onGoBrand }) {
+function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory, onGoBrand, left }) {
   const activeCategory = categories.find((c) => c.id === activeCat) || categories[0];
-  const brandsInActive = activeCategory
-    ? brands.filter((b) => products.some((p) => p.categoryId === activeCategory.id && p.brandId === b.id))
-    : [];
   return (
     <div className="cuppa-megamenu" style={{
-      position: "absolute", top: "calc(100% + 10px)", left: 0, background: T.card, border: `1px solid ${T.line}`,
+      position: "absolute", top: "calc(100% + 10px)", left, transform: "translateX(-50%)",
+      background: T.card, border: `1px solid ${T.line}`,
       borderRadius: 14, padding: "22px 24px", display: "flex", gap: 32, boxShadow: "0 24px 50px rgba(0,0,0,.35)",
       zIndex: 120, minWidth: 400,
     }}>
       <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
-        <div style={sideLabel}>Ангилал</div>
+        <div style={sideLabel}>Бүтээгдэхүүн</div>
         {categories.map((c) => {
           const Icon = ICONS[c.icon] || CoffeeBeanIcon;
           const active = activeCategory?.id === c.id;
@@ -190,18 +185,20 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
       </div>
       <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
         <div style={sideLabel}>Брэнд</div>
-        {brandsInActive.map((b) => (
-          <button key={b.id} onClick={() => onGoBrand(b.id)}
-            style={{
-              display: "block", width: "100%", textAlign: "left", background: "transparent", color: T.ink,
-              border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif",
-              fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = T.cream)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >{b.name}</button>
-        ))}
-        {brandsInActive.length === 0 && (
+        <div className="cuppa-megamenu-brands">
+          {brands.map((b) => (
+            <button key={b.id} onClick={() => onGoBrand(b.id)}
+              style={{
+                display: "block", width: "100%", textAlign: "left", background: "transparent", color: T.ink,
+                border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif",
+                fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = T.ink; e.currentTarget.style.color = T.cream; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = T.ink; }}
+            >{b.name}</button>
+          ))}
+        </div>
+        {brands.length === 0 && (
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
         )}
       </div>
@@ -216,6 +213,8 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCat, setActiveCat] = useState(null);
   const navRef = useRef(null);
+  const menuTriggerRef = useRef(null);
+  const [menuLeft, setMenuLeft] = useState(0);
 
   useEffect(() => {
     if (categories.length && activeCat == null) setActiveCat(categories[0].id);
@@ -226,6 +225,12 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
+
+  useEffect(() => {
+    if (menuOpen && menuTriggerRef.current) {
+      setMenuLeft(menuTriggerRef.current.offsetLeft + menuTriggerRef.current.offsetWidth / 2);
+    }
+  }, [menuOpen]);
 
   const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); };
   const goBrand = (brandId) => { setView({ name: "brand", brandId }); setMenuOpen(false); };
@@ -242,8 +247,8 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
 
         <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", flex: 1 }}>
           <div className="cuppa-nav-links" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-            <NavButton active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-              Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
+            <NavButton ref={menuTriggerRef} active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+              Ангилал <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
             </NavButton>
             <NavButton onClick={() => setView({ name: "bestseller" })}>Бестселлэр</NavButton>
             <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
@@ -251,7 +256,8 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
 
           {menuOpen && (
             <ProductsMegaMenu categories={categories} brands={brands} products={products}
-              activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} onGoBrand={goBrand} />
+              activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} onGoBrand={goBrand}
+              left={menuLeft} />
           )}
         </nav>
 
