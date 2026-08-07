@@ -545,12 +545,14 @@ function cupAccessorySuggestions(product, categoryName, products) {
     if (sizeBucket) list.push(...findAll(new RegExp(`sleeve.*${sizeBucket}|${sizeBucket}.*sleeve`, "i")));
   }
 
+  // "хүйт" язгуураар шалгана — "хүйтэн", "хүйтний", "хуйтан" гэх мэт бүх
+  // хувилал (тийн ялгал)-ыг нэг дор барина
   const isHot = /халуу/i.test(sub) || /халуу/i.test(product.name);
-  const isCold = /хүйтэн|хуйтн/i.test(sub) || /хүйтэн|хуйтн/i.test(product.name);
+  const isCold = /хүйт|хуйт/i.test(sub) || /хүйт|хуйт/i.test(product.name);
   if (isHot) {
     list.push(...findAll(/халуун.*соруул|соруул.*халуун/i));
   } else if (isCold) {
-    list.push(...findAll(/(хүйтэн|хуйтн).*соруул|соруул.*(хүйтэн|хуйтн)|шэйк|смүүти/i));
+    list.push(...findAll(/(хүйт|хуйт).*соруул|соруул.*(хүйт|хуйт)|шэйк|смүүти/i));
   }
   list.push(...findAll(/takeaway/i).filter((p) => !/sleeve/i.test(p.name)));
 
