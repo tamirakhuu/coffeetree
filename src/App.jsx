@@ -520,6 +520,31 @@ const displayPrice = (product) => {
 // Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
 
+// "Нэг удаа" ангиллын аяган дээр — оны (oz) болон халуун/хүйтэн төрлөөс нь
+// хамааруулж тохирох sleeve, соруул, takeaway тээвэрлэгчийг автоматаар
+// санал болгоно (нэг аяган дээр нэгээс олон санал зэрэг гарч болно)
+const CUP_SUBCATEGORIES = ["Хуйтний аяга", "Давхар аяга", "Дан аяга"];
+function cupAccessorySuggestions(product, categoryName, products) {
+  if (categoryName !== "Нэг удаа" || !CUP_SUBCATEGORIES.includes(product.sub)) return [];
+  const findAll = (re) => products.filter((p) => p.id !== product.id && re.test(p.name));
+
+  const list = [];
+  const ozMatch = product.name.match(/(\d+)\s*oz/i);
+  const oz = ozMatch ? parseInt(ozMatch[1], 10) : null;
+  if (oz != null) {
+    const sizeBucket = [10, 13].includes(oz) ? "10\\/13" : [12, 14, 16].includes(oz) ? "12\\/16" : null;
+    if (sizeBucket) list.push(...findAll(new RegExp(`sleeve.*${sizeBucket}|${sizeBucket}.*sleeve`, "i")));
+  }
+  if (product.sub === "Давхар аяга" || product.sub === "Дан аяга") {
+    list.push(...findAll(/халуун.*соруул|соруул.*халуун/i));
+  } else if (product.sub === "Хуйтний аяга") {
+    list.push(...findAll(/(хүйтэн|хуйтн).*соруул|соруул.*(хүйтэн|хуйтн)|шэйк|смүүти/i));
+  }
+  list.push(...findAll(/takeaway/i).filter((p) => !/sleeve/i.test(p.name)));
+
+  return [...new Map(list.map((p) => [p.id, p])).values()];
+}
+
 const BREW_METHODS = [
   { key: "espresso", name: "Espresso / Delonghi", grindMn: "Fine", compare: "0.260мм" },
   { key: "mokapot", name: "Mokapot", grindMn: "Medium-Fine", compare: "0.350мм" },
@@ -553,6 +578,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
+  const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
+  const suggestions = suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions;
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
 
@@ -699,23 +726,27 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             </div>
           )}
 
-          {suggestedPump && (
+          {suggestions.length > 0 && (
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
               <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {suggestedPump.images && suggestedPump.images.length ? (
-                  <img src={suggestedPump.images[0]} alt={suggestedPump.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: T.card }} />
-                ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: `linear-gradient(155deg, ${suggestedPump.color}, ${T.ink})` }} />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{suggestedPump.name}</div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(displayPrice(suggestedPump))}</div>
-                </div>
-                <button onClick={() => onQuickAdd(suggestedPump)} style={{
-                  background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px",
-                  fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                }}>+ Нэмэх</button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {suggestions.map((s) => (
+                  <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {s.images && s.images.length ? (
+                      <img src={s.images[0]} alt={s.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, background: T.card }} />
+                    ) : (
+                      <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: `linear-gradient(155deg, ${s.color}, ${T.ink})` }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink }}>{s.name}</div>
+                      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.cherry }}>{money(displayPrice(s))}</div>
+                    </div>
+                    <button onClick={() => onQuickAdd(s)} style={{
+                      background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px",
+                      fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", flexShrink: 0,
+                    }}>+ Нэмэх</button>
+                  </div>
+                ))}
               </div>
             </div>
           )}

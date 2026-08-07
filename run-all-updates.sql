@@ -304,7 +304,7 @@ update categories set icon = 'PaperCup' where name = 'Нэг удаа';
 delete from subcategories where category_id = (select id from categories where name = 'Нэг удаа');
 insert into subcategories (category_id, name)
   select id, s.name from categories, unnest(array[
-    'Хуйтний аяга', 'Давхар аяга', 'Дан аяга', 'Зайрмаг / Десерт аяга',
+    'Хүйтний аяга', 'Давхар аяга', 'Дан аяга', 'Зайрмаг / Десерт аяга',
     'Соруул', 'Салфетка', 'Takeaway/Sleeve'
   ]) as s(name) where categories.name = 'Нэг удаа';
 
