@@ -523,21 +523,33 @@ const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump",
 // "Нэг удаа" ангиллын аяган дээр — оны (oz) болон халуун/хүйтэн төрлөөс нь
 // хамааруулж тохирох sleeve, соруул, takeaway тээвэрлэгчийг автоматаар
 // санал болгоно (нэг аяган дээр нэгээс олон санал зэрэг гарч болно)
-const CUP_SUBCATEGORIES = ["Хуйтний аяга", "Давхар аяга", "Дан аяга"];
 function cupAccessorySuggestions(product, categoryName, products) {
-  if (categoryName !== "Нэг удаа" || !CUP_SUBCATEGORIES.includes(product.sub)) return [];
-  const findAll = (re) => products.filter((p) => p.id !== product.id && re.test(p.name));
+  if (categoryName !== "Нэг удаа") return [];
+  const sub = product.sub || "";
+  // "Зайрмаг/Десерт аяга" гэх мэт халбагаар хэрэглэдэг сав sleeve/соруул
+  // шаарддаггүй тул хасна; бусад "...аяга" гэсэн дэд ангиллыг (Халууны
+  // аяга, Давхар аяга, Дан аяга, Хуйтний аяга гэх мэт админ ямар нэрээр ч
+  // оруулсан байсан) аяга гэж таньж, дараа нь халуун/хүйтэн эсэхийг мөн
+  // дэд ангиллын нэрнээс нь (эс бөгөөс барааны нэрнээс нь) тодорхойлно
+  const isDessertCup = /зайрмаг|десерт/i.test(sub);
+  const isCup = /аяга/i.test(sub) && !isDessertCup;
+  if (!isCup) return [];
 
+  const findAll = (re) => products.filter((p) => p.id !== product.id && re.test(p.name));
   const list = [];
+
   const ozMatch = product.name.match(/(\d+)\s*oz/i);
   const oz = ozMatch ? parseInt(ozMatch[1], 10) : null;
   if (oz != null) {
     const sizeBucket = [10, 13].includes(oz) ? "10\\/13" : [12, 14, 16].includes(oz) ? "12\\/16" : null;
     if (sizeBucket) list.push(...findAll(new RegExp(`sleeve.*${sizeBucket}|${sizeBucket}.*sleeve`, "i")));
   }
-  if (product.sub === "Давхар аяга" || product.sub === "Дан аяга") {
+
+  const isHot = /халуу/i.test(sub) || /халуу/i.test(product.name);
+  const isCold = /хүйтэн|хуйтн/i.test(sub) || /хүйтэн|хуйтн/i.test(product.name);
+  if (isHot) {
     list.push(...findAll(/халуун.*соруул|соруул.*халуун/i));
-  } else if (product.sub === "Хуйтний аяга") {
+  } else if (isCold) {
     list.push(...findAll(/(хүйтэн|хуйтн).*соруул|соруул.*(хүйтэн|хуйтн)|шэйк|смүүти/i));
   }
   list.push(...findAll(/takeaway/i).filter((p) => !/sleeve/i.test(p.name)));
