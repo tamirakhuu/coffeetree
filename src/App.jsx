@@ -441,23 +441,15 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
 }
 
 /* ------------------------------------------------------------------ */
-/*  Brand Page — ангиллаа сонгодогтой яг адилхнаар, брэнд дээр дарахад  */
-/*  тухайн брэндийн бүх бараа харагдаад, дээд хэсэгт нь ангиллаар шүүх  */
-/*  унжигч цэс (ChevronDown) байна                                     */
+/*  Brand Page — CategoryPage-тэй адил зүүн талын самбартаа ангиллаар   */
+/*  шүүдэг (брэнд дээр дарахад тухайн брэндийн бүх бараа харагдана)     */
 /* ------------------------------------------------------------------ */
 function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, brands, products } = useContext(DataContext);
   const brand = brands.find((b) => b.id === brandId);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState("default");
-  const [catMenuOpen, setCatMenuOpen] = useState(false);
-  const menuRef = useRef(null);
 
-  useEffect(() => {
-    const onDocClick = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setCatMenuOpen(false); };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
   useEffect(() => { setCategoryFilter(null); setSortBy("default"); }, [brandId]);
 
   if (!brand) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Брэнд олдсонгүй.</div>;
@@ -469,46 +461,23 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
 
   const categoriesInBrand = categories.filter((c) => products.some((p) => p.brandId === brandId && p.categoryId === c.id));
-  const activeCategory = categoriesInBrand.find((c) => c.id === categoryFilter);
-  const catItemStyle = (active) => ({
-    display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
-    background: active ? T.ink : "transparent", color: active ? T.cream : T.ink,
-    border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Ubuntu', sans-serif",
-    fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
-  });
 
   return (
-    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14, marginBottom: 22 }}>
+    <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{brand.name}</div>
         <div>
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink }}>{brand.name}</div>
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginTop: 4 }}>{items.length} бүтээгдэхүүн</div>
+          <div style={sideLabel}>Ангилал</div>
+          <button onClick={() => setCategoryFilter(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
+          {categoriesInBrand.map((c) => (
+            <button key={c.id} onClick={() => setCategoryFilter(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
+          ))}
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div ref={menuRef} style={{ position: "relative" }}>
-            <button onClick={() => setCatMenuOpen((v) => !v)} style={{
-              display: "flex", alignItems: "center", gap: 6, background: T.card, border: `1px solid ${T.line}`,
-              borderRadius: 999, padding: "9px 16px", fontFamily: "'Ubuntu', sans-serif", fontSize: 13,
-              fontWeight: 600, color: T.ink, cursor: "pointer",
-            }}>
-              {activeCategory ? activeCategory.name : "Ангиллаж харах"} <ChevronDown size={14} />
-            </button>
-            {catMenuOpen && (
-              <div style={{
-                position: "absolute", top: "calc(100% + 8px)", right: 0, background: T.card, border: `1px solid ${T.line}`,
-                borderRadius: 12, padding: 8, boxShadow: "0 16px 40px rgba(0,0,0,.2)", zIndex: 60, minWidth: 160,
-              }}>
-                <button onClick={() => { setCategoryFilter(null); setCatMenuOpen(false); }} style={catItemStyle(!categoryFilter)}>Бүх ангилал</button>
-                {categoriesInBrand.map((c) => {
-                  return (
-                    <button key={c.id} onClick={() => { setCategoryFilter(c.id); setCatMenuOpen(false); }} style={catItemStyle(categoryFilter === c.id)}>
-                      <CategoryIcon icon={c.icon} size={15} /> {c.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 280 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
             <option value="default">Санал болгох</option>
@@ -517,13 +486,13 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
-        {items.map((p) => (
-          <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-            isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
-        ))}
-        {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Тохирох бараа олдсонгүй.</div>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+          {items.map((p) => (
+            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+          ))}
+          {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Тохирох бараа олдсонгүй.</div>}
+        </div>
       </div>
     </div>
   );
