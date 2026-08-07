@@ -538,21 +538,40 @@ function cupAccessorySuggestions(product, categoryName, products) {
   const findAll = (re) => products.filter((p) => p.id !== product.id && re.test(p.name));
   const list = [];
 
+  // "хүйт" язгуураар шалгана — "хүйтэн", "хүйтний" гэх мэт бүх хувилал
+  // (тийн ялгал)-ыг нэг дор барина
+  const isHot = /халуу/i.test(sub) || /халуу/i.test(product.name);
+  const isCold = /хүйт/i.test(sub) || /хүйт/i.test(product.name);
+
+  // Sleeve — оноос нь хамаарч тааруулна. Нэг sleeve бараа "10/13oz" эсвэл
+  // "12/14/16oz" гэх мэт ХЭДЭН ч тоо зэрэг барьж болдог тул тэдгээрийг бүгдийг
+  // нь тоо тус бүрээр задалж, аяганы онтой яг таарч байгаа эсэхийг шалгана
+  // (зөвхөн "10/16" гэсэн тогтмол мөрөөр биш) — ингэснээр 12/14/16oz-ийн
+  // sleeve-г 10/13oz-ийнхтэй андуурахгүй
+  const parseSleeveSizes = (name) => {
+    const m = name.match(/(\d+(?:\s*\/\s*\d+)*)\s*oz/i);
+    return m ? m[1].split("/").map((s) => parseInt(s.trim(), 10)) : [];
+  };
   const ozMatch = product.name.match(/(\d+)\s*oz/i);
   const oz = ozMatch ? parseInt(ozMatch[1], 10) : null;
   if (oz != null) {
-    const sizeBucket = [10, 13].includes(oz) ? "10\\/13" : [12, 14, 16].includes(oz) ? "12\\/16" : null;
-    if (sizeBucket) list.push(...findAll(new RegExp(`sleeve.*${sizeBucket}|${sizeBucket}.*sleeve`, "i")));
+    // Хүйтэн (ice) аяганд ЗӨВХӨН 10/13oz-ийн sleeve-г санал болгохгүй
+    const skipSleeve = isCold && [10, 13].includes(oz);
+    if (!skipSleeve) {
+      const allSleeves = findAll(/sleeve/i);
+      const sizedMatch = allSleeves.filter((p) => parseSleeveSizes(p.name).includes(oz));
+      // Тухайн оны sleeve тусад нь байхгүй бол оны тэмдэглэгээгүй, бүх
+      // төрөлд зориулсан ганц (universal) sleeve байж болзошгүй тул түүн
+      // рүү шилжинэ — гэхдээ өөр оны sleeve-г буруу санал болгохгүй
+      const universalSleeves = allSleeves.filter((p) => parseSleeveSizes(p.name).length === 0);
+      list.push(...(sizedMatch.length ? sizedMatch : universalSleeves));
+    }
   }
 
-  // "хүйт" язгуураар шалгана — "хүйтэн", "хүйтний", "хуйтан" гэх мэт бүх
-  // хувилал (тийн ялгал)-ыг нэг дор барина
-  const isHot = /халуу/i.test(sub) || /халуу/i.test(product.name);
-  const isCold = /хүйт|хуйт/i.test(sub) || /хүйт|хуйт/i.test(product.name);
   if (isHot) {
     list.push(...findAll(/халуун.*соруул|соруул.*халуун/i));
   } else if (isCold) {
-    list.push(...findAll(/(хүйт|хуйт).*соруул|соруул.*(хүйт|хуйт)|шэйк|смүүти/i));
+    list.push(...findAll(/хүйт.*соруул|соруул.*хүйт|шэйк|смүүти/i));
   }
   list.push(...findAll(/takeaway/i).filter((p) => !/sleeve/i.test(p.name)));
 
@@ -1503,7 +1522,7 @@ function InfoPage({ title, note }) {
   );
 }
 function TrainingPage() {
-  return <InfoPage title="Сургалт" note="Бариста бэлтгэлийн сургалт удахгүй" />;
+  return <InfoPage title="Сургалт" note="Меню сургалт удахгүй" />;
 }
 
 function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
