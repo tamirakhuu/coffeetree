@@ -246,7 +246,8 @@
     ('Соус', 'Sauce'),
     ('Нунтаг', 'Powder'),
     ('Смүүти', 'Smoothie'),
-    ('Бариста хэрэгсэл', 'Wrench');
+    ('Бариста хэрэгсэл', 'Wrench'),
+    ('Нэг удаа', 'PaperCup');
 
   -- Дэд ангилал — санал болгож буй эхлэл, дараа нь Admin panel-аасаа хялбар
   -- нэмэх/өөрчлөх боломжтой тул энд төгс байх шаардлагагүй
@@ -261,7 +262,12 @@
     union all
     select id, s.name from categories, unnest(array['Шоколад','Матча','Тараг','Жимс']) as s(name) where categories.name = 'Нунтаг'
     union all
-    select id, s.name from categories, unnest(array['Fortafilter/Tamper','Аяга/Таг','Цэвэрлэгээ']) as s(name) where categories.name = 'Бариста хэрэгсэл';
+    select id, s.name from categories, unnest(array['Fortafilter/Tamper','Аяга/Таг','Цэвэрлэгээ']) as s(name) where categories.name = 'Бариста хэрэгсэл'
+    union all
+    select id, s.name from categories, unnest(array[
+      'Хуйтний аяга', 'Давхар аяга', 'Дан аяга', 'Зайрмаг / Десерт аяга',
+      'Соруул', 'Салфетка', 'Takeaway/Sleeve'
+    ]) as s(name) where categories.name = 'Нэг удаа';
 
   -- ---------------------------------------------------------------------
   -- 4) Таны брэндүүд
