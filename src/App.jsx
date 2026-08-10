@@ -228,13 +228,18 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
           {brands.map((b) => (
             <button key={b.id} onClick={() => onGoBrand(b.id)}
               style={{
-                display: "block", width: "100%", textAlign: "left", background: "transparent", color: T.ink,
+                display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "transparent", color: T.ink,
                 border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif",
                 fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = T.ink; e.currentTarget.style.color = T.cream; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = T.ink; }}
-            >{b.name}</button>
+            >
+              {b.logo
+                ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
+                : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
+              {b.name}
+            </button>
           ))}
         </div>
         {brands.length === 0 && (
@@ -478,7 +483,12 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{brand.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+          {brand.logo && (
+            <img src={brand.logo} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", background: "#fff", border: `1px solid ${T.line}`, flexShrink: 0 }} />
+          )}
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink }}>{brand.name}</div>
+        </div>
         <div>
           <div style={sideLabel}>Ангилал</div>
           <button onClick={() => setCategoryFilter(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
