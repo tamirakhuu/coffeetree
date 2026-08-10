@@ -732,7 +732,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             <div style={{ marginTop: 26, paddingTop: 22, borderTop: `1px solid ${T.line}` }}>
               <div style={sideLabel}>Бэлтгэх хэлбэр</div>
               <div style={{ display: "flex", gap: 10, marginBottom: grindForm === "ground" ? 18 : 0 }}>
-                {[{ key: "whole", label: "Үрээр" }, { key: "ground", label: "Бутлалсан" }].map((g) => (
+                {[{ key: "whole", label: "Үрээр" }, { key: "ground", label: "Бутласан" }].map((g) => (
                   <button key={g.key} onClick={() => setGrindForm(g.key)} style={{
                     flex: 1, padding: "11px 16px", borderRadius: 999, cursor: "pointer",
                     border: `1.5px solid ${grindForm === g.key ? T.cherry : T.line}`,
