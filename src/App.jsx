@@ -93,13 +93,26 @@ function StampBadge({ label, size = 56 }) {
 
 function ProductArt({ product, height = 190 }) {
   const hasImage = product.images && product.images.length > 0;
+  const hoverImage = hasImage && product.images.length > 1 ? product.images[1] : null;
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{
-      height, borderRadius: "14px 14px 4px 4px", position: "relative", overflow: "hidden",
-      background: hasImage ? T.card : `linear-gradient(155deg, ${product.color} 0%, ${T.ink} 130%)`,
-    }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        height, borderRadius: "14px 14px 4px 4px", position: "relative", overflow: "hidden",
+        background: hasImage ? T.card : `linear-gradient(155deg, ${product.color} 0%, ${T.ink} 130%)`,
+      }}>
       {hasImage ? (
-        <img src={product.images[0]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+        <>
+          <img src={product.images[0]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+          {hoverImage && (
+            <img src={hoverImage} alt="" style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
+              opacity: hovered ? 1 : 0, transition: "opacity .25s ease",
+            }} />
+          )}
+        </>
       ) : (
         <>
           <div style={{
@@ -593,10 +606,12 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const [activeImg, setActiveImg] = useState(0);
   const [grindForm, setGrindForm] = useState("whole");
   const [brewMethod, setBrewMethod] = useState(null);
+  const [zoomed, setZoomed] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null);
+    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setZoomed(false);
   }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
@@ -624,8 +639,19 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
       <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           {images ? (
-            <div style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card }}>
-              <img src={images[activeImg]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+            <div
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setZoomPos({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 });
+              }}
+              onMouseEnter={() => setZoomed(true)}
+              onMouseLeave={() => setZoomed(false)}
+              style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card, cursor: "zoom-in" }}>
+              <img src={images[activeImg]} alt={product.name} style={{
+                width: "100%", height: "100%", objectFit: "contain", display: "block",
+                transform: zoomed ? "scale(2.2)" : "scale(1)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                transition: zoomed ? "none" : "transform .25s ease",
+              }} />
             </div>
           ) : (
             <ProductArt product={product} height={420} />
