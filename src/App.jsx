@@ -608,10 +608,40 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const [brewMethod, setBrewMethod] = useState(null);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const zoomWrapRef = useRef(null);
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
     setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setZoomed(false);
+  }, [product?.id]);
+
+  // Гар утсанд hover/mousemove ажилладаггүй тул хуруугаа зурган дээр
+  // байрлуулж чирэхэд (touch-drag) яг адилхан zoom хийдэг болгоно.
+  // touchmove-г preventDefault хийхийн тулд React-ийн synthetic event биш,
+  // { passive: false } native listener ашиглах шаардлагатай.
+  useEffect(() => {
+    const el = zoomWrapRef.current;
+    if (!el) return;
+    const updatePos = (touch) => {
+      const rect = el.getBoundingClientRect();
+      setZoomPos({
+        x: Math.min(100, Math.max(0, ((touch.clientX - rect.left) / rect.width) * 100)),
+        y: Math.min(100, Math.max(0, ((touch.clientY - rect.top) / rect.height) * 100)),
+      });
+    };
+    const onTouchStart = (e) => { setZoomed(true); updatePos(e.touches[0]); };
+    const onTouchMove = (e) => { e.preventDefault(); updatePos(e.touches[0]); };
+    const onTouchEnd = () => setZoomed(false);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
@@ -646,7 +676,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
               }}
               onMouseEnter={() => setZoomed(true)}
               onMouseLeave={() => setZoomed(false)}
-              style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card, cursor: "zoom-in" }}>
+              ref={zoomWrapRef}
+              style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card, cursor: "zoom-in", touchAction: "none" }}>
               <img src={images[activeImg]} alt={product.name} style={{
                 width: "100%", height: "100%", objectFit: "contain", display: "block",
                 transform: zoomed ? "scale(2.2)" : "scale(1)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
