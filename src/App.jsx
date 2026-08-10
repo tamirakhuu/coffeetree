@@ -364,9 +364,9 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
         </div>
         <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, color: inkCard ? "rgba(255,255,255,.7)" : T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.gold : T.ink }}>{money(option.price)}</span>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.paper : T.ink }}>{money(option.price)}</span>
           <button onClick={() => onOpen(product)} style={{
-            background: inkCard ? "#fff" : T.cherry, color: inkCard ? T.ink : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
+            background: inkCard ? "#fff" : T.ink, color: inkCard ? T.ink : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
             fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>Дэлгэрэнгүй</button>
         </div>
@@ -1062,7 +1062,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
             </p>
 
             <button onClick={() => setView({ name: "discounts" })} style={{
-              background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
+              background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
             }}>Бүх хямдрал <ArrowRight size={16} /></button>
           </div>
@@ -1072,7 +1072,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 
       <section style={{ background: T.paper }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
             {categories.map((c) => (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
@@ -1094,12 +1094,12 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.ink, padding: "20px 20px 90px" }}>
+      <section style={{ background: T.ink, padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
-            <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
+          <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
+            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
             <button onClick={() => setView({ name: "bestseller" })} style={{
-              background: "none", border: "none", cursor: "pointer", color: T.paper,
+              background: "none", border: "none", cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
             }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
           </div>
@@ -1113,11 +1113,11 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 20px 90px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Хямдралтай бүтээгдэхүүн</div>
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 20px 60px" }}>
+        <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+          <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Хямдралтай бүтээгдэхүүн</div>
           <button onClick={() => setView({ name: "discounts" })} style={{
-            background: "none", border: "none", cursor: "pointer", color: T.cherry,
+            background: "none", border: "none", cursor: "pointer", color: T.cherry, whiteSpace: "nowrap", flexShrink: 0,
             fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
           }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
         </div>
@@ -1155,7 +1155,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
     setSubmitting(false);
   };
   return (
-    <div style={{ maxWidth: 780, margin: "0 auto", padding: "40px 20px 90px" }}>
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "40px 20px 60px" }}>
       <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
         <ChevronLeft size={15} /> Сагс руу буцах
       </button>

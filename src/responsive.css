@@ -67,6 +67,9 @@ html {
   .cuppa-hero-title { font-size: 30px !important; }
   .cuppa-hero-sub { font-size: 14.5px !important; }
 
+  .cuppa-section-head { flex-wrap: nowrap !important; gap: 10px !important; }
+  .cuppa-section-title { font-size: 18px !important; }
+
   .cuppa-category-layout { flex-direction: column !important; }
   .cuppa-category-aside { width: 100% !important; }
 
