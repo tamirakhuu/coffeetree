@@ -9,10 +9,7 @@ import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProd
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
-
-/* ------------------------------------------------------------------ */
-/*  Design tokens                                                      */
-/* ------------------------------------------------------------------ */
+/*  Design tokens */
 const T = {
   ink: "#241C15",
   inkSoft: "#5C4E3E",
@@ -43,12 +40,6 @@ const ICONS = {
 };
 const ICON_KEYS = Object.keys(ICONS);
 
-// Ангиллын icon нь эсвэл угсарсан түлхүүр (CoffeeBean, Syrup, ...), эсвэл
-// админ admin panel-аас өөрөө оруулсан зургийн URL байж болно. Оруулсан
-// зургийг <img>-ээр шууд харуулбал СВГ дотор нь бичигдсэн өнгөөрөө (жишээ
-// нь хар) үлдэж, бусад icon шиг context (hover, cherry өнгө гэх мэт) дагаж
-// хувирахгүй тул CSS mask ашиглаж — icon-ы ХЭЛБЭРийг тодруулаад, өнгийг нь
-// background-color-оор (currentColor-той адил динамикаар) дүүргэнэ
 function CategoryIcon({ icon, size = 20, color }) {
   if (icon && /^https?:\/\//.test(icon)) {
     return (
@@ -75,8 +66,6 @@ const discountPercent = (option) => {
   return Math.round((1 - option.price / option.originalPrice) * 100);
 };
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-
-/* backend-ээс татсан ангилал/брэнд/бараа              */
 
 const DataContext = createContext({ categories: [], brands: [], products: [] });
 
@@ -179,9 +168,7 @@ function ScrollToTopButton() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Header                                                              */
-/* ------------------------------------------------------------------ */
+/*  Header  */
 const NavButton = React.forwardRef(function NavButton({ onClick, active, children }, ref) {
   return (
     <button ref={ref} onClick={onClick}
@@ -348,15 +335,10 @@ function Badge({ n }) {
   }}>{n}</span>;
 }
 
-/* ------------------------------------------------------------------ */
 /*  Product Card                                                       */
-/* ------------------------------------------------------------------ */
 function ProductCard({ product, onOpen, isWished, onToggleWish }) {
   const { brands } = useContext(DataContext);
   const brand = brands.find((b) => b.id === product.brandId);
-  // Зарим бараа зөвхөн хайрцгаар зардаг (ширхэгээр зарахгүй) тул үргэлж
-  // "unit"-ийг харуулбал 0₮/Дууссан гэж буруу харагдана — тухайн барааны
-  // идэвхтэй эхний сонголтыг (ширхэг эсвэл хайрцаг) ашиглана
   const optionType = availableOptionTypes(product)[0] || "unit";
   const option = product[optionType];
   return (
@@ -391,10 +373,7 @@ function ProductCard({ product, onOpen, isWished, onToggleWish }) {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
 /*  Category Page                                                      */
-/* ------------------------------------------------------------------ */
 function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, brands, products } = useContext(DataContext);
   const category = categories.find((c) => c.id === categoryId);
@@ -457,11 +436,6 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Brand Page — CategoryPage-тэй адил зүүн талын самбартаа ангиллаар   */
-/*  шүүдэг (брэнд дээр дарахад тухайн брэндийн бүх бараа харагдана)     */
-/* ------------------------------------------------------------------ */
 function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, brands, products } = useContext(DataContext);
   const brand = brands.find((b) => b.id === brandId);
@@ -532,45 +506,23 @@ const subBtn = (active) => ({
 /*  Product Detail                                                     */
 const availableOptionTypes = (product) =>
   product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
-// Ширхэгээр зарахгүй (зөвхөн хайрцгаар зардаг) бараа үнээр эрэмбэлэхэд
-// unit.price=0-ийг ашиглавал үргэлж хамгийн хямд/үнэтэй мэт буруу эрэмбэлэгддэг
-// тул тухайн барааны идэвхтэй эхний сонголтын үнийг ашиглана
 const displayPrice = (product) => {
   const t = availableOptionTypes(product)[0];
   return t ? product[t].price : 0;
 };
 
-// Тодорхой ангиллын бараа үзэж байвал холбогдох дагалдах хэрэгслийг санал болгоно
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
-
-// "Нэг удаа" ангиллын аяган дээр — оны (oz) болон халуун/хүйтэн төрлөөс нь
-// хамааруулж тохирох sleeve, соруул, takeaway тээвэрлэгчийг автоматаар
-// санал болгоно (нэг аяган дээр нэгээс олон санал зэрэг гарч болно)
 function cupAccessorySuggestions(product, categoryName, products) {
   if (categoryName !== "Нэг удаа") return [];
   const sub = product.sub || "";
-  // "Зайрмаг/Десерт аяга" гэх мэт халбагаар хэрэглэдэг сав sleeve/соруул
-  // шаарддаггүй тул хасна; бусад "...аяга" гэсэн дэд ангиллыг (Халууны
-  // аяга, Давхар аяга, Дан аяга, Хуйтний аяга гэх мэт админ ямар нэрээр ч
-  // оруулсан байсан) аяга гэж таньж, дараа нь халуун/хүйтэн эсэхийг мөн
-  // дэд ангиллын нэрнээс нь (эс бөгөөс барааны нэрнээс нь) тодорхойлно
   const isDessertCup = /зайрмаг|десерт/i.test(sub);
   const isCup = /аяга/i.test(sub) && !isDessertCup;
   if (!isCup) return [];
 
   const findAll = (re) => products.filter((p) => p.id !== product.id && re.test(p.name));
   const list = [];
-
-  // "хүйт" язгуураар шалгана — "хүйтэн", "хүйтний" гэх мэт бүх хувилал
-  // (тийн ялгал)-ыг нэг дор барина
   const isHot = /халуу/i.test(sub) || /халуу/i.test(product.name);
   const isCold = /хүйт/i.test(sub) || /хүйт/i.test(product.name);
-
-  // Sleeve — оноос нь хамаарч тааруулна. Нэг sleeve бараа "10/13oz" эсвэл
-  // "12/14/16oz" гэх мэт ХЭДЭН ч тоо зэрэг барьж болдог тул тэдгээрийг бүгдийг
-  // нь тоо тус бүрээр задалж, аяганы онтой яг таарч байгаа эсэхийг шалгана
-  // (зөвхөн "10/16" гэсэн тогтмол мөрөөр биш) — ингэснээр 12/14/16oz-ийн
-  // sleeve-г 10/13oz-ийнхтэй андуурахгүй
   const parseSleeveSizes = (name) => {
     const m = name.match(/(\d+(?:\s*\/\s*\d+)*)\s*oz/i);
     return m ? m[1].split("/").map((s) => parseInt(s.trim(), 10)) : [];
@@ -578,14 +530,10 @@ function cupAccessorySuggestions(product, categoryName, products) {
   const ozMatch = product.name.match(/(\d+)\s*oz/i);
   const oz = ozMatch ? parseInt(ozMatch[1], 10) : null;
   if (oz != null) {
-    // Хүйтэн (ice) аяганд ЗӨВХӨН 10/13oz-ийн sleeve-г санал болгохгүй
     const skipSleeve = isCold && [10, 13].includes(oz);
     if (!skipSleeve) {
       const allSleeves = findAll(/sleeve/i);
       const sizedMatch = allSleeves.filter((p) => parseSleeveSizes(p.name).includes(oz));
-      // Тухайн оны sleeve тусад нь байхгүй бол оны тэмдэглэгээгүй, бүх
-      // төрөлд зориулсан ганц (universal) sleeve байж болзошгүй тул түүн
-      // рүү шилжинэ — гэхдээ өөр оны sleeve-г буруу санал болгохгүй
       const universalSleeves = allSleeves.filter((p) => parseSleeveSizes(p.name).length === 0);
       list.push(...(sizedMatch.length ? sizedMatch : universalSleeves));
     }
@@ -624,11 +572,6 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
     setOptionType(availableOptionTypes(product)[0] || "unit");
     setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setZoomed(false);
   }, [product?.id]);
-
-  // Гар утсанд hover/mousemove ажилладаггүй тул хуруугаа зурган дээр
-  // байрлуулж чирэхэд (touch-drag) яг адилхан zoom хийдэг болгоно.
-  // touchmove-г preventDefault хийхийн тулд React-ийн synthetic event биш,
-  // { passive: false } native listener ашиглах шаардлагатай.
   useEffect(() => {
     const el = zoomWrapRef.current;
     if (!el) return;
@@ -973,7 +916,6 @@ function AuthModal({ open, onClose }) {
         if (!data.session) {
           setNotice("Бүртгэл амжилттай! Имэйлээ баталгаажуулж нэвтрэх хэсгээр орно уу.");
         }
-        // Session шууд үүссэн бол App-ийн onAuthStateChange listener modal-г автоматаар хаана
       } else {
         await loginWithEmail(email, password);
       }
@@ -1047,8 +989,6 @@ function AuthModal({ open, onClose }) {
   );
 }
 const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none", boxSizing: "border-box" };
-// Профайл хуудас цагаан дэвсгэр дээр байрладаг тул inputStyle-ийн цагаан
-// background нь бараг харагдахгүй болдог — тод дэвсгэр + label нэмж ялгаруулна
 const fieldLabelStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5 };
 const profileInputStyle = { ...inputStyle, width: "100%", background: T.cream, border: `1.5px solid ${T.line}` };
 const eyeBtnStyle = {
@@ -1343,7 +1283,6 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 const ORDER_STATUS_LABELS = {
   pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",
-  // Хуучин захиалгуудад байж болох хуучин статусууд (үзүүлэлтийн зорилгоор хадгалав)
   processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн",
 };
 const ORDER_STATUS_COLORS = {
@@ -1543,7 +1482,7 @@ function ProfileDeleteSection() {
 
 function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
-  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
     let cancelled = false;
@@ -1777,7 +1716,7 @@ const primaryBtn = { background: T.cherry, color: "#fff", border: "none", border
 /* ------------------------------------------------------------------ */
 export default function App() {
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
-  const [dataStatus, setDataStatus] = useState("loading"); // loading | ready | error
+  const [dataStatus, setDataStatus] = useState("loading"); 
   const [view, setView] = useState({ name: "home" });
   useEffect(() => { window.scrollTo(0, 0); }, [view]);
   const [cart, setCart] = useState([]);
@@ -1791,14 +1730,16 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const loaded = useRef(false);
-  // Сагс/wishlist-ийг нэвтэрсэн хэрэглэгчийн ID-гаар тусгаарлана — ингэснээр
-  // нэг browser дээр өөр өөр account-аар нэвтрэхэд хэрэглэгч бүр зөвхөн
-  // өөрийн сагс/wishlist-ээ л харна (нэвтрээгүй үед "guest" сагс)
   const storageKey = useRef("guest");
 
+  // Лого animation
+  const MIN_LOADING_MS = 1500;
   const loadData = async () => {
+    const startedAt = Date.now();
     try {
       const d = await fetchBootstrap();
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_LOADING_MS) await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed));
       setData(d);
       setDataStatus("ready");
     } catch (e) {
@@ -1807,9 +1748,6 @@ export default function App() {
   };
 
   useEffect(() => { loadData(); }, []);
-
-  // Барааны нөөц (унит/хайрцаг) өөр хэрэглэгчийн захиалга эсвэл admin-ийн
-  // өөрчлөлтөөс болж өөрчлөгдөх бүрт refresh хийхгүйгээр шууд шинэчлэгдэнэ
   useEffect(() => {
     const channel = supabase.channel("products-stock")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, (payload) => {
@@ -1839,7 +1777,7 @@ export default function App() {
     if (loaded.current) localStorage.setItem(`cuppa:wishlist:${storageKey.current}`, JSON.stringify(wishlist));
   }, [wishlist]);
 
-  // Хэрэглэгчийн нэвтрэлтийн төлөв — Supabase Auth session-той шууд синхрон
+  // hereglegciin newtrelt shalgah
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = shapeAuthUser(session?.user);
@@ -1860,9 +1798,6 @@ export default function App() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
-
-  // Ангилал руу шилжихэд шүүлтүүрийг цэвэрлэнэ — гэхдээ header-ийн мега менюгээс
-  // тодорхой брэнд сонгож орж ирсэн бол (view.brandId) тэрийг шууд идэвхжүүлнэ
   useEffect(() => {
     setBrandFilter(view.brandId ? [view.brandId] : []);
     setSubFilter(null);
@@ -1879,9 +1814,6 @@ export default function App() {
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
-  // Ширхэгээр зарахгүй (зөвхөн хайрцгаар зардаг) бараан дээр "unit"-ийг
-  // шууд хатуу бичсэн байвал байхгүй сонголтоор сагсанд нэмэгдэж алдаа
-  // гаргадаг байсан тул тухайн барааны идэвхтэй эхний сонголтыг ашиглана
   const quickAdd = (product) => addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
   const updateQty = (productId, optionType, note, qty) =>
     setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
@@ -1909,7 +1841,7 @@ export default function App() {
     try {
       const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
       setOrderNumber(orderNumber);
-      // Захиалсан хэмжээгээр нөөцийг дэлгүүрийн UI дээр шууд бууруулна
+      // noots hasagdah
       setData((prev) => ({
         ...prev,
         products: prev.products.map((p) => {
