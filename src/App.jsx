@@ -353,20 +353,20 @@ function ProductCard({ product, onOpen, isWished, onToggleWish }) {
       </div>
       <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11, color: T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 11, color: T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
           <button onClick={() => onToggleWish(product.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isWished ? T.cherry : T.inkSoft }}>
             <Heart size={16} fill={isWished ? T.cherry : "none"} />
           </button>
         </div>
-        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Ubuntu', sans-serif", fontSize: 17, fontWeight: 600, color: T.ink, lineHeight: 1.25 }}>
+        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.ink, lineHeight: 1.25 }}>
           {product.name}
         </div>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
+        <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 15, color: T.ink }}>{money(option.price)}</span>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{money(option.price)}</span>
           <button onClick={() => onOpen(product)} style={{
             background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
-            fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+            fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>Дэлгэрэнгүй</button>
         </div>
       </div>
@@ -1048,53 +1048,75 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1.08, margin: "0 0 20px" }}>text эсвэл видео<br/>байршуулах</h1>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Кофе шопдоо хэрэгтэй<br/>бүгдийг нэг дороос</h1>
+            <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: "0 0 28px" }}>
+              Буурцаг, сироп, сорц, аяга сав, тоног хэрэгсэл хүртэл — чанартай хэрэглээний бараагаа CuppA-аас хялбархан захиал.
+            </p>
 
             <button onClick={() => setView({ name: "discounts" })} style={{
               background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "13px 26px",
-              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
             }}>Бүх хямдрал <ArrowRight size={16} /></button>
           </div>
           <HeroSlideshow products={products} onOpen={onOpen} />
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 10px" }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
-          {categories.map((c) => (
-            <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
-              background: "rgba(255,255,255,.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,.5)", borderRadius: 14, padding: "26px 14px",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
-              boxShadow: "0 2px 10px rgba(36,28,20,.08)", transition: "transform .15s ease, box-shadow .15s ease",
-            }}>
-              <CategoryIcon icon={c.icon} size={26} color={T.cherry} />
-              <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
-            </button>
-          ))}
+      <section style={{ background: T.cream }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
+            {categories.map((c) => (
+              <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
+                background: "rgba(255,255,255,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "24px 14px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 12, cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(36,28,20,.06)", transition: "transform .15s ease, box-shadow .15s ease",
+              }}>
+                <span style={{
+                  width: 46, height: 46, borderRadius: "50%", background: "rgba(122,46,46,.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <CategoryIcon icon={c.icon} size={22} color={T.cherry} />
+                </span>
+                <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 90px" }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Бестселлэр бүтээгдэхүүн</div>
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 20px 20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Бестселлэр бүтээгдэхүүн</div>
+          <button onClick={() => setView({ name: "bestseller" })} style={{
+            background: "none", border: "none", cursor: "pointer", color: T.cherry,
+            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
+          }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {featured.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "10px 20px 90px" }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 20 }}>Хямдралтай бүтээгдэхүүн</div>
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 20px 90px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Хямдралтай бүтээгдэхүүн</div>
+          <button onClick={() => setView({ name: "discounts" })} style={{
+            background: "none", border: "none", cursor: "pointer", color: T.cherry,
+            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
+          }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {discounted.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
       </section>
     </div>
@@ -1730,7 +1752,11 @@ export default function App() {
           products: prev.products.map((p) => (p.id === updated.id ? updated : p)),
         }));
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          console.error("Realtime холболт амжилтгүй боллоо:", status, err);
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, []);
 

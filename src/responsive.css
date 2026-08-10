@@ -65,6 +65,7 @@ html {
 
   .cuppa-hero-grid { grid-template-columns: 1fr !important; }
   .cuppa-hero-title { font-size: 30px !important; }
+  .cuppa-hero-sub { font-size: 14.5px !important; }
 
   .cuppa-category-layout { flex-direction: column !important; }
   .cuppa-category-aside { width: 100% !important; }
