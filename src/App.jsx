@@ -158,7 +158,7 @@ function ScrollToTopButton() {
       aria-label="Дээш буцах"
       style={{
         position: "fixed", bottom: 24, right: 24, width: 46, height: 46, borderRadius: "50%",
-        background: T.cherry, color: "#fff", border: "none", cursor: "pointer", zIndex: 150,
+        background: T.ink, color: "#fff", border: "none", cursor: "pointer", zIndex: 150,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "0 6px 20px rgba(0,0,0,.25)",
       }}
@@ -346,7 +346,7 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
     <div className="cuppa-product-card" style={{
       background: inkCard ? T.ink : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
       borderRadius: "25px 25px 14px 14px", border: inkCard ? "1px solid rgb(255, 255, 255)" : "none", overflow: "hidden",
-      display: "flex", flexDirection: "column", boxShadow: inkCard ? "0 4px 16px rgba(36,28,20,.35)" : "none",
+      display: "flex", flexDirection: "column", boxShadow: inkCard ? "0 4px 16px rgba(36,28,20,.35)" : "0 1px 4px rgba(36,28,20,.12)",
       transition: "transform .15s ease, box-shadow .15s ease",
     }}>
       <div style={{ cursor: "pointer", borderBottom: `1px solid ${T.line}` }} onClick={() => onOpen(product)}>
@@ -654,7 +654,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             </div>
           )}
         </div>
-        <div>
+        <div className="cuppa-detail-info">
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
           <h1 className="cuppa-detail-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>

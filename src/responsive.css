@@ -76,6 +76,7 @@ html {
   .cuppa-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
   .cuppa-detail-title { font-size: 26px !important; }
   .cuppa-thumb-row { overflow-x: auto !important; }
+  .cuppa-detail-info { border-top: 1px solid #d3cecb7c; padding-top: 22px; }
 
   .cuppa-checkout-grid { grid-template-columns: 1fr !important; }
 
