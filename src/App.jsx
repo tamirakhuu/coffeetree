@@ -1117,7 +1117,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <div>
             <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Кофе шопдоо хэрэгтэй<br/>бүгдийг нэг дороос</h1>
             <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: "0 0 28px" }}>
-              Буурцаг, сироп, сорц, аяга сав, тоног хэрэгсэл хүртэл — чанартай хэрэглээний бараагаа CuppA-аас хялбархан захиал.
+              Кофе, сироп, соус, аяга, бариста хэрэгсэл хүртэл — чанартай хэрэглээний бараагаа CuppA-аас хялбархан захиал.
             </p>
 
             <button onClick={() => setView({ name: "discounts" })} style={{
@@ -1928,57 +1928,15 @@ export default function App() {
 
   if (dataStatus === "loading") {
     return (
-      <div style={{ minHeight: "100vh", background: T.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Ubuntu', sans-serif", color: T.inkSoft, gap: 22 }}>
-        <style>{FONT_IMPORT}</style>
+      <div style={{ minHeight: "100vh", background: T.paper, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <style>{`
-          @keyframes cuppa-steam {
-            0%   { transform: translate(0, 0) scaleX(1); opacity: 0; }
-            25%  { opacity: 0.55; }
-            50%  { transform: translate(-3px, -13px) scaleX(1.3); opacity: 0.8; }
-            75%  { transform: translate(3px, -20px) scaleX(0.9); opacity: 0.35; }
-            100% { transform: translate(0, -28px) scaleX(1); opacity: 0; }
-          }
-          @keyframes cuppa-pour {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(0.86); }
-          }
-          @keyframes cuppa-dot {
-            0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-            40% { opacity: 1; transform: translateY(-3px); }
+          @keyframes cuppa-breathe {
+            0%, 100% { transform: scale(0.94); opacity: 0.55; }
+            50% { transform: scale(1); opacity: 1; }
           }
         `}</style>
 
-        <div style={{ position: "relative", width: 92, height: 100 }}>
-          {[0, 1, 2].map((i) => (
-            <span key={i} style={{
-              position: "absolute", bottom: 62, left: 28 + i * 12, width: 5, height: 18, borderRadius: 999,
-              background: T.gold, opacity: 0, animation: `cuppa-steam 2.4s ease-in-out ${i * 0.35}s infinite`,
-            }} />
-          ))}
-          <div style={{
-            position: "absolute", bottom: 44, left: 14, width: 64, height: 34, borderRadius: "6px 6px 30px 30px",
-            background: T.ink, overflow: "hidden", transformOrigin: "top", animation: "cuppa-pour 2.4s ease-in-out infinite",
-          }}>
-            <div style={{ position: "absolute", top: 4, left: 0, right: 0, height: 6, background: T.gold, opacity: 0.9 }} />
-          </div>
-          <div style={{
-            position: "absolute", bottom: 51, left: 76, width: 16, height: 20, borderRadius: "0 12px 12px 0",
-            border: `4px solid ${T.ink}`, borderLeft: "none",
-          }} />
-          <div style={{ position: "absolute", bottom: 38, left: 6, width: 80, height: 8, borderRadius: 999, background: T.ink, opacity: 0.14 }} />
-        </div>
-
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, display: "flex", alignItems: "center", gap: 4 }}>
-          Ачааллаж байна
-          <span style={{ display: "inline-flex", gap: 3, marginLeft: 3 }}>
-            {[0, 1, 2].map((i) => (
-              <span key={i} style={{
-                width: 5, height: 5, borderRadius: "50%", background: T.cherry, display: "inline-block",
-                animation: `cuppa-dot 1.2s ease-in-out ${i * 0.15}s infinite`,
-              }} />
-            ))}
-          </span>
-        </div>
+        <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 170, animation: "cuppa-breathe 3.2s ease-in-out infinite" }} />
       </div>
     );
   }
