@@ -336,16 +336,17 @@ function Badge({ n }) {
 }
 
 /*  Product Card                                                       */
-function ProductCard({ product, onOpen, isWished, onToggleWish }) {
+function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
   const { brands } = useContext(DataContext);
   const brand = brands.find((b) => b.id === product.brandId);
   const optionType = availableOptionTypes(product)[0] || "unit";
   const option = product[optionType];
+  const inkCard = variant === "ink";
   return (
     <div className="cuppa-product-card" style={{
-      background: "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-      borderRadius: "14px 14px 10px 10px", border: "1px solid rgba(255,255,255,.5)", overflow: "hidden",
-      display: "flex", flexDirection: "column", boxShadow: "0 2px 10px rgba(36,28,20,.08)",
+      background: inkCard ? T.ink : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+      borderRadius: "14px 14px 10px 10px", border: inkCard ? "1px solid rgba(255,255,255,.35)" : "1px solid rgba(255,255,255,.5)", overflow: "hidden",
+      display: "flex", flexDirection: "column", boxShadow: inkCard ? "0 4px 16px rgba(36,28,20,.35)" : "0 2px 10px rgba(36,28,20,.08)",
       transition: "transform .15s ease, box-shadow .15s ease",
     }}>
       <div style={{ cursor: "pointer", borderBottom: `1px solid ${T.line}` }} onClick={() => onOpen(product)}>
@@ -353,19 +354,19 @@ function ProductCard({ product, onOpen, isWished, onToggleWish }) {
       </div>
       <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 11, color: T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
-          <button onClick={() => onToggleWish(product.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isWished ? T.cherry : T.inkSoft }}>
-            <Heart size={16} fill={isWished ? T.cherry : "none"} />
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 11, color: inkCard ? "rgba(255,255,255,.75)" : T.moss, textTransform: "uppercase", letterSpacing: "0.05em" }}>{brand?.name}</span>
+          <button onClick={() => onToggleWish(product.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isWished ? (inkCard ? "#fff" : T.cherry) : (inkCard ? "rgba(255,255,255,.6)" : T.inkSoft) }}>
+            <Heart size={16} fill={isWished ? (inkCard ? "#fff" : T.cherry) : "none"} />
           </button>
         </div>
-        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.ink, lineHeight: 1.25 }}>
+        <div onClick={() => onOpen(product)} style={{ cursor: "pointer", fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: inkCard ? "#fff" : T.ink, lineHeight: 1.25 }}>
           {product.name}
         </div>
-        <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, color: T.inkSoft }}>{product.origin}</div>
+        <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, color: inkCard ? "rgba(255,255,255,.7)" : T.inkSoft }}>{product.origin}</div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{money(option.price)}</span>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.gold : T.ink }}>{money(option.price)}</span>
           <button onClick={() => onOpen(product)} style={{
-            background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
+            background: inkCard ? "#fff" : T.cherry, color: inkCard ? T.ink : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
             fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
           }}>Дэлгэрэнгүй</button>
         </div>
@@ -1069,7 +1070,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.cream }}>
+      <section style={{ background: T.paper }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
           <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
@@ -1093,20 +1094,22 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 20px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Бестселлэр бүтээгдэхүүн</div>
-          <button onClick={() => setView({ name: "bestseller" })} style={{
-            background: "none", border: "none", cursor: "pointer", color: T.cherry,
-            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
-          }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
-          ))}
-          {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+      <section style={{ background: T.ink, padding: "20px 20px 90px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
+            <div style={{ fontFamily: "'Fraunces', serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
+            <button onClick={() => setView({ name: "bestseller" })} style={{
+              background: "none", border: "none", cursor: "pointer", color: T.paper,
+              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
+            }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+            ))}
+            {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          </div>
         </div>
       </section>
 
@@ -1121,7 +1124,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {discounted.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
           ))}
           {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
         </div>
