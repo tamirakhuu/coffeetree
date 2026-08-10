@@ -261,6 +261,14 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <input id="productSearch" oninput="renderProducts()" placeholder="Нэр эсвэл үнээр хайх..."
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:220px">
+        <select id="productBrandFilter" onchange="renderProducts()"
+          style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+          <option value="">Бүх брэнд</option>
+        </select>
+        <select id="productCategoryFilter" onchange="renderProducts()"
+          style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+          <option value="">Бүх ангилал</option>
+        </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap">
           <input type="checkbox" id="lowStockFirst" onchange="renderProducts()"> Бага үлдэгдэл харуулах
         </label>
@@ -455,6 +463,7 @@ async function loadAll() {
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
   stockTransfers = st.data || [];
+  populateProductFilters();
   renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport();
   checkLowStock();
 }
@@ -533,14 +542,33 @@ function statusBadge(s) {
   return `<span class="badge ${s}">${statusLabel(s)}</span>`;
 }
 
+function populateProductFilters() {
+  const brandSel = document.getElementById('productBrandFilter');
+  const catSel = document.getElementById('productCategoryFilter');
+  if (brandSel) {
+    const prev = brandSel.value;
+    brandSel.innerHTML = '<option value="">Бүх брэнд</option>' + brandOptions(null).replace(/ selected/g, '');
+    brandSel.value = prev;
+  }
+  if (catSel) {
+    const prev = catSel.value;
+    catSel.innerHTML = '<option value="">Бүх ангилал</option>' + categoryOptions(null).replace(/ selected/g, '');
+    catSel.value = prev;
+  }
+}
+
 function renderProducts() {
   const query = (document.getElementById('productSearch')?.value || '').trim().toLowerCase();
-  const filtered = query ? products.filter(p =>
+  const brandFilter = document.getElementById('productBrandFilter')?.value || '';
+  const categoryFilter = document.getElementById('productCategoryFilter')?.value || '';
+  let filtered = query ? products.filter(p =>
     (p.name || '').toLowerCase().includes(query) ||
     String(p.unit_price ?? '').includes(query) ||
     String(p.box_price ?? '').includes(query)
   ) : products.slice();
-  document.getElementById('prodCount').textContent = query
+  if (brandFilter) filtered = filtered.filter(p => String(p.brand_id) === brandFilter);
+  if (categoryFilter) filtered = filtered.filter(p => String(p.category_id) === categoryFilter);
+  document.getElementById('prodCount').textContent = (query || brandFilter || categoryFilter)
     ? `${filtered.length} / Нийт ${products.length} бараа`
     : `Нийт ${products.length} бараа`;
   if (document.getElementById('lowStockFirst')?.checked) {
@@ -562,7 +590,7 @@ function renderProducts() {
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openTransferStock(${p.id})">Шилжүүлэх</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" class="empty">${query ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
+  }).join('') || `<tr><td colspan="7" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
 
 function categoryOptions(selectedId) {
