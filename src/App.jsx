@@ -299,11 +299,11 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
             style={{ background: "transparent", border: "none", outline: "none", color: T.paper, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
         </form>
 
-        <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 18 }}>
           <button className="cuppa-search-toggle" onClick={() => setSearchOpen((v) => !v)} style={iconBtnStyle}>
             {searchOpen ? <X size={19} /> : <Search size={19} />}
           </button>
-          <div className={`cuppa-icons-rest${searchOpen ? " cuppa-icons-rest-hidden" : ""}`} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className={`cuppa-icons-rest${searchOpen ? " cuppa-icons-rest-hidden" : ""}`} style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
               <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
             </button>
@@ -328,7 +328,7 @@ function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, o
 const iconBtnStyle = { position: "relative", background: "transparent", border: "none", color: T.cream, cursor: "pointer", display: "flex", padding: 4 };
 function Badge({ n }) {
   return <span style={{
-    position: "absolute", top: -4, right: -6, background: T.cherry, color: "#fff",
+    position: "absolute", top: -3, right: -3, background: T.cherry, color: "#fff",
     fontSize: 10, fontWeight: 700, borderRadius: 999, minWidth: 16, height: 16,
     display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px",
     fontFamily: "'Ubuntu', sans-serif",
