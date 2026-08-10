@@ -345,7 +345,7 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
   return (
     <div className="cuppa-product-card" style={{
       background: inkCard ? T.ink : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-      borderRadius: "14px 14px 10px 10px", border: inkCard ? "1px solid rgba(255,255,255,.35)" : "1px solid rgba(255,255,255,.5)", overflow: "hidden",
+      borderRadius: "14px 14px 10px 10px", border: inkCard ? "1px solid rgba(255,255,255,.35)" : "none", overflow: "hidden",
       display: "flex", flexDirection: "column", boxShadow: inkCard ? "0 4px 16px rgba(36,28,20,.35)" : "0 2px 10px rgba(36,28,20,.08)",
       transition: "transform .15s ease, box-shadow .15s ease",
     }}>
