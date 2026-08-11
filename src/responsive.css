@@ -42,6 +42,8 @@ html {
   .cuppa-icons-rest {
     overflow: hidden;
     max-width: 200px;
+    padding-top: 6px;
+    margin-top: -6px;
     opacity: 1;
     transition: max-width .32s ease, opacity .5s ease;
   }
