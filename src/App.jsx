@@ -669,7 +669,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
           {images && images.length > 1 && (
             <div className="cuppa-thumb-row" style={{ display: "flex", gap: 8, marginTop: 10 }}>
               {images.map((src, i) => (
-                <button key={i} onClick={() => setActiveImg(i)} style={{
+                <button key={i} onClick={() => { setActiveImg(i); setZoomed(false); }} style={{
                   width: 64, height: 64, borderRadius: 8, overflow: "hidden", padding: 0, cursor: "pointer",
                   border: activeImg === i ? `2px solid ${T.cherry}` : `1px solid ${T.line}`, flexShrink: 0,
                 }}>
