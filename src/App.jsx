@@ -496,6 +496,11 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   );
 }
 
+const detailImgArrowStyle = {
+  position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
+  border: "none", cursor: "pointer", background: "rgba(36,28,20,.5)", color: "#fff",
+  display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1,
+};
 const sideLabel = { fontFamily: "'Ubuntu', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10 };
 const subBtn = (active) => ({
   display: "block", width: "100%", textAlign: "left", background: active ? T.ink : "transparent",
@@ -631,12 +636,32 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
               onMouseEnter={() => setZoomed(true)}
               onMouseLeave={() => setZoomed(false)}
               ref={zoomWrapRef}
-              style={{ height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card, cursor: "zoom-in", touchAction: "none" }}>
+              style={{ position: "relative", height: 420, borderRadius: "14px 14px 4px 4px", overflow: "hidden", background: T.card, cursor: "zoom-in", touchAction: "none" }}>
               <img src={images[activeImg]} alt={product.name} style={{
                 width: "100%", height: "100%", objectFit: "contain", display: "block",
                 transform: zoomed ? "scale(2.2)" : "scale(1)", transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                 transition: zoomed ? "none" : "transform .25s ease",
               }} />
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i - 1 + images.length) % images.length); }}
+                    onMouseEnter={(e) => { e.stopPropagation(); setZoomed(false); }}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseLeave={(e) => { e.stopPropagation(); setZoomed(true); }}
+                    aria-label="Өмнөх зураг" style={{ ...detailImgArrowStyle, left: 10, cursor: "pointer" }}>
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveImg((i) => (i + 1) % images.length); }}
+                    onMouseEnter={(e) => { e.stopPropagation(); setZoomed(false); }}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseLeave={(e) => { e.stopPropagation(); setZoomed(true); }}
+                    aria-label="Дараах зураг" style={{ ...detailImgArrowStyle, right: 10, cursor: "pointer" }}>
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <ProductArt product={product} height={420} />
