@@ -1581,6 +1581,10 @@ function TrainingPage() {
   return <InfoPage title="Сургалт" note="Меню сургалт удахгүй" />;
 }
 
+function AboutPage() {
+  return <InfoPage title="Бидний тухай" note="Энэ хэсгийг удахгүй нэмнэ" />;
+}
+
 function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { products, brands } = useContext(DataContext);
   const [brandFilter, setBrandFilter] = useState([]);
@@ -1949,6 +1953,8 @@ export default function App() {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
   } else if (view.name === "training") {
     body = <TrainingPage />;
+  } else if (view.name === "about") {
+    body = <AboutPage />;
   } else if (view.name === "bestseller") {
     body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
   } else if (view.name === "discounts") {
@@ -2006,6 +2012,7 @@ export default function App() {
           }}>
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
             <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+              <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
               <a href="/terms.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</a>
               <a href="/privacy.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</a>
             </div>
