@@ -97,7 +97,7 @@ function ProductArt({ product, height = 190 }) {
           <img src={product.images[0]} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
           {hoverImage && (
             <img src={hoverImage} alt="" style={{
-              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
+              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: T.card,
               opacity: hovered ? 1 : 0, transition: "opacity .25s ease",
             }} />
           )}
