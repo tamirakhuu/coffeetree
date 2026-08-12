@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
+import { Link } from "react-router-dom";
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee,
@@ -10,7 +11,7 @@ import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
-const T = {
+export const T = {
   ink: "#241C15",
   inkSoft: "#5C4E3E",
   paper: "#ffffff",
@@ -237,7 +238,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
   );
 }
 
-function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch }) {
+export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch }) {
   const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1715,7 +1716,7 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
   );
 }
 
-const BRANCHES = [
+export const BRANCHES = [
   {
     name: "Саруул зах",
     heading: "Дэлгүүрийн хаяг",
@@ -1742,6 +1743,57 @@ const BRANCHES = [
 ];
 
 const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
+
+export function Footer({ setView }) {
+  return (
+    <footer style={{ background: T.ink, color: T.cream, padding: "26px 20px 16px" }}>
+      <div style={{
+        maxWidth: 1180, margin: "0 auto 16px", display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
+      }}>
+        <div className="cuppa-footer-logo" style={{ display: "flex", alignItems: "flex-start" }}>
+          <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140, filter: "invert(1)" }} />
+        </div>
+        {BRANCHES.map((b) => (
+          <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.heading || `${b.name} салбар`}</div>
+            <a href={b.mapUrl} target="_blank" rel="noopener noreferrer" style={{
+              display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.cream,
+              textDecoration: "none", opacity: 0.85,
+            }}>
+              <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
+            </a>
+            <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+              <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
+            </a>
+            <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+              <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
+            </a>
+            {b.socials.map(({ label, href, Icon }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
+                display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none",
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
+              }}>
+                <Icon size={14} style={{ flexShrink: 0 }} /> {label}
+              </a>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{
+        maxWidth: 1180, margin: "0 auto", display: "flex", justifyContent: "space-between",
+        alignItems: "center", flexWrap: "wrap", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)",
+      }}>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+          <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
+          <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
+          <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  App                                                                 */
@@ -1972,52 +2024,7 @@ export default function App() {
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
           onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} />
         <main style={{ flex: 1 }}>{body}</main>
-        <footer style={{ background: T.ink, color: T.cream, padding: "26px 20px 16px" }}>
-          <div style={{
-            maxWidth: 1180, margin: "0 auto 16px", display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
-          }}>
-            <div className="cuppa-footer-logo" style={{ display: "flex", alignItems: "flex-start" }}>
-              <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140, filter: "invert(1)" }} />
-            </div>
-            {BRANCHES.map((b) => (
-              <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
-                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.heading || `${b.name} салбар`}</div>
-                <a href={b.mapUrl} target="_blank" rel="noopener noreferrer" style={{
-                  display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.cream,
-                  textDecoration: "none", opacity: 0.85,
-                }}>
-                  <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
-                </a>
-                <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
-                  <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
-                </a>
-                <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
-                  <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
-                </a>
-                {b.socials.map(({ label, href, Icon }) => (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
-                    display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none",
-                    fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
-                  }}>
-                    <Icon size={14} style={{ flexShrink: 0 }} /> {label}
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{
-            maxWidth: 1180, margin: "0 auto", display: "flex", justifyContent: "space-between",
-            alignItems: "center", flexWrap: "wrap", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)",
-          }}>
-            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
-            <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-              <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
-              <a href="/terms.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</a>
-              <a href="/privacy.html" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</a>
-            </div>
-          </div>
-        </footer>
+        <Footer setView={setView} />
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         <Toast message={toast} />
