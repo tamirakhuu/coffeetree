@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount } from "./auth.js";
+import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount, sendPasswordReset, updatePassword } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
 export const T = {
@@ -924,6 +924,21 @@ function AuthModal({ open, onClose }) {
     }
   };
 
+  const submitForgot = async (e) => {
+    e.preventDefault();
+    setError(""); setNotice("");
+    if (!EMAIL_RE.test(email)) { setError("Имэйл хаягийн формат буруу байна."); return; }
+    setLoading(true);
+    try {
+      await sendPasswordReset(email);
+      setNotice("Нууц үг сэргээх линкийг имэйлээр илгээлээ. Имэйлээ шалгана уу.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setError(""); setNotice("");
@@ -957,6 +972,30 @@ function AuthModal({ open, onClose }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: T.paper, borderRadius: 16, width: 380, maxWidth: "90vw", padding: 30, position: "relative" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={18} /></button>
+
+        {mode === "forgot" ? (
+          <>
+            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Нууц үг сэргээх</h2>
+            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
+              Бүртгэлтэй имэйл хаягаа оруулна уу. Бид танд нууц үг сэргээх линк илгээх болно.
+            </p>
+            <form onSubmit={submitForgot} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input type="email" required placeholder="Имэйл хаяг" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
+              {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+              {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
+              <button type="submit" disabled={loading} style={{
+                marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
+                padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
+              }}>{loading ? "Түр хүлээнэ үү…" : "Линк илгээх"}</button>
+              <button type="button" onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{
+                background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textDecoration: "underline", padding: 4,
+              }}>Нэвтрэх хэсэг рүү буцах</button>
+            </form>
+          </>
+        ) : (
+        <>
         <div style={{ display: "flex", gap: 6, marginBottom: 22 }}>
           {["login", "register"].map((m) => (
             <button key={m} onClick={() => { setMode(m); setError(""); setNotice(""); }} style={{
@@ -989,6 +1028,12 @@ function AuthModal({ open, onClose }) {
               </button>
             </div>
           )}
+          {mode === "login" && (
+            <button type="button" onClick={() => { setMode("forgot"); setError(""); setNotice(""); }} style={{
+              alignSelf: "flex-end", background: "none", border: "none", cursor: "pointer", color: T.cherry,
+              fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, padding: 0, marginTop: -2,
+            }}>Нууц үгээ мартсан уу?</button>
+          )}
           {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
           {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
           <button type="submit" disabled={loading} style={{
@@ -997,7 +1042,11 @@ function AuthModal({ open, onClose }) {
             cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
           }}>{loading ? "Түр хүлээнэ үү…" : (mode === "login" ? "Нэвтрэх" : "Бүртгүүлэх")}</button>
         </form>
+        </>
+        )}
 
+        {mode !== "forgot" && (
+        <>
         <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
           <div style={{ flex: 1, height: 1, background: T.line }} />
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>эсвэл</span>
@@ -1011,6 +1060,82 @@ function AuthModal({ open, onClose }) {
         }}>
           <Facebook size={17} /> Facebook-ээр {mode === "login" ? "нэвтрэх" : "бүртгүүлэх"}
         </button>
+        </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResetPasswordModal({ open, onClose }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  if (!open) return null;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!PASSWORD_RE.test(password)) {
+      setError("Нууц үг нь 8 үсэгтэй, дор хаяж 1 тусгай тэмдэгт (!@#$% гэх мэт) агуулсан байх ёстой.");
+      return;
+    }
+    if (password !== confirmPassword) { setError("Нууц үг таарахгүй байна."); return; }
+    setLoading(true);
+    try {
+      await updatePassword(password);
+      setDone(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: T.paper, borderRadius: 16, width: 380, maxWidth: "90vw", padding: 30, position: "relative" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={18} /></button>
+        {done ? (
+          <>
+            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Амжилттай!</h2>
+            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
+              Таны нууц үг шинэчлэгдлээ.
+            </p>
+            <button onClick={onClose} style={{
+              width: "100%", background: T.ink, color: T.cream, border: "none", borderRadius: 10,
+              padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
+            }}>Үргэлжлүүлэх</button>
+          </>
+        ) : (
+          <>
+            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Шинэ нууц үг үүсгэх</h2>
+            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
+              Дансандаа ашиглах шинэ нууц үгээ оруулна уу.
+            </p>
+            <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ position: "relative" }}>
+                <input type={showPassword ? "text" : "password"} required minLength={8}
+                  placeholder="Шинэ нууц үг (8+ орон, 1 тусгай тэмдэгт)"
+                  value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
+                <button type="button" onClick={() => setShowPassword((v) => !v)} title={showPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <input type={showPassword ? "text" : "password"} required minLength={8} placeholder="Нууц үг давтах"
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
+              {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+              <button type="submit" disabled={loading} style={{
+                marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
+                padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
+              }}>{loading ? "Түр хүлээнэ үү…" : "Хадгалах"}</button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
@@ -1814,6 +1939,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [brandFilter, setBrandFilter] = useState([]);
   const [subFilter, setSubFilter] = useState(null);
   const [sortBy, setSortBy] = useState("default");
@@ -1884,7 +2010,12 @@ export default function App() {
         storageKey.current = nextKey;
         loadCartWishlist(nextKey);
       }
-      if (u) { setAuthOpen(false); flash(`Тавтай морил, ${u.name}!`); }
+      if (_event === "PASSWORD_RECOVERY") {
+        setAuthOpen(false);
+        setResetOpen(true);
+      } else if (u) {
+        setAuthOpen(false); flash(`Тавтай морил, ${u.name}!`);
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -2033,6 +2164,7 @@ export default function App() {
         <Footer setView={setView} />
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+        <ResetPasswordModal open={resetOpen} onClose={() => setResetOpen(false)} />
         <Toast message={toast} />
         <ScrollToTopButton />
       </div>

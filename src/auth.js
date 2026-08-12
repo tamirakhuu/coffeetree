@@ -64,6 +64,18 @@ export async function loginWithFacebook() {
   if (error) throw new Error(translate(error.message));
 }
 
+export async function sendPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+  if (error) throw new Error(translate(error.message));
+}
+
+export async function updatePassword(password) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new Error(translate(error.message));
+}
+
 export async function updateProfile({ name, phone, address, locationUrl }) {
   await requireSession();
   const data = {};
