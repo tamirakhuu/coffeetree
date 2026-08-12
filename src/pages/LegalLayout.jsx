@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer, T } from "../App.jsx";
 
@@ -18,6 +19,10 @@ export const legal = {
 export function LegalLayout({ children }) {
   const navigate = useNavigate();
   const toHome = () => navigate("/");
+  // react-router нь route солигдоход скролыг автоматаар дээш буцаадаггүй тул
+  // (жишээ нь footer-ийн доод хэсгээс дарж ирэхэд хуудас доороосоо эхэлдэг байсан)
+  // хуудас бүр анх render хийгдэх мөчид өөрөө дээшээ буцаана
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   return (
     <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Header setView={toHome} cartCount={0} wishCount={0} user={null}
