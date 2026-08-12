@@ -7,15 +7,16 @@ const ERROR_MESSAGES = {
   "Email not confirmed": "Имэйл хаягаа баталгаажуулна уу — имэйл рүүгээ орж илгээсэн линк дээр дарна уу.",
   "Unable to validate email address: invalid format": "Имэйл хаягийн формат буруу байна.",
   "Auth session missing!": "Нэвтэрсэн байдал дууссан байна. Гарч, дахин нэвтэрнэ үү.",
+  "Email rate limit exceeded": "Имэйл хэт олон удаа илгээгдсэн байна. Хэдэн минутын дараа дахин оролдоно уу.",
 };
 function translate(msg) {
-  return ERROR_MESSAGES[msg] || msg;
+  if (ERROR_MESSAGES[msg]) return ERROR_MESSAGES[msg];
+  if (/for security purposes.*after \d+ seconds/i.test(msg || "")) {
+    return "Хэсэг хугацааны дараа дахин оролдоно уу.";
+  }
+  return msg;
 }
 
-// updateUser() зэрэг session шаарддаг үйлдлийн өмнө дуудна. getSession() нь
-// зөвхөн локал storage-аас уншдаг тул access_token дуусах дөхсөн/дууссан үед
-// хуучирсан session буцааж болно — тиймээс тухайн тохиолдолд refreshSession()-г
-// шууд дуудаж, серверээс шинэ token авахыг оролддог.
 async function requireSession() {
   let { data: { session } } = await supabase.auth.getSession();
   const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;

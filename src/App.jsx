@@ -1114,7 +1114,7 @@ function ResetPasswordModal({ open, onClose }) {
           <>
             <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Шинэ нууц үг үүсгэх</h2>
             <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
-              Дансандаа ашиглах шинэ нууц үгээ оруулна уу.
+              Цаашид ашиглах шинэ нууц үгээ оруулна уу.
             </p>
             <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ position: "relative" }}>
