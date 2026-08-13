@@ -6,6 +6,9 @@ html {
 .cuppa-search-toggle {
   display: none !important;
 }
+.cuppa-hamburger {
+  display: none !important;
+}
 
 @media (max-width: 720px) {
   .cuppa-header-row {
@@ -52,18 +55,16 @@ html {
     opacity: 0;
   }
   .cuppa-nav {
-    order: 4;
-    width: 100%;
+    order: 0;
+    width: auto !important;
+    flex: 0 0 auto !important;
   }
   .cuppa-nav-links {
-    flex-wrap: nowrap !important;
-    overflow-x: auto;
-    gap: 2px !important;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    display: none !important;
   }
-  .cuppa-nav-links::-webkit-scrollbar { display: none; }
-  .cuppa-nav-links button { white-space: nowrap; }
+  .cuppa-hamburger {
+    display: flex !important;
+  }
 
   .cuppa-hero-grid { grid-template-columns: 1fr !important; }
   .cuppa-hero-title { font-size: 30px !important; }
@@ -90,6 +91,10 @@ html {
     gap: 18px !important;
     left: 0 !important;
     transform: none !important;
+    max-height: calc(100vh - 130px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   .cuppa-megamenu-col { min-width: 0 !important; }
   .cuppa-megamenu-brands {

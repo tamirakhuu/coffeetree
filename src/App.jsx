@@ -4,7 +4,7 @@ import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee,
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
-  Facebook, Instagram, Eye, EyeOff
+  Facebook, Instagram, Eye, EyeOff, Menu
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
 import { supabase } from "./supabaseClient.js";
@@ -238,11 +238,102 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
   );
 }
 
+function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBrand, setView }) {
+  useEffect(() => {
+    if (!open) return;
+    // Зөвхөн body { overflow: hidden } нь mobile Safari/Chrome дээр touch-scroll-ыг
+    // бүрэн блоклодоггүй тул body-г өөрийг нь position:fixed болгож бүрэн түгжинэ.
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.left = "0";
+    style.right = "0";
+    return () => {
+      style.position = "";
+      style.top = "";
+      style.left = "";
+      style.right = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
+  const goPage = (name) => { setView({ name }); onClose(); };
+  const linkBtnStyle = {
+    display: "flex", alignItems: "center", width: "100%", textAlign: "left",
+    background: "transparent", color: T.ink, border: "none", borderRadius: 8,
+    padding: "10px 10px", fontFamily: "'Ubuntu', sans-serif", fontSize: 14.5, fontWeight: 600, cursor: "pointer",
+  };
+  const catBtnStyle = {
+    display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
+    background: "transparent", color: T.ink, border: "none", borderRadius: 8,
+    padding: "8px 10px", fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
+  };
+  const brandBtnStyle = {
+    display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
+    background: "transparent", color: T.ink, border: "none", borderRadius: 8,
+    padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 199,
+        opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none", transition: "opacity .3s ease",
+      }} />
+      <div style={{
+        position: "fixed", top: 0, left: 0, bottom: 0, width: "82%", maxWidth: 320,
+        background: T.paper, zIndex: 200, boxShadow: "8px 0 30px rgba(0,0,0,.25)",
+        transform: open ? "translateX(0)" : "translateX(-100%)", transition: "transform .32s ease",
+        display: "flex", flexDirection: "column", overflowY: "auto", WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "12px 16px", borderBottom: `1px solid ${T.line}`, flexShrink: 0, position: "relative" }}>
+          <button onClick={onClose} aria-label="Хаах" style={{ ...iconBtnStyle, color: T.ink }}><X size={21} /></button>
+          <img src="/cuppa-logo.png" alt="CUPPA" style={{ height: 26, filter: "invert(1)", position: "absolute", left: "50%", transform: "translateX(-50%)" }} />
+        </div>
+
+        <div style={{ padding: "14px 18px 4px", display: "flex", flexDirection: "column", gap: 2 }}>
+          <button onClick={() => goPage("bestseller")} style={linkBtnStyle}>Бестселлэр</button>
+          <button onClick={() => goPage("training")} style={linkBtnStyle}>Сургалт</button>
+        </div>
+
+        <div style={{ padding: "14px 18px 4px" }}>
+          <div style={sideLabel}>Бүтээгдэхүүн</div>
+          {categories.map((c) => (
+            <button key={c.id} onClick={() => onGoCategory(c.id)} style={catBtnStyle}>
+              <CategoryIcon icon={c.icon} size={15} /> {c.name}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ padding: "14px 18px 24px" }}>
+          <div style={sideLabel}>Брэнд</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px" }}>
+            {brands.map((b) => (
+              <button key={b.id} onClick={() => onGoBrand(b.id)} style={brandBtnStyle}>
+                {b.logo
+                  ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
+                  : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
+                {b.name}
+              </button>
+            ))}
+          </div>
+          {brands.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch }) {
   const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeCat, setActiveCat] = useState(null);
   const navRef = useRef(null);
   const menuTriggerRef = useRef(null);
@@ -264,10 +355,11 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
     }
   }, [menuOpen]);
 
-  const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); };
-  const goBrand = (brandId) => { setView({ name: "brand", brandId }); setMenuOpen(false); };
+  const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); setDrawerOpen(false); };
+  const goBrand = (brandId) => { setView({ name: "brand", brandId }); setMenuOpen(false); setDrawerOpen(false); };
 
   return (
+    <>
     <header style={{
       background: "rgba(36,28,20,.65)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
       color: T.cream, position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid rgba(255,255,255,.08)",
@@ -278,6 +370,9 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
         </div>
 
         <nav ref={navRef} className="cuppa-nav" style={{ position: "relative", flex: 1 }}>
+          <button className="cuppa-hamburger" onClick={() => setDrawerOpen(true)} aria-label="Цэс" style={iconBtnStyle}>
+            <Menu size={21} />
+          </button>
           <div className="cuppa-nav-links" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
             <NavButton ref={menuTriggerRef} active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
               Ангилал <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
@@ -324,6 +419,9 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
         </div>
       </div>
     </header>
+    <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}
+      categories={categories} brands={brands} onGoCategory={goCategory} onGoBrand={goBrand} setView={setView} />
+    </>
   );
 }
 const iconBtnStyle = { position: "relative", background: "transparent", border: "none", color: T.cream, cursor: "pointer", display: "flex", padding: 4 };
