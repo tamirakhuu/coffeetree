@@ -1345,9 +1345,9 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Кофе шопдоо хэрэгтэй<br/>бүгдийг нэг дороос</h1>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>70 BABY<br/></h1>
             <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: "0 0 28px" }}>
-              Кофе, сироп, соус, аяга, бариста хэрэгсэл хүртэл — чанартай хэрэглээний бараагаа CuppA-аас хялбархан захиал.
+              GUYS хамтлаг
             </p>
 
             <button onClick={() => setView({ name: "discounts" })} style={{
@@ -1362,7 +1362,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: T.paper }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
+          <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
             {categories.map((c) => (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
                 background: "rgba(255,255,255,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
@@ -1857,23 +1857,40 @@ function AboutPage() {
   return <InfoPage title="Бидний тухай" note="Энэ хэсгийг удахгүй нэмнэ" />;
 }
 
-function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
-  const { products, brands } = useContext(DataContext);
+function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
+  const { products, brands, categories } = useContext(DataContext);
   const [brandFilter, setBrandFilter] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState([]);
   const [sortBy, setSortBy] = useState("default");
 
   const bestsellers = products.filter((p) => p.tag === "бестселлэр");
   const brandsInBest = brands.filter((b) => bestsellers.some((p) => p.brandId === b.id));
-  let items = brandFilter.length ? bestsellers.filter((p) => brandFilter.includes(p.brandId)) : bestsellers;
+  const categoriesInBest = categories.filter((c) => bestsellers.some((p) => p.categoryId === c.id));
+  let items = bestsellers;
+  if (categoryFilter.length) items = items.filter((p) => categoryFilter.includes(p.categoryId));
+  if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title="Бестселлэр" />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Бестселлэр</div>
-        <div>
-          <div style={sideLabel}>Брэнд</div>
+        <CollapsibleSection label="Ангилал">
+          {categoriesInBest.map((c) => (
+            <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+              <input type="checkbox" checked={categoryFilter.includes(c.id)}
+                onChange={() => setCategoryFilter(categoryFilter.includes(c.id) ? categoryFilter.filter((x) => x !== c.id) : [...categoryFilter, c.id])}
+                style={{ accentColor: T.cherry }} />
+              {c.name}
+            </label>
+          ))}
+          {categoriesInBest.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Ангилал алга</div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection label="Брэнд">
           {brandsInBest.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={brandFilter.includes(b.id)}
@@ -1885,7 +1902,7 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
           {brandsInBest.length === 0 && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Брэнд алга</div>
           )}
-        </div>
+        </CollapsibleSection>
       </aside>
 
       <div style={{ flex: 1, minWidth: 280 }}>
@@ -1914,7 +1931,7 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /*  Discounts Page — "хямдралтай" шошготой бүх бараа, ангилал+брэндээр  */
 /*  шүүх боломжтой                                                      */
 /* ------------------------------------------------------------------ */
-function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
+function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { products, brands, categories } = useContext(DataContext);
   const [brandFilter, setBrandFilter] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState([]);
@@ -1931,11 +1948,9 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title="Бүх хямдрал" />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Бүх хямдрал</div>
-
-        <div style={{ marginBottom: 26 }}>
-          <div style={sideLabel}>Ангилал</div>
+        <CollapsibleSection label="Ангилал">
           {categoriesInDiscount.map((c) => (
             <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={categoryFilter.includes(c.id)}
@@ -1947,10 +1962,9 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
           {categoriesInDiscount.length === 0 && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Ангилал алга</div>
           )}
-        </div>
+        </CollapsibleSection>
 
-        <div>
-          <div style={sideLabel}>Брэнд</div>
+        <CollapsibleSection label="Брэнд">
           {brandsInDiscount.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={brandFilter.includes(b.id)}
@@ -1962,7 +1976,7 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish }) {
           {brandsInDiscount.length === 0 && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Брэнд алга</div>
           )}
-        </div>
+        </CollapsibleSection>
       </aside>
 
       <div style={{ flex: 1, minWidth: 280 }}>
@@ -2285,9 +2299,9 @@ export default function App() {
   } else if (view.name === "about") {
     body = <AboutPage />;
   } else if (view.name === "bestseller") {
-    body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
+    body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "discounts") {
-    body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
+    body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "profile") {
     body = user
       ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} setView={setView} />

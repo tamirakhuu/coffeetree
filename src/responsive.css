@@ -75,6 +75,7 @@ html {
 
   .cuppa-category-layout { flex-direction: column !important; }
   .cuppa-category-aside { width: 100% !important; }
+  .cuppa-category-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
   .cuppa-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
   .cuppa-detail-title { font-size: 26px !important; }
