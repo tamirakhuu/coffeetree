@@ -480,7 +480,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
   const chooseSub = (s) => {
     setSubFilter(s);
     if (window.innerWidth <= 720 && productsRef.current) {
-      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
   const category = categories.find((c) => c.id === categoryId);
@@ -552,7 +552,7 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const chooseCategory = (id) => {
     setCategoryFilter(id);
     if (window.innerWidth <= 720 && productsRef.current) {
-      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
 
