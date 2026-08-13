@@ -23,7 +23,8 @@ export const T = {
   gold: "#B8862E", //badge color
   cream: "#F6EFE0",
   green: "#177400",
-  blue: "#1b00b4"
+  blue: "#1b00b4",
+  saaral: "#494949"
 };
 
 const FONT_IMPORT =
@@ -159,7 +160,7 @@ function ScrollToTopButton() {
       aria-label="Дээш буцах"
       style={{
         position: "fixed", bottom: 24, right: 24, width: 46, height: 46, borderRadius: "50%",
-        background: T.ink, color: "#fff", border: "none", cursor: "pointer", zIndex: 150,
+        background: T.saaral, color: "#fff", border: "none", cursor: "pointer", zIndex: 150,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "0 6px 20px rgba(0,0,0,.25)",
       }}
@@ -474,7 +475,7 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
   );
 }
 /*  Category Page                                                      */
-function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish }) {
+function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
   const productsRef = useRef(null);
   const chooseSub = (s) => {
@@ -497,19 +498,16 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title={category.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 18 }}>{category.name}</div>
-
-        <div style={{ marginBottom: 26 }}>
-          <div style={sideLabel}>ТӨРӨЛ</div>
+        <CollapsibleSection label="ТӨРӨЛ">
           <button onClick={() => chooseSub(null)} style={subBtn(subFilter === null)}>Бүгд</button>
           {category.sub.map((s) => (
             <button key={s} onClick={() => chooseSub(s)} style={subBtn(subFilter === s)}>{s}</button>
           ))}
-        </div>
+        </CollapsibleSection>
 
-        <div>
-          <div style={sideLabel}>Брэнд</div>
+        <CollapsibleSection label="Брэнд">
           {brandsInCat.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={brandFilter.includes(b.id)}
@@ -518,7 +516,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
               {b.name}
             </label>
           ))}
-        </div>
+        </CollapsibleSection>
       </aside>
 
       <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
@@ -543,7 +541,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
     </div>
   );
 }
-function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
+function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
   const brand = brands.find((b) => b.id === brandId);
   const [categoryFilter, setCategoryFilter] = useState(null);
@@ -570,20 +568,19 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title={brand.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-          {brand.logo && (
-            <img src={brand.logo} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "contain", background: "#fff", border: `1px solid ${T.line}`, flexShrink: 0 }} />
-          )}
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink }}>{brand.name}</div>
-        </div>
-        <div>
-          <div style={sideLabel}>Ангилал</div>
+        {brand.logo && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+            <img src={brand.logo} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", border: `1px solid ${T.line}` }} />
+          </div>
+        )}
+        <CollapsibleSection label="Ангилал">
           <button onClick={() => chooseCategory(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
           {categoriesInBrand.map((c) => (
             <button key={c.id} onClick={() => chooseCategory(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
           ))}
-        </div>
+        </CollapsibleSection>
       </aside>
 
       <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
@@ -615,6 +612,37 @@ const detailImgArrowStyle = {
   display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1,
 };
 const sideLabel = { fontFamily: "'Ubuntu', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10 };
+const backBtnStyle = { display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20, padding: 0, flexShrink: 0 };
+function BackButton({ onClick, style }) {
+  return <button onClick={onClick} style={{ ...backBtnStyle, ...style }}><ChevronLeft size={15} /> Буцах</button>;
+}
+function PageHeaderRow({ onBack, title }) {
+  return (
+    <div style={{ width: "100%", display: "flex", alignItems: "center", position: "relative", marginBottom: 22 }}>
+      <BackButton onClick={onBack} style={{ marginBottom: 0 }} />
+      <div style={{
+        position: "absolute", left: "50%", transform: "translateX(-50%)", textAlign: "center",
+        fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink,
+        maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{title}</div>
+    </div>
+  );
+}
+function CollapsibleSection({ label, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ marginBottom: 22 }}>
+      <button onClick={() => setOpen((v) => !v)} style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+        background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: open ? 10 : 0,
+      }}>
+        <span style={{ ...sideLabel, marginBottom: 0 }}>{label}</span>
+        <ChevronDown size={14} style={{ color: T.moss, transform: open ? "rotate(180deg)" : "none", transition: "transform .25s" }} />
+      </button>
+      {open && children}
+    </div>
+  );
+}
 const subBtn = (active) => ({
   display: "block", width: "100%", textAlign: "left", background: active ? "#E4E1DC" : "transparent",
   color: T.ink, border: `1px solid ${active ? "#E4E1DC" : "transparent"}`,
@@ -735,9 +763,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
-        <ChevronLeft size={15} /> Буцах
-      </button>
+      <BackButton onClick={onBack} />
       <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           {images ? (
@@ -1524,11 +1550,12 @@ function Confirmation({ orderNumber, onContinue }) {
 /* ------------------------------------------------------------------ */
 /*  Wishlist page                                                       */
 /* ------------------------------------------------------------------ */
-function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish }) {
+function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish, setView }) {
   const { products } = useContext(DataContext);
   const items = products.filter((p) => wishlist.includes(p.id));
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
+      <BackButton onClick={() => setView({ name: "home" })} />
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 }}>Таалагдсан бүтээгдэхүүн</h1>
       {items.length === 0 ? (
         <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Жагсаалт хоосон байна.</div>
@@ -1580,9 +1607,10 @@ const PROFILE_SECTIONS = [
   { key: "delete", label: "Бүртгэл устгах", Icon: Trash2 },
 ];
 
-function ProfilePage({ user, section, setSection, onLogout, onUserUpdate }) {
+function ProfilePage({ user, section, setSection, onLogout, onUserUpdate, setView }) {
   return (
     <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 20px 90px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <div style={{ width: "100%" }}><BackButton onClick={() => setView({ name: "home" })} /></div>
       <aside style={{ width: 220, flexShrink: 0 }}>
         {PROFILE_SECTIONS.map(({ key, label, Icon }) => (
           <button key={key} onClick={() => setSection(key)} style={{
@@ -2227,9 +2255,9 @@ export default function App() {
   } else if (view.name === "category") {
     body = <CategoryPage categoryId={view.categoryId} brandFilter={brandFilter} setBrandFilter={setBrandFilter}
       subFilter={subFilter} setSubFilter={setSubFilter} sortBy={sortBy} setSortBy={setSortBy}
-      onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
+      onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "brand") {
-    body = <BrandPage brandId={view.brandId} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
+    body = <BrandPage brandId={view.brandId} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "product") {
     const product = data.products.find((p) => p.id === view.productId);
     body = <ProductDetail product={product} onBack={() => setView(view.returnTo || { name: "home" })}
@@ -2247,7 +2275,7 @@ export default function App() {
       </div>
     );
   } else if (view.name === "wishlist") {
-    body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} />;
+    body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "checkout") {
     body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} user={user} />;
   } else if (view.name === "confirmation") {
@@ -2262,7 +2290,7 @@ export default function App() {
     body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
   } else if (view.name === "profile") {
     body = user
-      ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} />
+      ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} setView={setView} />
       : <InfoPage title="Миний мэдээлэл" note="Өөрийн мэдээллээ харахын тулд эхлээд нэвтэрнэ үү." actionLabel="Нэвтрэх" onAction={() => setAuthOpen(true)} />;
   }
 
