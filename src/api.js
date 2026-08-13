@@ -1,5 +1,8 @@
 import { supabase } from "./supabaseClient.js";
 
+export const DELIVERY_FEE = 15000;
+export const FREE_DELIVERY_THRESHOLD = 500000;
+
 export function shapeProduct(r) {
   return {
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
@@ -86,7 +89,7 @@ export async function submitOrder({ form, cart, products, userId }) {
 
   const subtotal = validItems.reduce((sum, { item, product }) => sum + lineTotalFor(item, product), 0);
   const deliveryMethod = form.deliveryMethod === "delivery" ? "delivery" : "pickup";
-  const deliveryFee = deliveryMethod === "delivery" ? 15000 : 0;
+  const deliveryFee = deliveryMethod === "delivery" && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
 
   const { error: orderErr } = await supabase.from("orders").insert({
     order_number: orderNumber,

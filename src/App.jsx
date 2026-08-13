@@ -6,7 +6,7 @@ import {
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount, sendPasswordReset, updatePassword } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
@@ -988,9 +988,9 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
         transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform .3s ease",
         zIndex: 160, display: "flex", flexDirection: "column", boxShadow: "-10px 0 30px rgba(0,0,0,.2)",
       }}>
-        <div style={{ padding: "20px 20px 14px", borderBottom: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink }}>Сагс</span>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={20} /></button>
+          <button onClick={onClose} style={{ ...iconBtnStyle, color: T.ink }}><X size={21} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "10px 20px" }}>
           {cart.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, marginTop: 30, textAlign: "center" }}>Таны сагс хоосон байна.</div>}
@@ -1431,8 +1431,6 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 /*  Checkout & Confirmation                                             */
 /* ------------------------------------------------------------------ */
-const DELIVERY_FEE = 15000;
-
 function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
   const { products } = useContext(DataContext);
   const [form, setForm] = useState({
@@ -1440,7 +1438,8 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
     receiptType: "individual", registerNumber: "", deliveryMethod: "pickup",
   });
   const [submitting, setSubmitting] = useState(false);
-  const deliveryFee = form.deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
+  const freeDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
+  const deliveryFee = form.deliveryMethod === "delivery" && !freeDelivery ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
   const valid = form.name && form.phone && (form.deliveryMethod !== "delivery" || form.address)
     && (form.receiptType !== "company" || form.registerNumber) && !submitting;
@@ -1469,7 +1468,11 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
                   border: `1.5px solid ${form.deliveryMethod === key ? T.cherry : T.line}`,
                   background: form.deliveryMethod === key ? T.cream : "transparent",
                   fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, color: T.ink,
-                }}>{label}{key === "delivery" && <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: T.inkSoft, marginTop: 2 }}>+{money(DELIVERY_FEE)}</span>}</button>
+                }}>{label}{key === "delivery" && (
+                  <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: freeDelivery ? T.moss : T.inkSoft, marginTop: 2 }}>
+                    {freeDelivery ? "500,000₮-с дээш худалдан авалтанд хүргэлт үнэгүй" : `+${money(DELIVERY_FEE)}`}
+                  </span>
+                )}</button>
               ))}
             </div>
           </div>
