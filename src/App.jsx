@@ -394,12 +394,19 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..." autoFocus={searchOpen}
             style={{ background: "transparent", border: "none", outline: "none", color: T.paper, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
+          {searchOpen && (
+            <button type="button" onClick={() => setSearchOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: T.paper, opacity: 0.75, display: "flex", flexShrink: 0, padding: 0 }}>
+              <X size={16} />
+            </button>
+          )}
         </form>
 
         <div className="cuppa-icons" style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <button className="cuppa-search-toggle" onClick={() => setSearchOpen((v) => !v)} style={iconBtnStyle}>
-            {searchOpen ? <X size={19} /> : <Search size={19} />}
-          </button>
+          {!searchOpen && (
+            <button className="cuppa-search-toggle" onClick={() => setSearchOpen(true)} style={iconBtnStyle}>
+              <Search size={19} />
+            </button>
+          )}
           <div className={`cuppa-icons-rest${searchOpen ? " cuppa-icons-rest-hidden" : ""}`} style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <button onClick={() => setView({ name: "wishlist" })} style={iconBtnStyle}>
               <Heart size={19} /> {wishCount > 0 && <Badge n={wishCount} />}
@@ -830,16 +837,15 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             <div style={{ display: "flex", gap: 10 }}>
               {availableTypes.map((t) => (
                 <button key={t} onClick={() => { setOptionType(t); setQty(1); }} style={{
-                  flex: 1, textAlign: "left", padding: "14px 16px", borderRadius: 10, cursor: "pointer",
+                  flex: 1, textAlign: "center", padding: "14px 16px", borderRadius: 10, cursor: "pointer",
                   border: `1.5px solid ${optionType === t ? T.cherry : T.line}`,
                   background: optionType === t ? T.cream : "transparent",
                   position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.cherry}22` : "none",
                 }}>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
                     {t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, fontWeight: 600, color: T.ink, margin: "3px 0" }}>{product[t].label}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
                     {discountPercent(product[t]) != null && (
                       <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, textDecoration: "line-through" }}>{money(product[t].originalPrice)}</span>
