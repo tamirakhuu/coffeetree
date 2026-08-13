@@ -476,6 +476,13 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
 /*  Category Page                                                      */
 function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, brands, products } = useContext(DataContext);
+  const productsRef = useRef(null);
+  const chooseSub = (s) => {
+    setSubFilter(s);
+    if (window.innerWidth <= 720 && productsRef.current) {
+      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  };
   const category = categories.find((c) => c.id === categoryId);
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub === subFilter);
@@ -495,9 +502,9 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
 
         <div style={{ marginBottom: 26 }}>
           <div style={sideLabel}>ТӨРӨЛ</div>
-          <button onClick={() => setSubFilter(null)} style={subBtn(subFilter === null)}>Бүгд</button>
+          <button onClick={() => chooseSub(null)} style={subBtn(subFilter === null)}>Бүгд</button>
           {category.sub.map((s) => (
-            <button key={s} onClick={() => setSubFilter(s)} style={subBtn(subFilter === s)}>{s}</button>
+            <button key={s} onClick={() => chooseSub(s)} style={subBtn(subFilter === s)}>{s}</button>
           ))}
         </div>
 
@@ -514,7 +521,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
         </div>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 280 }}>
+      <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
@@ -541,6 +548,13 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const brand = brands.find((b) => b.id === brandId);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [sortBy, setSortBy] = useState("default");
+  const productsRef = useRef(null);
+  const chooseCategory = (id) => {
+    setCategoryFilter(id);
+    if (window.innerWidth <= 720 && productsRef.current) {
+      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  };
 
   useEffect(() => { setCategoryFilter(null); setSortBy("default"); }, [brandId]);
 
@@ -565,14 +579,14 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
         <div>
           <div style={sideLabel}>Ангилал</div>
-          <button onClick={() => setCategoryFilter(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
+          <button onClick={() => chooseCategory(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
           {categoriesInBrand.map((c) => (
-            <button key={c.id} onClick={() => setCategoryFilter(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
+            <button key={c.id} onClick={() => chooseCategory(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
           ))}
         </div>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 280 }}>
+      <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
@@ -602,8 +616,8 @@ const detailImgArrowStyle = {
 };
 const sideLabel = { fontFamily: "'Ubuntu', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10 };
 const subBtn = (active) => ({
-  display: "block", width: "100%", textAlign: "left", background: active ? T.ink : "transparent",
-  color: active ? T.cream : T.ink, border: `1px solid ${active ? T.ink : "transparent"}`,
+  display: "block", width: "100%", textAlign: "left", background: active ? "#E4E1DC" : "transparent",
+  color: T.ink, border: `1px solid ${active ? "#E4E1DC" : "transparent"}`,
   borderRadius: 8, padding: "7px 10px", fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5,
   cursor: "pointer", marginBottom: 4,
 });
