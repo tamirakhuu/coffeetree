@@ -35,6 +35,7 @@ body{font-family:'Ubuntu',sans-serif;background:var(--paper);color:var(--ink);di
 .nav-item:hover{background:rgba(255,255,255,.06);opacity:1}
 .nav-item.active{background:var(--cherry);opacity:1;font-weight:600}
 .nav-item .badge{margin-left:auto;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;font-family:'Ubuntu',sans-serif}
+.nav-icon{display:inline-block;width:16px;height:16px;flex-shrink:0;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
 .sidebar-foot{padding:12px 10px;border-top:1px solid rgba(255,255,255,.1)}
 .main{margin-left:220px;flex:1;padding:28px 32px;min-height:100vh}
 .page{display:none}
@@ -230,15 +231,15 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="b">ADMIN PANEL</div>
   </div>
   <div class="sidebar-body">
-    <button class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">📊 Нүүр хуудас</button>
-    <button class="nav-item" data-page="products" onclick="navTo('products')">Бараа <span class="badge" id="nb-products" style="background:var(--gold);color:var(--ink)">0</span></button>
-    <button class="nav-item" data-page="categories" onclick="navTo('categories')">🏷️ Ангилал</button>
-    <button class="nav-item" data-page="brands" onclick="navTo('brands')">🏪 Брэнд</button>
-    <button class="nav-item" data-page="orders" onclick="navTo('orders')">🧾 Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
-    <button class="nav-item" data-page="report" onclick="navTo('report')">📈 Тайлан</button>
+    <button class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/dashboard.svg');mask-image:url('/admin-icons/dashboard.svg')"></span> Нүүр хуудас</button>
+    <button class="nav-item" data-page="products" onclick="navTo('products')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/box.svg');mask-image:url('/admin-icons/box.svg')"></span> Бараа <span class="badge" id="nb-products" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="categories" onclick="navTo('categories')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/categories.svg');mask-image:url('/admin-icons/categories.svg')"></span> Ангилал</button>
+    <button class="nav-item" data-page="brands" onclick="navTo('brands')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/brands.svg');mask-image:url('/admin-icons/brands.svg')"></span>Брэнд</button>
+    <button class="nav-item" data-page="orders" onclick="navTo('orders')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/orders.svg');mask-image:url('/admin-icons/orders.svg')"></span> Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="report" onclick="navTo('report')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/report.svg');mask-image:url('/admin-icons/report.svg')"></span> Тайлан</button>
   </div>
   <div class="sidebar-foot">
-    <button class="nav-item" onclick="doLogout()">🚪 Гарах</button>
+    <button class="nav-item" onclick="doLogout()"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/doLogout.svg');mask-image:url('/admin-icons/doLogout.svg')"></span> Гарах</button>
   </div>
 </aside>
 
