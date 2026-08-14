@@ -11,6 +11,11 @@ html {
 }
 
 @media (max-width: 720px) {
+  /* headers busad tomruulah */
+  main, footer {
+    zoom: 1.08;
+  }
+
   .cuppa-header-row {
     padding: 12px 16px !important;
     gap: 10px !important;
