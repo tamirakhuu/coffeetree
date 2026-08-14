@@ -631,8 +631,8 @@ function PageHeaderRow({ onBack, title }) {
       <BackButton onClick={onBack} style={{ marginBottom: 0 }} />
       <div style={{
         position: "absolute", left: "50%", transform: "translateX(-50%)", textAlign: "center",
-        fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink,
-        maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, lineHeight: 1.25,
+        maxWidth: "62%",
       }}>{title}</div>
     </div>
   );
