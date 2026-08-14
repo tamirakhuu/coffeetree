@@ -394,8 +394,8 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
         <form className={`cuppa-search-form${searchOpen ? " cuppa-search-open" : ""}`} onSubmit={(e) => { e.preventDefault(); onSearch(q); setSearchOpen(false); }}
           style={{ display: "flex", alignItems: "center", background: "rgba(253, 252, 252, 0.43)", borderRadius: 999, padding: "6px 12px", gap: 8, width: 200 }}>
           <Search size={15} style={{ opacity: 0.7, flexShrink: 0 }} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..." autoFocus={searchOpen}
-            style={{ background: "transparent", border: "none", outline: "none", color: T.paper, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Хайх..." autoFocus={searchOpen} className="cuppa-search-input"
+            style={{ background: "transparent", border: "none", outline: "none", color: T.ink, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, width: "100%" }} />
           {searchOpen && (
             <button type="button" onClick={() => setSearchOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: T.paper, opacity: 0.75, display: "flex", flexShrink: 0, padding: 0 }}>
               <X size={16} />

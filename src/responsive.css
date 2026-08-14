@@ -2,6 +2,11 @@ html {
   overflow-x: hidden;
 }
 
+.cuppa-search-input::placeholder {
+  color: #5C4E3E;
+  opacity: 0.75;
+}
+
 /* search box nuuh */
 .cuppa-search-toggle {
   display: none !important;
