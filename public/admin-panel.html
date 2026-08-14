@@ -130,6 +130,9 @@ tr:hover td{background:rgba(255,255,255,.4)}
 #printInventory{display:none}
 .receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px}
 .receipt-hr{border-top:1px dashed #000;margin:6px 0}
+.receipt-item{margin-bottom:6px}
+.receipt-item-title{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700}
+.receipt-item-meta{font-size:10px;color:#555;margin-top:1px}
 @media print{
   body.printing-receipt > *{visibility:hidden}
   body.printing-receipt #printReceipt,
@@ -228,7 +231,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
   <div class="sidebar-body">
     <button class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">📊 Нүүр хуудас</button>
-    <button class="nav-item" data-page="products" onclick="navTo('products')">📦 Бараа <span class="badge" id="nb-products" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="products" onclick="navTo('products')">Бараа <span class="badge" id="nb-products" style="background:var(--gold);color:var(--ink)">0</span></button>
     <button class="nav-item" data-page="categories" onclick="navTo('categories')">🏷️ Ангилал</button>
     <button class="nav-item" data-page="brands" onclick="navTo('brands')">🏪 Брэнд</button>
     <button class="nav-item" data-page="orders" onclick="navTo('orders')">🧾 Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
@@ -1159,6 +1162,12 @@ async function deleteBrandNow(id) {
   await loadAll();
 }
 
+function brandNameForProduct(productId) {
+  const p = products.find(x => x.id === productId);
+  if (!p) return '';
+  return brands.find(b => b.id === p.brand_id)?.name || '';
+}
+
 function renderOrders() {
   const query = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
   const filtered = query ? orders.filter(o =>
@@ -1172,7 +1181,10 @@ function renderOrders() {
   const tb = document.getElementById('orderTable');
   tb.innerHTML = filtered.map(o => {
     const items = orderItems.filter(i => i.order_number === o.order_number);
-    const itemsText = items.map(i => `${i.product_name} (${i.option_label}) × ${i.qty}`).join('<br>');
+    const itemsText = items.map(i => {
+      const brandName = brandNameForProduct(i.product_id);
+      return `${i.product_name} (${i.option_label}) × ${i.qty}${brandName ? ` <span style="color:var(--ink-soft)">· ${brandName}</span>` : ''}`;
+    }).join('<br>');
     const boxCountInput = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
       <span style="font-size:10.5px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">Хайрцаг:</span>
       <input type="number" min="0" value="${o.box_count ?? 0}" onchange="updateOrderBoxCount('${o.order_number}', this.value)"
@@ -1267,11 +1279,14 @@ function openOrderDetail(orderNumber) {
   const isDelivery = o.delivery_method === 'delivery';
   const unitQty = items.filter(i => i.option_type === 'unit').reduce((s, i) => s + (i.qty || 0), 0);
   const boxQty = items.filter(i => i.option_type === 'box').reduce((s, i) => s + (i.qty || 0), 0);
-  const itemsRows = items.map(i => `
+  const itemsRows = items.map(i => {
+    const brandName = brandNameForProduct(i.product_id);
+    return `
     <tr>
-      <td>${i.product_name}<div style="font-size:11px;color:var(--ink-soft)">${i.option_label} × ${i.qty}</div></td>
+      <td>${i.product_name}${brandName ? ` <span style="color:var(--ink-soft);font-size:11px">(${brandName})</span>` : ''}<div style="font-size:11px;color:var(--ink-soft)">${i.option_label} × ${i.qty}</div></td>
       <td class="mono" style="text-align:right">${fmt(i.line_total)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   const body = `
     <div style="display:grid;gap:4px;margin-bottom:16px;font-size:13px">
       <div><b>Хэрэглэгч:</b> ${o.customer_name || '-'}</div>
@@ -1301,9 +1316,14 @@ function printOrderReceipt(orderNumber) {
   if (!o) return;
   const items = orderItems.filter(i => i.order_number === orderNumber);
   const isDelivery = o.delivery_method === 'delivery';
-  const itemsLines = items.map(i =>
-    `<div class="receipt-row"><span>${i.product_name} (${i.option_label}) ×${i.qty}</span><span>${fmt(i.line_total)}</span></div>`
-  ).join('');
+  const itemsLines = items.map(i => {
+    const brandName = brandNameForProduct(i.product_id);
+    const meta = [brandName, i.option_label, `×${i.qty}`].filter(Boolean).join(' · ');
+    return `<div class="receipt-item">
+      <div class="receipt-item-title"><span>${i.product_name}</span><span>${fmt(i.line_total)}</span></div>
+      <div class="receipt-item-meta">${meta}</div>
+    </div>`;
+  }).join('');
   const html = `
     <div style="text-align:center;font-weight:700;font-size:14px;margin-bottom:4px">CUPPA</div>
     <div style="text-align:center;font-size:10px;margin-bottom:8px">Захиалга: ${o.order_number}</div>
