@@ -2077,15 +2077,15 @@ export function Footer({ setView }) {
         ))}
       </div>
       <div style={{
-        maxWidth: 1180, margin: "0 auto", display: "flex", justifyContent: "space-between",
-        alignItems: "center", flexWrap: "wrap", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)",
+        maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column",
+        alignItems: "center", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)", textAlign: "center",
       }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
-        <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
           <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
           <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
         </div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
       </div>
     </footer>
   );
