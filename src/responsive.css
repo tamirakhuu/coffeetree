@@ -15,6 +15,9 @@ html {
   main, footer {
     zoom: 1.08;
   }
+  .cuppa-drawer-content {
+    zoom: 1.08;
+  }
 
   .cuppa-header-row {
     padding: 12px 16px !important;

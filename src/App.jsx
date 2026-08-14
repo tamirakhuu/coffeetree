@@ -294,35 +294,37 @@ function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBra
           <img src="/cuppa-logo.png" alt="CUPPA" style={{ height: 26, filter: "invert(1)", position: "absolute", left: "50%", transform: "translateX(-50%)" }} />
         </div>
 
-        <div style={{ padding: "14px 18px 4px", display: "flex", flexDirection: "column", gap: 2 }}>
-          <button onClick={() => goPage("bestseller")} style={linkBtnStyle}>Бестселлэр</button>
-          <button onClick={() => goPage("training")} style={linkBtnStyle}>Сургалт</button>
-        </div>
+        <div className="cuppa-drawer-content">
+          <div style={{ padding: "14px 18px 4px", display: "flex", flexDirection: "column", gap: 2 }}>
+            <button onClick={() => goPage("bestseller")} style={linkBtnStyle}>Бестселлэр</button>
+            <button onClick={() => goPage("training")} style={linkBtnStyle}>Сургалт</button>
+          </div>
 
-        <div style={{ padding: "14px 18px 4px" }}>
-          <div style={sideLabel}>Бүтээгдэхүүн</div>
-          {categories.map((c) => (
-            <button key={c.id} onClick={() => onGoCategory(c.id)} style={catBtnStyle}>
-              <CategoryIcon icon={c.icon} size={15} /> {c.name}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ padding: "14px 18px 24px" }}>
-          <div style={sideLabel}>Брэнд</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px" }}>
-            {brands.map((b) => (
-              <button key={b.id} onClick={() => onGoBrand(b.id)} style={brandBtnStyle}>
-                {b.logo
-                  ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
-                  : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
-                {b.name}
+          <div style={{ padding: "14px 18px 4px" }}>
+            <div style={sideLabel}>Бүтээгдэхүүн</div>
+            {categories.map((c) => (
+              <button key={c.id} onClick={() => onGoCategory(c.id)} style={catBtnStyle}>
+                <CategoryIcon icon={c.icon} size={15} /> {c.name}
               </button>
             ))}
           </div>
-          {brands.length === 0 && (
-            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
-          )}
+
+          <div style={{ padding: "14px 18px 24px" }}>
+            <div style={sideLabel}>Брэнд</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px" }}>
+              {brands.map((b) => (
+                <button key={b.id} onClick={() => onGoBrand(b.id)} style={brandBtnStyle}>
+                  {b.logo
+                    ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
+                    : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
+                  {b.name}
+                </button>
+              ))}
+            </div>
+            {brands.length === 0 && (
+              <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -667,7 +669,7 @@ const displayPrice = (product) => {
 
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
 function cupAccessorySuggestions(product, categoryName, products) {
-  if (categoryName !== "Нэг удаа") return [];
+  if (categoryName !== "Нэг удаагийн хэрэгсэл") return [];
   const sub = product.sub || "";
   const isDessertCup = /зайрмаг|десерт/i.test(sub);
   const isCup = /аяга/i.test(sub) && !isDessertCup;
