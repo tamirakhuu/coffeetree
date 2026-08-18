@@ -1377,13 +1377,6 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
   return (
     <div>
-      <style>{`
-        @keyframes cuppa-pulse-dot {
-          0% { box-shadow: 0 0 0 0 rgba(255,70,70,.6); }
-          70% { box-shadow: 0 0 0 9px rgba(255,70,70,0); }
-          100% { box-shadow: 0 0 0 0 rgba(255,70,70,0); }
-        }
-      `}</style>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div className="cuppa-hero-image" style={{ width: "100%" }}>
@@ -1391,11 +1384,10 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           </div>
           <div className="cuppa-hero-cta" style={{ marginTop: 30 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
-              position: "relative", background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
+              background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
             }}>
-              <span style={{ position: "absolute", top: 6, right: 8, width: 10, height: 10, borderRadius: "50%", background: "#FF4646", animation: "cuppa-pulse-dot 1.8s ease-out infinite" }} />
-              Бүх хямдрал <ArrowRight size={16} />
+              Бүх хямдрал үзэх<ArrowRight size={16} />
             </button>
           </div>
         </div>
