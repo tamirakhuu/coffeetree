@@ -79,10 +79,13 @@ html {
     display: flex !important;
   }
 
-  .cuppa-hero-grid { grid-template-columns: 1fr !important; grid-template-areas: "text" "image" "button" !important; }
-  .cuppa-hero-cta { margin-top: 0 !important; }
+  .cuppa-hero-cta { order: 3 !important; margin-top: 24px !important; margin-bottom: 0 !important; }
+  .cuppa-hero-image { order: 2 !important; margin-bottom: 24px !important; }
   .cuppa-hero-title { font-size: 30px !important; }
   .cuppa-hero-sub { font-size: 14.5px !important; }
+
+  .cuppa-hero-side-slide { display: none !important; }
+  .cuppa-hero-main-slide { max-width: none !important; }
 
   .cuppa-section-head { flex-wrap: nowrap !important; gap: 10px !important; }
   .cuppa-section-title { font-size: 18px !important; }

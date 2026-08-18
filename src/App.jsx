@@ -1313,46 +1313,59 @@ function HeroSlideshow({ products, onOpen }) {
   if (slides.length === 0) return null;
   const currentOption = current[availableOptionTypes(current)[0]];
   const currentDiscount = discountPercent(currentOption);
-  const goPrev = (e) => { e.stopPropagation(); setIndex((i) => (i - 1 + slides.length) % slides.length); };
-  const goNext = (e) => { e.stopPropagation(); setIndex((i) => (i + 1) % slides.length); };
+  const prevIndex = (index - 1 + slides.length) % slides.length;
+  const nextIndex = (index + 1) % slides.length;
+  const goPrev = (e) => { e.stopPropagation(); setIndex(prevIndex); };
+  const goNext = (e) => { e.stopPropagation(); setIndex(nextIndex); };
   const arrowBtnStyle = {
     position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
     border: "none", cursor: "pointer", background: "rgba(0,0,0,.35)", color: "#fff",
-    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1,
+    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2,
+  };
+  const sideSlideStyle = {
+    flexShrink: 0, width: "16%", height: "78%", borderRadius: 14, overflow: "hidden", cursor: "pointer",
+    opacity: 0.45, background: T.card, transition: "opacity .3s ease", border: "none", padding: 0,
   };
   return (
-    <div onClick={() => onOpen(current)} style={{
-      position: "relative", height: 320, borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
-    }}>
-      {slides.map((p, i) => (
-        <img key={p.id} src={p.images[0]} alt={p.name} style={{
-          position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
-          opacity: i === index ? 1 : 0, transition: "opacity .6s ease", pointerEvents: i === index ? "auto" : "none",
-        }} />
-      ))}
-      {currentDiscount != null && (
-        <div style={{
-          position: "absolute", left: 14, bottom: 14, zIndex: 1,
-          display: "flex", alignItems: "baseline", gap: 8,
-          background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
-          padding: "8px 14px", borderRadius: 12,
-        }}>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(160, 136, 136, 0.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.lightgreen }}>{money(currentOption.price)}</span>
-        </div>
-      )}
+    <div className="cuppa-hero-carousel" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, height: 320 }}>
       {slides.length > 1 && (
-        <>
-          <button onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
-          <button onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
-          <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
-            {slides.map((_, i) => (
-              <span key={i} style={{
-                width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
-              }} />
-            ))}
+        <button className="cuppa-hero-side-slide" onClick={() => setIndex(prevIndex)} aria-label="Өмнөх бараа" style={sideSlideStyle}>
+          <img src={slides[prevIndex].images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        </button>
+      )}
+      <div className="cuppa-hero-main-slide" onClick={() => onOpen(current)} style={{
+        position: "relative", flex: 1, maxWidth: 640, height: "100%", borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
+      }}>
+        <img src={current.images[0]} alt={current.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        {currentDiscount != null && (
+          <div style={{
+            position: "absolute", left: 14, bottom: 14, zIndex: 1,
+            display: "flex", alignItems: "baseline", gap: 8,
+            background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+            padding: "8px 14px", borderRadius: 12,
+          }}>
+            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(160, 136, 136, 0.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
+            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.paper }}>{money(currentOption.price)}</span>
           </div>
-        </>
+        )}
+        {slides.length > 1 && (
+          <>
+            <button onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
+            <button onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
+            <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+              {slides.map((_, i) => (
+                <span key={i} style={{
+                  width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
+                }} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {slides.length > 1 && (
+        <button className="cuppa-hero-side-slide" onClick={() => setIndex(nextIndex)} aria-label="Дараах бараа" style={sideSlideStyle}>
+          <img src={slides[nextIndex].images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        </button>
       )}
     </div>
   );
@@ -1372,17 +1385,14 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         }
       `}</style>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
-        <div className="cuppa-hero-grid" style={{
-          maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr",
-          gridTemplateAreas: '"text image" "button image"', gap: 40, alignItems: "center",
-        }}>
-          <div style={{ gridArea: "text" }}>
+        <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column" }}>
+          <div className="cuppa-hero-text" style={{ order: 1, maxWidth: 560 }}>
             <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Хямдралтай үнээр<br/>захиалаарай</h1>
             <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: 0 }}>
               Сонгогдсон бараа бүтээгдэхүүнүүдийг тогтмол үнээс хямд авах боломжтой.
             </p>
           </div>
-          <div className="cuppa-hero-cta" style={{ gridArea: "button", marginTop: 28 }}>
+          <div className="cuppa-hero-cta" style={{ order: 2, marginTop: 28, marginBottom: 36 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
               position: "relative", background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
@@ -1391,7 +1401,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               Бүх хямдрал <ArrowRight size={16} />
             </button>
           </div>
-          <div style={{ gridArea: "image" }}>
+          <div className="cuppa-hero-image" style={{ order: 3 }}>
             <HeroSlideshow products={products} onOpen={onOpen} />
           </div>
         </div>
