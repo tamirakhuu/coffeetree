@@ -1301,6 +1301,7 @@ const eyeBtnStyle = {
 function HeroSlideshow({ products, onOpen }) {
   const slides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [index, setIndex] = useState(0);
+  const current = slides[index];
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -1309,7 +1310,8 @@ function HeroSlideshow({ products, onOpen }) {
   }, [slides.length, index]);
 
   if (slides.length === 0) return null;
-  const current = slides[index];
+  const currentOption = current[availableOptionTypes(current)[0]];
+  const currentDiscount = discountPercent(currentOption);
   const goPrev = (e) => { e.stopPropagation(); setIndex((i) => (i - 1 + slides.length) % slides.length); };
   const goNext = (e) => { e.stopPropagation(); setIndex((i) => (i + 1) % slides.length); };
   const arrowBtnStyle = {
@@ -1327,6 +1329,24 @@ function HeroSlideshow({ products, onOpen }) {
           opacity: i === index ? 1 : 0, transition: "opacity .6s ease", pointerEvents: i === index ? "auto" : "none",
         }} />
       ))}
+      {currentDiscount != null && (
+        <>
+          <span style={{
+            position: "absolute", top: 14, left: 14, fontFamily: "'Ubuntu', sans-serif",
+            fontSize: 13, letterSpacing: "0.04em", color: "#fff", background: T.cherry,
+            padding: "5px 12px", borderRadius: 999, fontWeight: 700, zIndex: 1,
+          }}>-{currentDiscount}%</span>
+          <div style={{
+            position: "absolute", left: 14, bottom: 14, zIndex: 1,
+            display: "flex", alignItems: "baseline", gap: 8,
+            background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+            padding: "8px 14px", borderRadius: 12,
+          }}>
+            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
+            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.gold }}>{money(currentOption.price)}</span>
+          </div>
+        </>
+      )}
       {slides.length > 1 && (
         <>
           <button onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
@@ -1350,18 +1370,28 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
   return (
     <div>
+      <style>{`
+        @keyframes cuppa-pulse-dot {
+          0% { box-shadow: 0 0 0 0 rgba(255,70,70,.6); }
+          70% { box-shadow: 0 0 0 9px rgba(255,70,70,0); }
+          100% { box-shadow: 0 0 0 0 rgba(255,70,70,0); }
+        }
+      `}</style>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 40, alignItems: "center" }}>
           <div>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>70 BABY<br/></h1>
+            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Хямдралтай үнээр<br/>захиалаарай</h1>
             <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: "0 0 28px" }}>
-              GUYS хамтлаг
+              Сонгосон кофе, сироп, бариста хэрэгслүүдийг тогтмол үнээс хямд, хязгаарлагдмал хугацаанд авах боломжтой.
             </p>
 
             <button onClick={() => setView({ name: "discounts" })} style={{
-              background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
+              position: "relative", background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
-            }}>Бүх хямдрал <ArrowRight size={16} /></button>
+            }}>
+              <span style={{ position: "absolute", top: -3, right: -3, width: 10, height: 10, borderRadius: "50%", background: "#FF4646", animation: "cuppa-pulse-dot 1.8s ease-out infinite" }} />
+              Бүх хямдрал <ArrowRight size={16} />
+            </button>
           </div>
           <HeroSlideshow products={products} onOpen={onOpen} />
         </div>
