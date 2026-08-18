@@ -176,7 +176,7 @@ const NavButton = React.forwardRef(function NavButton({ onClick, active, childre
   return (
     <button ref={ref} onClick={onClick}
       style={{
-        background: active ? "rgba(255,255,255,0.08)" : "transparent", border: "none", color: T.cream, opacity: 0.85,
+        background: active ? "color: T.ink" : "transparent", border: "none", color: T.cream, opacity: 0.85,
         fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
         borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
       }}
@@ -1385,14 +1385,11 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         }
       `}</style>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
-        <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column" }}>
-          <div className="cuppa-hero-text" style={{ order: 1, maxWidth: 560 }}>
-            <h1 className="cuppa-hero-title" style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 600, lineHeight: 1.1, margin: "0 0 18px" }}>Хямдралтай үнээр<br/>захиалаарай</h1>
-            <p className="cuppa-hero-sub" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 16.5, lineHeight: 1.55, color: "rgba(246,239,224,.78)", maxWidth: 440, margin: 0 }}>
-              Сонгогдсон бараа бүтээгдэхүүнүүдийг тогтмол үнээс хямд авах боломжтой.
-            </p>
+        <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div className="cuppa-hero-image" style={{ width: "100%" }}>
+            <HeroSlideshow products={products} onOpen={onOpen} />
           </div>
-          <div className="cuppa-hero-cta" style={{ order: 2, marginTop: 28, marginBottom: 36 }}>
+          <div className="cuppa-hero-cta" style={{ marginTop: 30 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
               position: "relative", background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
@@ -1400,9 +1397,6 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               <span style={{ position: "absolute", top: 6, right: 8, width: 10, height: 10, borderRadius: "50%", background: "#FF4646", animation: "cuppa-pulse-dot 1.8s ease-out infinite" }} />
               Бүх хямдрал <ArrowRight size={16} />
             </button>
-          </div>
-          <div className="cuppa-hero-image" style={{ order: 3 }}>
-            <HeroSlideshow products={products} onOpen={onOpen} />
           </div>
         </div>
       </section>
