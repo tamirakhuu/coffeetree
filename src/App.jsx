@@ -69,7 +69,7 @@ const discountPercent = (option) => {
 };
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
-const DataContext = createContext({ categories: [], brands: [], products: [] });
+export const DataContext = createContext({ categories: [], brands: [], products: [] });
 
 function StampBadge({ label, size = 56 }) {
   return (
@@ -1330,22 +1330,15 @@ function HeroSlideshow({ products, onOpen }) {
         }} />
       ))}
       {currentDiscount != null && (
-        <>
-          <span style={{
-            position: "absolute", top: 14, left: 14, fontFamily: "'Ubuntu', sans-serif",
-            fontSize: 13, letterSpacing: "0.04em", color: "#fff", background: T.cherry,
-            padding: "5px 12px", borderRadius: 999, fontWeight: 700, zIndex: 1,
-          }}>-{currentDiscount}%</span>
-          <div style={{
-            position: "absolute", left: 14, bottom: 14, zIndex: 1,
-            display: "flex", alignItems: "baseline", gap: 8,
-            background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
-            padding: "8px 14px", borderRadius: 12,
-          }}>
-            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
-            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.gold }}>{money(currentOption.price)}</span>
-          </div>
-        </>
+        <div style={{
+          position: "absolute", left: 14, bottom: 14, zIndex: 1,
+          display: "flex", alignItems: "baseline", gap: 8,
+          background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+          padding: "8px 14px", borderRadius: 12,
+        }}>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
+          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.gold }}>{money(currentOption.price)}</span>
+        </div>
       )}
       {slides.length > 1 && (
         <>
@@ -2127,7 +2120,20 @@ export function Footer({ setView }) {
 export default function App() {
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
   const [dataStatus, setDataStatus] = useState("loading"); 
-  const [view, setView] = useState({ name: "home" });
+  // /privacy, /terms зэрэг хуудаснаас "Ангилал" цэсээр дамжуулан тодорхой
+  // ангилал/брэнд рүү шууд шилжихийг дэмжихийн тулд эхний ачаалалтад
+  // ?category=/?brand= query param-ыг уншиж эхний view-г тохируулна
+  const [view, setView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get("category");
+    const brand = params.get("brand");
+    if (category) return { name: "category", categoryId: Number(category) };
+    if (brand) return { name: "brand", brandId: Number(brand) };
+    return { name: "home" };
+  });
+  useEffect(() => {
+    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
+  }, []);
   useEffect(() => { window.scrollTo(0, 0); }, [view]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
