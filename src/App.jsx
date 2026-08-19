@@ -1303,6 +1303,8 @@ function HeroSlideshow({ products, onOpen }) {
   const slides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [index, setIndex] = useState(0);
   const current = slides[index];
+  const touchStartRef = useRef(null);
+  const swipedRef = useRef(false);
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -1317,6 +1319,26 @@ function HeroSlideshow({ products, onOpen }) {
   const nextIndex = (index + 1) % slides.length;
   const goPrev = (e) => { e.stopPropagation(); setIndex(prevIndex); };
   const goNext = (e) => { e.stopPropagation(); setIndex(nextIndex); };
+  const onTouchStart = (e) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    swipedRef.current = false;
+  };
+  const onTouchMove = (e) => {
+    if (!touchStartRef.current) return;
+    const dx = e.touches[0].clientX - touchStartRef.current.x;
+    const dy = e.touches[0].clientY - touchStartRef.current.y;
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) swipedRef.current = true;
+  };
+  const onTouchEnd = (e) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    if (Math.abs(dx) > 40) setIndex(dx < 0 ? nextIndex : prevIndex);
+    touchStartRef.current = null;
+  };
+  const handleMainClick = () => {
+    if (swipedRef.current) { swipedRef.current = false; return; }
+    onOpen(current);
+  };
   const arrowBtnStyle = {
     position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
     border: "none", cursor: "pointer", background: "rgba(0,0,0,.35)", color: "#fff",
@@ -1333,25 +1355,26 @@ function HeroSlideshow({ products, onOpen }) {
           <img src={slides[prevIndex].images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
         </button>
       )}
-      <div className="cuppa-hero-main-slide" onClick={() => onOpen(current)} style={{
+      <div className="cuppa-hero-main-slide" onClick={handleMainClick}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} style={{
         position: "relative", flex: 1, maxWidth: 640, height: "100%", borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
       }}>
         <img src={current.images[0]} alt={current.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
         {currentDiscount != null && (
-          <div style={{
+          <div className="cuppa-hero-price" style={{
             position: "absolute", left: 14, bottom: 14, zIndex: 1,
             display: "flex", alignItems: "baseline", gap: 8,
             background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
             padding: "8px 14px", borderRadius: 12,
           }}>
-            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(160, 136, 136, 0.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
-            <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.paper }}>{money(currentOption.price)}</span>
+            <span className="cuppa-hero-price-old" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(160, 136, 136, 0.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
+            <span className="cuppa-hero-price-new" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.paper }}>{money(currentOption.price)}</span>
           </div>
         )}
         {slides.length > 1 && (
           <>
-            <button onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
-            <button onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
+            <button className="cuppa-hero-arrow" onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
+            <button className="cuppa-hero-arrow" onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
             <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
               {slides.map((_, i) => (
                 <span key={i} style={{

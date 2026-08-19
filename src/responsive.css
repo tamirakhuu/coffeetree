@@ -82,6 +82,10 @@ html {
   .cuppa-hero-cta { margin-top: 24px !important; }
 
   .cuppa-hero-carousel { height: 200px !important; gap: 8px !important; }
+  .cuppa-hero-arrow { display: none !important; }
+  .cuppa-hero-price { padding: 5px 8px !important; gap: 5px !important; }
+  .cuppa-hero-price-old { font-size: 9.5px !important; }
+  .cuppa-hero-price-new { font-size: 12.5px !important; }
 
   .cuppa-section-head { flex-wrap: nowrap !important; gap: 10px !important; }
   .cuppa-section-title { font-size: 18px !important; }
