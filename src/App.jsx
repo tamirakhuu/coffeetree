@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee,
@@ -30,6 +30,46 @@ export const T = {
 
 const FONT_IMPORT =
   "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');";
+
+/*  URL routing helpers — view state, ялдаа/огт солигдоогүй нэрсээр, address bar-той синхрончлогдоно  */
+export function slugify(str) {
+  return (str || "").toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+export function viewFromLocation(pathname, search) {
+  const params = new URLSearchParams(search);
+  let m;
+  if ((m = pathname.match(/^\/category\/(\d+)\/?$/))) return { name: "category", categoryId: Number(m[1]) };
+  if ((m = pathname.match(/^\/brand\/([^/]+)\/?$/))) return { name: "brand", brandSlug: m[1] };
+  if (pathname === "/bestseller") return { name: "bestseller" };
+  if (pathname === "/training") return { name: "training" };
+  if (pathname === "/discount") return { name: "discounts" };
+  if (pathname === "/profile") return { name: "profile", section: params.get("section") || "info" };
+  if (pathname === "/checkout") return { name: "checkout" };
+  if (pathname === "/wishlist") return { name: "wishlist" };
+  if (pathname === "/about") return { name: "about" };
+  if (pathname === "/search") return { name: "search", query: params.get("q") || "" };
+  if (pathname === "/confirmation") return { name: "confirmation" };
+  return { name: "home" };
+}
+export function pathForView(view, brands = []) {
+  switch (view?.name) {
+    case "category": return `/category/${view.categoryId}`;
+    case "brand": {
+      const brand = brands.find((b) => b.id === view.brandId);
+      return `/brand/${slugify(brand?.name || "")}`;
+    }
+    case "bestseller": return "/bestseller";
+    case "training": return "/training";
+    case "discounts": return "/discount";
+    case "profile": return view.section && view.section !== "info" ? `/profile?section=${view.section}` : "/profile";
+    case "checkout": return "/checkout";
+    case "wishlist": return "/wishlist";
+    case "about": return "/about";
+    case "search": return view.query ? `/search?q=${encodeURIComponent(view.query)}` : "/search";
+    case "confirmation": return "/confirmation";
+    default: return "/";
+  }
+}
 
 const ICONS = {
   CoffeeBean: CoffeeBeanIcon,
@@ -2162,22 +2202,18 @@ export function Footer({ setView }) {
 /* ------------------------------------------------------------------ */
 export default function App() {
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
-  const [dataStatus, setDataStatus] = useState("loading"); 
-  // /privacy, /terms зэрэг хуудаснаас "Ангилал" цэсээр дамжуулан тодорхой
-  // ангилал/брэнд рүү шууд шилжихийг дэмжихийн тулд эхний ачаалалтад
-  // ?category=/?brand= query param-ыг уншиж эхний view-г тохируулна
-  const [view, setView] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const category = params.get("category");
-    const brand = params.get("brand");
-    if (category) return { name: "category", categoryId: Number(category) };
-    if (brand) return { name: "brand", brandId: Number(brand) };
-    return { name: "home" };
-  });
-  useEffect(() => {
-    if (window.location.search) window.history.replaceState(null, "", window.location.pathname);
-  }, []);
-  useEffect(() => { window.scrollTo(0, 0); }, [view]);
+  const [dataStatus, setDataStatus] = useState("loading");
+  // view нь одоо react-router-ийн location-оос уусгагдана — address bar нь
+  // цорын ганц үнэн сурвалж тул хуудас бүр өөрийн гэсэн бодит URL-тэй,
+  // хуулж/хуваалцаж, browser-ийн буцах/урагшлах товчоор шилжиж болно
+  const location = useLocation();
+  const navigate = useNavigate();
+  const view = viewFromLocation(location.pathname, location.search);
+  const setView = (v) => navigate(pathForView(v, data.brands));
+  // Бүтээгдэхүүний дэлгэрэнгүй хэсэг URL-гүй, одоогийн хуудасны дээгүүр
+  // "давхарга" мэт нээгддэг тул тусад нь state-ээр удирдана
+  const [openProductView, setOpenProductView] = useState(null);
+  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search, openProductView]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [user, setUser] = useState(null);
@@ -2293,7 +2329,7 @@ export default function App() {
   }, 0), [cart, data.products]);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
-  const openProduct = (p) => setView({ name: "product", productId: p.id, returnTo: view });
+  const openProduct = (p) => setOpenProductView({ productId: p.id });
   const handleSearch = (q) => setView({ name: "search", query: q });
   const handleLogout = async () => { await logout(); flash("Гарлаа"); };
   const handleCheckout = () => {
@@ -2354,18 +2390,19 @@ export default function App() {
   }
 
   let body;
-  if (view.name === "home") {
+  if (openProductView) {
+    const product = data.products.find((p) => p.id === openProductView.productId);
+    body = <ProductDetail product={product} onBack={() => setOpenProductView(null)}
+      onAddToCart={addToCart} onQuickAdd={quickAdd} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
+  } else if (view.name === "home") {
     body = <Home setView={setView} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
   } else if (view.name === "category") {
     body = <CategoryPage categoryId={view.categoryId} brandFilter={brandFilter} setBrandFilter={setBrandFilter}
       subFilter={subFilter} setSubFilter={setSubFilter} sortBy={sortBy} setSortBy={setSortBy}
       onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "brand") {
-    body = <BrandPage brandId={view.brandId} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
-  } else if (view.name === "product") {
-    const product = data.products.find((p) => p.id === view.productId);
-    body = <ProductDetail product={product} onBack={() => setView(view.returnTo || { name: "home" })}
-      onAddToCart={addToCart} onQuickAdd={quickAdd} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
+    const brand = data.brands.find((b) => slugify(b.name) === view.brandSlug);
+    body = <BrandPage brandId={brand?.id} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "search") {
     const q = view.query.toLowerCase();
     const results = data.products.filter((p) => p.name.toLowerCase().includes(q) || (p.origin || "").toLowerCase().includes(q));
