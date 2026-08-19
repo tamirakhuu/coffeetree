@@ -1341,9 +1341,23 @@ const eyeBtnStyle = {
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
 /* ------------------------------------------------------------------ */
-function HeroSlideshow({ products, onOpen }) {
+function HeroDots({ slides, index, onSelect }) {
+  if (slides.length < 2) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 22 }}>
+      {slides.map((_, i) => (
+        <button key={i} onClick={() => onSelect(i)} aria-label={`Слайд ${i + 1}`} style={{
+          width: i === index ? 24 : 7, height: 7, borderRadius: 999, border: "none", padding: 0, cursor: "pointer",
+          background: i === index ? T.gold : "rgba(246,239,224,.32)",
+          transition: "width .45s cubic-bezier(.4,0,.2,1), background .45s ease",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function HeroSlideshow({ products, onOpen, index, setIndex }) {
   const slides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
-  const [index, setIndex] = useState(0);
   const current = slides[index];
   const touchStartRef = useRef(null);
   const swipedRef = useRef(false);
@@ -1427,13 +1441,6 @@ function HeroSlideshow({ products, onOpen }) {
           <>
             <button className="cuppa-hero-arrow" onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
             <button className="cuppa-hero-arrow" onClick={goNext} aria-label="Дараах" style={{ ...arrowBtnStyle, right: 12 }}><ChevronRight size={18} /></button>
-            <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
-              {slides.map((_, i) => (
-                <span key={i} style={{
-                  width: 6, height: 6, borderRadius: 999, background: i === index ? T.gold : "rgba(255,255,255,.5)",
-                }} />
-              ))}
-            </div>
           </>
         )}
       </div>
@@ -1455,19 +1462,22 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
   const featured = products.filter((p) => p.tag === "бестселлэр").slice(0, 4);
   const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
+  const heroSlides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
+  const [heroIndex, setHeroIndex] = useState(0);
   return (
     <div>
       <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div className="cuppa-hero-image" style={{ width: "100%" }}>
-            <HeroSlideshow products={products} onOpen={onOpen} />
+            <HeroSlideshow products={products} onOpen={onOpen} index={heroIndex} setIndex={setHeroIndex} />
           </div>
-          <div className="cuppa-hero-cta" style={{ marginTop: 30 }}>
+          <HeroDots slides={heroSlides} index={heroIndex} onSelect={setHeroIndex} />
+          <div className="cuppa-hero-cta" style={{ marginTop: 22 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
               background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
-              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 400, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
             }}>
-              Бүх хямдрал үзэх<ArrowRight size={16} />
+              Бүх хямдрал үзэх<ArrowRight size={12} />
             </button>
           </div>
         </div>
