@@ -81,8 +81,7 @@ html {
 
   .cuppa-hero-cta { margin-top: 24px !important; }
 
-  .cuppa-hero-side-slide { display: none !important; }
-  .cuppa-hero-main-slide { max-width: none !important; }
+  .cuppa-hero-carousel { height: 200px !important; gap: 8px !important; }
 
   .cuppa-section-head { flex-wrap: nowrap !important; gap: 10px !important; }
   .cuppa-section-title { font-size: 18px !important; }
