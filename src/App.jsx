@@ -1445,8 +1445,9 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
             <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
             <button onClick={() => setView({ name: "bestseller" })} style={{
-              background: "none", border: "none", cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
-              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
+              background: "transparent", border: `1.5px solid rgba(246,239,224,.4)`, borderRadius: 999, padding: "8px 16px",
+              cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
+              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
             }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
@@ -1463,8 +1464,9 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
           <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Хямдралтай бүтээгдэхүүн</div>
           <button onClick={() => setView({ name: "discounts" })} style={{
-            background: "none", border: "none", cursor: "pointer", color: T.cherry, whiteSpace: "nowrap", flexShrink: 0,
-            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 4,
+            background: "transparent", border: `1.5px solid ${T.cherry}`, borderRadius: 999, padding: "8px 16px",
+            cursor: "pointer", color: T.cherry, whiteSpace: "nowrap", flexShrink: 0,
+            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
           }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
