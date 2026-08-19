@@ -1345,21 +1345,31 @@ function HeroSlideshow({ products, onOpen }) {
     display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2,
   };
   const sideSlideStyle = {
-    flexShrink: 0, width: "16%", height: "78%", borderRadius: 14, overflow: "hidden", cursor: "pointer",
+    position: "relative", flexShrink: 0, width: "16%", height: "78%", borderRadius: 14, overflow: "hidden", cursor: "pointer",
     opacity: 0.45, background: T.card, transition: "opacity .3s ease", border: "none", padding: 0,
   };
   return (
     <div className="cuppa-hero-carousel" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, height: 320 }}>
       {slides.length > 1 && (
         <button className="cuppa-hero-side-slide" onClick={() => setIndex(prevIndex)} aria-label="Өмнөх бараа" style={sideSlideStyle}>
-          <img src={slides[prevIndex].images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          {slides.map((p, i) => (
+            <img key={p.id} src={p.images[0]} alt="" style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
+              opacity: i === prevIndex ? 1 : 0, transition: "opacity .6s ease",
+            }} />
+          ))}
         </button>
       )}
       <div className="cuppa-hero-main-slide" onClick={handleMainClick}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} style={{
         position: "relative", flex: 1, maxWidth: 640, height: "100%", borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
       }}>
-        <img src={current.images[0]} alt={current.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        {slides.map((p, i) => (
+          <img key={p.id} src={p.images[0]} alt={p.name} style={{
+            position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
+            opacity: i === index ? 1 : 0, transition: "opacity .6s ease",
+          }} />
+        ))}
         {currentDiscount != null && (
           <div className="cuppa-hero-price" style={{
             position: "absolute", left: 14, bottom: 14, zIndex: 1,
@@ -1387,7 +1397,12 @@ function HeroSlideshow({ products, onOpen }) {
       </div>
       {slides.length > 1 && (
         <button className="cuppa-hero-side-slide" onClick={() => setIndex(nextIndex)} aria-label="Дараах бараа" style={sideSlideStyle}>
-          <img src={slides[nextIndex].images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          {slides.map((p, i) => (
+            <img key={p.id} src={p.images[0]} alt="" style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain",
+              opacity: i === nextIndex ? 1 : 0, transition: "opacity .6s ease",
+            }} />
+          ))}
         </button>
       )}
     </div>
