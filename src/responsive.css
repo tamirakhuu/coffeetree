@@ -93,6 +93,10 @@ html {
   .cuppa-category-layout { flex-direction: column !important; }
   .cuppa-category-aside { width: 100% !important; }
   .cuppa-category-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .cuppa-category-tile { padding: 16px 8px !important; gap: 8px !important; }
+  .cuppa-category-icon-wrap { width: 36px !important; height: 36px !important; }
+  .cuppa-category-icon-wrap svg { width: 18px !important; height: 18px !important; }
+  .cuppa-category-label { font-size: 12.5px !important; }
 
   .cuppa-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
   .cuppa-detail-title { font-size: 26px !important; }
