@@ -40,6 +40,7 @@ export function viewFromLocation(pathname, search) {
   let m;
   if ((m = pathname.match(/^\/category\/(\d+)\/?$/))) return { name: "category", categoryId: Number(m[1]) };
   if ((m = pathname.match(/^\/brand\/([^/]+)\/?$/))) return { name: "brand", brandSlug: m[1] };
+  if ((m = pathname.match(/^\/product\/(\d+)\/?$/))) return { name: "product", productId: Number(m[1]) };
   if (pathname === "/bestseller") return { name: "bestseller" };
   if (pathname === "/training") return { name: "training" };
   if (pathname === "/discount") return { name: "discounts" };
@@ -58,6 +59,7 @@ export function pathForView(view, brands = []) {
       const brand = brands.find((b) => b.id === view.brandId);
       return `/brand/${slugify(brand?.name || "")}`;
     }
+    case "product": return `/product/${view.productId}`;
     case "bestseller": return "/bestseller";
     case "training": return "/training";
     case "discounts": return "/discount";
@@ -2210,10 +2212,7 @@ export default function App() {
   const navigate = useNavigate();
   const view = viewFromLocation(location.pathname, location.search);
   const setView = (v) => navigate(pathForView(v, data.brands));
-  // Бүтээгдэхүүний дэлгэрэнгүй хэсэг URL-гүй, одоогийн хуудасны дээгүүр
-  // "давхарга" мэт нээгддэг тул тусад нь state-ээр удирдана
-  const [openProductView, setOpenProductView] = useState(null);
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search, openProductView]);
+  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [user, setUser] = useState(null);
@@ -2329,7 +2328,13 @@ export default function App() {
   }, 0), [cart, data.products]);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
-  const openProduct = (p) => setOpenProductView({ productId: p.id });
+  const openProduct = (p) => setView({ name: "product", productId: p.id });
+  // Дэлгэрэнгүй хуудаснаас "Буцах" дарахад аппын дотоод шилжилт байсан бол
+  // browser-ийн буцах, эс бол (шууд URL-аар орж ирсэн бол) Нүүр хуудас
+  const backFromProduct = () => {
+    if (location.key !== "default") navigate(-1);
+    else navigate("/");
+  };
   const handleSearch = (q) => setView({ name: "search", query: q });
   const handleLogout = async () => { await logout(); flash("Гарлаа"); };
   const handleCheckout = () => {
@@ -2390,9 +2395,9 @@ export default function App() {
   }
 
   let body;
-  if (openProductView) {
-    const product = data.products.find((p) => p.id === openProductView.productId);
-    body = <ProductDetail product={product} onBack={() => setOpenProductView(null)}
+  if (view.name === "product") {
+    const product = data.products.find((p) => p.id === view.productId);
+    body = <ProductDetail product={product} onBack={backFromProduct}
       onAddToCart={addToCart} onQuickAdd={quickAdd} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
   } else if (view.name === "home") {
     body = <Home setView={setView} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
