@@ -755,7 +755,7 @@ const BREW_METHODS = [
   { key: "frenchpress", name: "Aero Press", grindMn: "Coarse", compare: "0.400мм" },
 ];
 
-function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onToggleWish }) {
+function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onToggleWish, onOpen, wishlist }) {
   const { brands, categories, products } = useContext(DataContext);
   const availableTypes = availableOptionTypes(product);
   const [optionType, setOptionType] = useState(() => availableTypes[0] || "unit");
@@ -810,6 +810,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
     : null;
   const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
   const suggestions = suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions;
+  const sameNameOtherBrands = products.filter((p) =>
+    p.brandId !== product.brandId && p.name.trim().toLowerCase() === product.name.trim().toLowerCase());
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
 
@@ -1011,6 +1013,18 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
           )}
         </div>
       </div>
+
+      {sameNameOtherBrands.length > 0 && (
+        <div style={{ marginTop: 54 }}>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Өөр брэндийн ижил бүтээгдэхүүн</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+            {sameNameOtherBrands.map((p) => (
+              <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2407,7 +2421,7 @@ export default function App() {
   let body;
   if (view.name === "product") {
     const product = data.products.find((p) => p.id === view.productId);
-    body = <ProductDetail product={product} onBack={backFromProduct}
+    body = <ProductDetail product={product} onBack={backFromProduct} onOpen={openProduct} wishlist={wishlist}
       onAddToCart={addToCart} onQuickAdd={quickAdd} isWished={product ? wishlist.includes(product.id) : false} onToggleWish={toggleWish} />;
   } else if (view.name === "home") {
     body = <Home setView={setView} onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} />;
