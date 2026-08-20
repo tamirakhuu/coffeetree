@@ -138,6 +138,12 @@ html {
   box-shadow: 0 8px 20px rgba(36, 28, 20, .14) !important;
 }
 
+/* darah mochid bagazereg jijigreh, gar utsan deer daraltiig medruuleh */
+.cuppa-category-tile:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
 /* safari zoom. */
 @media (max-width: 720px) {
   input, textarea, select {

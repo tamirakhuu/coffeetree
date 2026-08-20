@@ -709,6 +709,13 @@ const displayPrice = (product) => {
   const t = availableOptionTypes(product)[0];
   return t ? product[t].price : 0;
 };
+// Өөр брэндийн ижил бараа хайхад "Caramel Syrup 750ml" ба "Caramel Syrup 1000ml"
+// зэрэг адилхан бараа зөвхөн сав/хэмжээгээрээ ялгаатай нэртэй байдаг тул
+// сүүлийн тоо+хэмжих нэгжийг (750ml, 1kg, 500gr гэх мэт) хассан "үндсэн нэрээр" харьцуулна.
+const stripSizeSuffix = (name) =>
+  (name || "").trim()
+    .replace(/\s*\d+(\.\d+)?(\s*\/\s*\d+(\.\d+)?)*\s*(ml|mkl|л|l|kg|кг|g|gr|гр|oz|ш|шир|pcs)\.?\s*$/i, "")
+    .trim();
 
 const PUMP_SUGGESTIONS = { "Соус": "Sauce pump", "Сироп": "Syrup pump", "Смүүти": "Sauce pump" };
 function cupAccessorySuggestions(product, categoryName, products) {
@@ -810,8 +817,9 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
     : null;
   const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
   const suggestions = suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions;
-  const sameNameOtherBrands = products.filter((p) =>
-    p.brandId !== product.brandId && p.name.trim().toLowerCase() === product.name.trim().toLowerCase());
+  const productBaseName = stripSizeSuffix(product.name).toLowerCase();
+  const sameNameOtherBrands = productBaseName ? products.filter((p) =>
+    p.brandId !== product.brandId && stripSizeSuffix(p.name).toLowerCase() === productBaseName) : [];
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
 
@@ -1016,7 +1024,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
 
       {sameNameOtherBrands.length > 0 && (
         <div style={{ marginTop: 54 }}>
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Өөр брэндийн ижил бүтээгдэхүүн</div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Төстэй бүтээгдэхүүн</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {sameNameOtherBrands.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
@@ -1362,7 +1370,7 @@ function HeroDots({ slides, index, onSelect }) {
       {slides.map((_, i) => (
         <button key={i} onClick={() => onSelect(i)} aria-label={`Слайд ${i + 1}`} style={{
           width: i === index ? 24 : 7, height: 7, borderRadius: 999, border: "none", padding: 0, cursor: "pointer",
-          background: i === index ? T.gold : "rgba(246,239,224,.32)",
+          background: i === index ? T.paper : "rgba(246,239,224,.32)",
           transition: "width .45s cubic-bezier(.4,0,.2,1), background .45s ease",
         }} />
       ))}
@@ -1480,7 +1488,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const [heroIndex, setHeroIndex] = useState(0);
   return (
     <div>
-      <section style={{ background: T.ink, color: T.cream, padding: "70px 20px 60px" }}>
+      <section style={{ background: T.paper, color: T.cream, padding: "70px 20px 60px" }}>
         <div className="cuppa-hero-grid" style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div className="cuppa-hero-image" style={{ width: "100%" }}>
             <HeroSlideshow products={products} onOpen={onOpen} index={heroIndex} setIndex={setHeroIndex} />
@@ -1488,7 +1496,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <HeroDots slides={heroSlides} index={heroIndex} onSelect={setHeroIndex} />
           <div className="cuppa-hero-cta" style={{ marginTop: 22 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
-              background: T.paper, color: T.ink, border: "none", borderRadius: 999, padding: "13px 26px",
+              background: T.ink, color: T.paper, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 400, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
             }}>
               Бүх хямдрал үзэх<ArrowRight size={12} />
@@ -1497,15 +1505,16 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.paper }}>
+      <section style={{ background: T.ink }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
-          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink, marginBottom: 20 }}>Ангиллаж үзэх</div>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}>Ангиллаж үзэх</div>
           <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
             {categories.map((c) => (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
-                background: "rgba(255,255,255,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "24px 14px",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 12, cursor: "pointer",
+                background: "rgb(255, 255, 255)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "14px",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, cursor: "pointer",
+                aspectRatio: "1 / 1", boxSizing: "border-box",
                 boxShadow: "0 2px 10px rgba(36,28,20,.06)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
                 <span className="cuppa-category-icon-wrap" style={{
@@ -1521,41 +1530,43 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.ink, padding: "20px 20px 60px" }}>
+      <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
-            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
+            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Бестселлэр бүтээгдэхүүн</div>
             <button onClick={() => setView({ name: "bestseller" })} style={{
-              background: "transparent", border: `1.5px solid rgba(246,239,224,.4)`, borderRadius: 999, padding: "8px 16px",
-              cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
+              background: "transparent", border: `1.5px solid rgba(0, 0, 0, 0.4)`, borderRadius: 999, padding: "8px 16px",
+              cursor: "pointer", color: T.ink, whiteSpace: "nowrap", flexShrink: 0,
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
             }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
             ))}
             {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
           </div>
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 20px 60px" }}>
+      <section style={{ background:T.ink, padding: "20px 20px 60px" }}>
+       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
-          <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Хямдралтай бүтээгдэхүүн</div>
+          <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Хямдралтай бүтээгдэхүүн</div>
           <button onClick={() => setView({ name: "discounts" })} style={{
-            background: "transparent", border: `1.5px solid ${T.cherry}`, borderRadius: 999, padding: "8px 16px",
-            cursor: "pointer", color: T.cherry, whiteSpace: "nowrap", flexShrink: 0,
+            background: "transparent", border: `1.5px solid ${T.paper}`, borderRadius: 999, padding: "8px 16px",
+            cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
             fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
           }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {discounted.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
           ))}
-          {discounted.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          {discounted.length === 0 && <div style={{ color: T.paper, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+        </div>
         </div>
       </section>
     </div>
