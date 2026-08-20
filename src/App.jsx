@@ -1369,8 +1369,8 @@ function HeroDots({ slides, index, onSelect }) {
     <div style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 22 }}>
       {slides.map((_, i) => (
         <button key={i} onClick={() => onSelect(i)} aria-label={`Слайд ${i + 1}`} style={{
-          width: i === index ? 24 : 7, height: 7, borderRadius: 999, border: "none", padding: 0, cursor: "pointer",
-          background: i === index ? T.paper : "rgba(246,239,224,.32)",
+          width: i === index ? 24 : 7, height: 4, borderRadius: 999, border: "none", padding: 0, cursor: "pointer",
+          background: i === index ? T.ink : "rgba(95, 95, 95, 0.65)",
           transition: "width .45s cubic-bezier(.4,0,.2,1), background .45s ease",
         }} />
       ))}
@@ -1391,8 +1391,6 @@ function HeroSlideshow({ products, onOpen, index, setIndex }) {
   }, [slides.length, index]);
 
   if (slides.length === 0) return null;
-  const currentOption = current[availableOptionTypes(current)[0]];
-  const currentDiscount = discountPercent(currentOption);
   const prevIndex = (index - 1 + slides.length) % slides.length;
   const nextIndex = (index + 1) % slides.length;
   const goPrev = (e) => { e.stopPropagation(); setIndex(prevIndex); };
@@ -1448,17 +1446,6 @@ function HeroSlideshow({ products, onOpen, index, setIndex }) {
             opacity: i === index ? 1 : 0, transition: "opacity .6s ease",
           }} />
         ))}
-        {currentDiscount != null && (
-          <div className="cuppa-hero-price" style={{
-            position: "absolute", left: 14, bottom: 14, zIndex: 1,
-            display: "flex", alignItems: "baseline", gap: 8,
-            background: "rgba(36,28,20,.78)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
-            padding: "8px 14px", borderRadius: 12,
-          }}>
-            <span className="cuppa-hero-price-old" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, color: "rgba(160, 136, 136, 0.55)", textDecoration: "line-through" }}>{money(currentOption.originalPrice)}</span>
-            <span className="cuppa-hero-price-new" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.paper }}>{money(currentOption.price)}</span>
-          </div>
-        )}
         {slides.length > 1 && (
           <>
             <button className="cuppa-hero-arrow" onClick={goPrev} aria-label="Өмнөх" style={{ ...arrowBtnStyle, left: 12 }}><ChevronLeft size={18} /></button>
@@ -1494,7 +1481,23 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
             <HeroSlideshow products={products} onOpen={onOpen} index={heroIndex} setIndex={setHeroIndex} />
           </div>
           <HeroDots slides={heroSlides} index={heroIndex} onSelect={setHeroIndex} />
-          <div className="cuppa-hero-cta" style={{ marginTop: 22 }}>
+          <div className="cuppa-hero-price-block" style={{ position: "relative", height: 30, marginTop: 16, width: "100%" }}>
+            {heroSlides.map((p, i) => {
+              const opt = p[availableOptionTypes(p)[0]];
+              const disc = discountPercent(opt);
+              if (disc == null) return null;
+              return (
+                <div key={p.id} style={{
+                  position: "absolute", inset: 0, display: "flex", alignItems: "baseline", justifyContent: "center", gap: 9,
+                  opacity: i === heroIndex ? 1 : 0, transition: "opacity .6s ease", pointerEvents: "none",
+                }}>
+                  <span className="cuppa-hero-price-old" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 13.5, color: T.inkSoft, textDecoration: "line-through" }}>{money(opt.originalPrice)}</span>
+                  <span className="cuppa-hero-price-new" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 19, fontWeight: 800, color: T.cherry }}>{money(opt.price)}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="cuppa-hero-cta" style={{ marginTop: 16 }}>
             <button onClick={() => setView({ name: "discounts" })} style={{
               background: T.ink, color: T.paper, border: "none", borderRadius: 999, padding: "13px 26px",
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 400, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
