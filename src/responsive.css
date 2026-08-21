@@ -83,6 +83,7 @@ html {
 
   .cuppa-hero-carousel { height: 200px !important; gap: 8px !important; }
   .cuppa-hero-arrow { display: none !important; }
+  .cuppa-hero-side-slide { width: 24% !important; height: 88% !important; opacity: 0.65 !important; }
   .cuppa-hero-price-old { font-size: 11.5px !important; }
   .cuppa-hero-price-new { font-size: 15px !important; }
 
