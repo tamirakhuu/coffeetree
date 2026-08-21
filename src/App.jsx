@@ -576,7 +576,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
-            <option value="default">Санал болгох</option>
+            <option value="default">Шүүж үзэх</option>
             <option value="new">Шинэ эхэндээ</option>
             <option value="price_asc">Үнэ багаас их</option>
             <option value="price_desc">Үнэ ихээс бага</option>
@@ -640,7 +640,7 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish, setVie
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
-            <option value="default">Санал болгох</option>
+            <option value="default">Шүүж үзэх</option>
             <option value="new">Шинэ эхэндээ</option>
             <option value="price_asc">Үнэ багаас их</option>
             <option value="price_desc">Үнэ ихээс бага</option>
@@ -997,7 +997,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
 
           {suggestions.length > 0 && (
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
-              <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
+              <div style={{ ...sideLabel, marginBottom: 10 }}>Шүүж үзэх</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {suggestions.map((s) => (
                   <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1524,7 +1524,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   width: 46, height: 46, borderRadius: "50%", background: "rgba(122,46,46,.1)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  <CategoryIcon icon={c.icon} size={22} color={T.cherry} />
+                  <CategoryIcon icon={c.icon} size={22} color={T.ink} />
                 </span>
                 <span className="cuppa-category-label" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
               </button>
@@ -2067,7 +2067,7 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView })
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
-            <option value="default">Санал болгох</option>
+            <option value="default">Шүүж үзэх</option>
             <option value="price_asc">Үнэ багаас их</option>
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
@@ -2141,7 +2141,7 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) 
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
-            <option value="default">Санал болгох</option>
+            <option value="default">Шүүж үзэх</option>
             <option value="price_asc">Үнэ багаас их</option>
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
@@ -2188,32 +2188,32 @@ const primaryBtn = { background: T.cherry, color: "#fff", border: "none", border
 
 export function Footer({ setView }) {
   return (
-    <footer style={{ background: T.ink, color: T.cream, padding: "26px 20px 16px" }}>
+    <footer style={{ background: T.paper, color: T.ink, padding: "26px 20px 16px" }}>
       <div style={{
         maxWidth: 1180, margin: "0 auto 16px", display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
       }}>
         <div className="cuppa-footer-logo" style={{ display: "flex", alignItems: "flex-start" }}>
-          <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140, filter: "invert(1)" }} />
+          <img src="/cuppa-logo1.png" alt="CUPPA" style={{ height: 140 }} />
         </div>
         {BRANCHES.map((b) => (
           <div key={b.name} style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13 }}>
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{b.heading || `${b.name} салбар`}</div>
             <a href={b.mapUrl} target="_blank" rel="noopener noreferrer" style={{
-              display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.cream,
+              display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, color: T.ink,
               textDecoration: "none", opacity: 0.85,
             }}>
               <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
             </a>
-            <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+            <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.ink, textDecoration: "none", opacity: 0.85 }}>
               <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
             </a>
-            <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none", opacity: 0.85 }}>
+            <a href={`mailto:${b.email}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.ink, textDecoration: "none", opacity: 0.85 }}>
               <Mail size={14} style={{ flexShrink: 0 }} /> {b.email}
             </a>
             {b.socials.map(({ label, href, Icon }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{
-                display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.cream, textDecoration: "none",
+                display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.ink, textDecoration: "none",
                 fontFamily: "'Ubuntu', sans-serif", fontSize: 13, opacity: 0.85,
               }}>
                 <Icon size={14} style={{ flexShrink: 0 }} /> {label}
@@ -2224,12 +2224,12 @@ export function Footer({ setView }) {
       </div>
       <div style={{
         maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column",
-        alignItems: "center", gap: 10, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.1)", textAlign: "center",
+        alignItems: "center", gap: 10, paddingTop: 14, borderTop: `1px solid ${T.line}`, textAlign: "center",
       }}>
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
-          <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
-          <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
-          <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.cream, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
+          <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
+          <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
+          <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
         </div>
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, opacity: 0.7 }}>© 2026 CoffeeTreeLLC</div>
       </div>
