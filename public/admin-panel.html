@@ -65,6 +65,26 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .badge.cancelled{background:var(--red-light);color:var(--red)}
 .badge.prepared{background:#DCE8FB;color:#1D4ED8}
 .badge.handed_over{background:var(--green-light);color:#2F4A22}
+
+/* Захиалгын хүснэгт — бусад хүснэгтээс тусад нь илүү уншиж болохоор */
+.orders-table th{font-size:11.5px;padding:12px 16px}
+.orders-table td{font-size:14px;padding:16px}
+.orders-table .badge{font-size:11px;padding:4px 11px}
+.order-num-btn{background:none;border:none;padding:0;color:var(--cherry);font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Ubuntu',sans-serif;font-size:14.5px}
+.order-customer{font-size:14.5px;font-weight:700;color:var(--ink)}
+.order-phone{font-size:12.5px;color:var(--ink-soft);margin-top:3px;font-family:'Ubuntu',sans-serif}
+.order-items-list{display:flex;flex-direction:column;gap:6px}
+.order-item-row{font-size:13.5px;line-height:1.4}
+.order-item-row .oi-brand{color:var(--ink-soft);font-size:12px}
+.order-amount{font-size:15px;font-weight:700}
+.order-date{font-size:12.5px;color:var(--ink-soft)}
+.order-detail-section-title{font-size:11px;font-weight:700;color:var(--moss);text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px}
+.order-detail-section-title:first-child{margin-top:0}
+.order-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.order-detail-grid.full{grid-template-columns:1fr}
+.order-detail-item{display:flex;flex-direction:column;gap:2px}
+.order-detail-item label{font-size:10.5px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+.order-detail-item span{font-size:14.5px;color:var(--ink)}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Ubuntu',sans-serif;white-space:nowrap}
 .btn-primary{background:var(--cherry);color:#fff}
 .btn-primary:hover{background:var(--cherry-dark)}
@@ -182,6 +202,34 @@ tr:hover td{background:rgba(255,255,255,.4)}
   .modal{max-width:100%;width:100%;height:100%;max-height:100%;border-radius:0}
   #orderSearch{width:100% !important}
   input, textarea, select { font-size:16px !important; }
+
+  /* Захиалгын хүснэгтийг гар утсанд хэвтээ scroll хийдэг хүснэгт биш,
+     тус бүр карт болгож эгнэ дараалуулна (багана → мөр) */
+  .card:has(.orders-table){background:none;border:none;box-shadow:none}
+  .orders-table thead{display:none}
+  .orders-table, .orders-table tbody, .orders-table tr{display:block;width:100%}
+  .orders-table tr{
+    display:flex;flex-direction:column;gap:11px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh);
+  }
+  .orders-table td{display:block;width:100%;border-bottom:none;padding:0}
+  .orders-table td[data-th]:before{
+    content:attr(data-th);display:block;font-size:10px;font-weight:700;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;
+  }
+  .orders-table td:nth-child(1){order:1}
+  .orders-table td:nth-child(8){order:2}
+  .orders-table td:nth-child(2){order:3}
+  .orders-table td:nth-child(7){order:4}
+  .orders-table td:nth-child(3){order:5}
+  .orders-table td:nth-child(4){order:6}
+  .orders-table td:nth-child(5){order:7}
+  .orders-table td:nth-child(6){order:8;border-top:1px solid var(--line);padding-top:12px}
+  .orders-table .order-num-btn{font-size:17px}
+  .orders-table .order-amount{font-size:17px}
+  .orders-table select{width:100%}
+
+  .order-detail-grid{grid-template-columns:1fr !important;gap:12px !important}
 }
 </style>
 </head>
@@ -302,7 +350,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <input id="orderSearch" oninput="renderOrders()" placeholder="Захиалгын дугаар, регистр эсвэл утасны дугаараар хайх..."
         style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:240px">
     </div>
-    <div class="card"><div class="table-wrap"><table><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>Утас</th><th>И-баримт</th><th>Хүргэлт</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+    <div class="card"><div class="table-wrap"><table class="orders-table"><thead><tr><th>Захиалга №</th><th>Хэрэглэгч</th><th>И-баримт</th><th>Хүргэлт</th><th>Бараанууд</th><th>Дүн</th><th>Огноо</th><th>Төлөв</th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
   </div>
 
   <div class="page" id="page-report">
@@ -1184,36 +1232,35 @@ function renderOrders() {
     const items = orderItems.filter(i => i.order_number === o.order_number);
     const itemsText = items.map(i => {
       const brandName = brandNameForProduct(i.product_id);
-      return `${i.product_name} (${i.option_label}) × ${i.qty}${brandName ? ` <span style="color:var(--ink-soft)">· ${brandName}</span>` : ''}`;
-    }).join('<br>');
-    const boxCountInput = `<div style="display:flex;align-items:center;gap:5px;margin-top:5px">
-      <span style="font-size:10.5px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">Хайрцаг:</span>
+      return `<div class="order-item-row">${i.product_name} <span class="oi-brand">${i.option_label} × ${i.qty}${brandName ? ` · ${brandName}` : ''}</span></div>`;
+    }).join('');
+    const boxCountInput = `<div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+      <span style="font-size:11px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">Хайрцаг:</span>
       <input type="number" min="0" value="${o.box_count ?? 0}" onchange="updateOrderBoxCount('${o.order_number}', this.value)"
-        style="width:54px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:11px;font-family:'Ubuntu',sans-serif;background:var(--card)">
+        style="width:58px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-family:'Ubuntu',sans-serif;background:var(--card)">
     </div>`;
     const receiptText = o.receipt_type === 'company'
-      ? `Байгууллага<br><span class="mono" style="font-size:11px">${o.register_number || '-'}</span>`
+      ? `Байгууллага<div class="mono" style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">${o.register_number || '-'}</div>`
       : 'Хувь хүн';
     const isDelivery = o.delivery_method === 'delivery';
     const deliveryText = isDelivery
-      ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:10.5px;color:var(--ink-soft);margin-top:3px">+${fmt(o.delivery_fee || 0)}</div>${o.address ? `<div style="font-size:11px;color:var(--ink);margin-top:4px;max-width:170px;white-space:normal">📍 ${o.address}</div>` : ''}`
+      ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px">+${fmt(o.delivery_fee || 0)}</div>${o.address ? `<div style="font-size:12px;color:var(--ink);margin-top:5px;max-width:180px;white-space:normal">📍 ${o.address}</div>` : ''}`
       : `<span class="badge" style="background:var(--green-light);color:#2F4A22">Очиж авах</span>`;
     return `<tr style="${isDelivery ? 'background:#F5F9FF' : ''}">
-      <td class="mono"><button onclick="openOrderDetail('${o.order_number}')" style="background:none;border:none;padding:0;color:var(--cherry);font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Ubuntu',monospace;font-size:13px">${o.order_number}</button></td>
-      <td>${o.customer_name||'-'}</td>
-      <td class="mono">${o.phone||'-'}</td>
-      <td style="font-size:12px">${receiptText}</td>
-      <td style="font-size:12px">${deliveryText}</td>
-      <td style="font-size:12px">${itemsText || '-'}${boxCountInput}</td>
-      <td class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</td>
-      <td class="mono" style="font-size:11px">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
+      <td class="mono"><button class="order-num-btn" onclick="openOrderDetail('${o.order_number}')">${o.order_number}</button></td>
+      <td data-th="Хэрэглэгч"><div class="order-customer">${o.customer_name||'-'}</div><div class="order-phone mono">${o.phone||'-'}</div></td>
+      <td data-th="И-баримт">${receiptText}</td>
+      <td data-th="Хүргэлт">${deliveryText}</td>
+      <td data-th="Бараанууд"><div class="order-items-list">${itemsText || '-'}</div>${boxCountInput}</td>
+      <td class="mono order-amount" data-th="Дүн">${fmt(o.subtotal + (o.delivery_fee || 0))}</td>
+      <td class="mono order-date" data-th="Огноо">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
       <td>
-        <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--card)">
+        <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px;background:var(--card)">
           ${statusesFor(o).map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
         </select>
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9" class="empty">Захиалга алга байна</td></tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">Захиалга алга байна</td></tr>`;
 }
 
 function renderReport() {
@@ -1284,29 +1331,36 @@ function openOrderDetail(orderNumber) {
     const brandName = brandNameForProduct(i.product_id);
     return `
     <tr>
-      <td>${i.product_name}${brandName ? ` <span style="color:var(--ink-soft);font-size:11px">(${brandName})</span>` : ''}<div style="font-size:11px;color:var(--ink-soft)">${i.option_label} × ${i.qty}</div></td>
-      <td class="mono" style="text-align:right">${fmt(i.line_total)}</td>
+      <td style="padding:10px 0;font-size:14.5px">${i.product_name}${brandName ? ` <span style="color:var(--ink-soft);font-size:12.5px">(${brandName})</span>` : ''}<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">${i.option_label} × ${i.qty}</div></td>
+      <td class="mono" style="text-align:right;font-size:14.5px;font-weight:600">${fmt(i.line_total)}</td>
     </tr>`;
   }).join('');
   const body = `
-    <div style="display:grid;gap:4px;margin-bottom:16px;font-size:13px">
-      <div><b>Хэрэглэгч:</b> ${o.customer_name || '-'}</div>
-      <div><b>Утас:</b> ${o.phone || '-'}</div>
-      <div><b>И-баримт:</b> ${o.receipt_type === 'company' ? `Байгууллага (${o.register_number || '-'})` : 'Хувь хүн'}</div>
-      <div><b>Хүргэлт:</b> ${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</div>
-      ${isDelivery ? `<div><b>Хаяг:</b> ${o.address || '-'}</div>` : ''}
-      <div><b>Хайрцаг:</b> ${boxQty} · <b>Ширхэг:</b> ${unitQty} ${o.box_count ? `· <b>Гараар оруулсан хайрцаг:</b> ${o.box_count}` : ''}</div>
-      <div><b>Огноо:</b> ${new Date(o.created_at).toLocaleString('mn-MN')}</div>
-      <div><b>Төлөв:</b> ${statusLabel(o.status)}</div>
+    <div class="order-detail-section-title">Хэрэглэгчийн мэдээлэл</div>
+    <div class="order-detail-grid">
+      <div class="order-detail-item"><label>Хэрэглэгч</label><span>${o.customer_name || '-'}</span></div>
+      <div class="order-detail-item"><label>Утас</label><span class="mono">${o.phone || '-'}</span></div>
+      <div class="order-detail-item"><label>И-баримт</label><span>${o.receipt_type === 'company' ? `Байгууллага (${o.register_number || '-'})` : 'Хувь хүн'}</span></div>
+      <div class="order-detail-item"><label>Огноо</label><span>${new Date(o.created_at).toLocaleString('mn-MN')}</span></div>
+      <div class="order-detail-item"><label>Төлөв</label><span>${statusBadge(o.status)}</span></div>
+      <div class="order-detail-item"><label>Хайрцаг / Ширхэг</label><span>${boxQty} хайрцаг · ${unitQty} ширхэг${o.box_count ? ` · гараар ${o.box_count}` : ''}</span></div>
     </div>
+
+    <div class="order-detail-section-title">Хүргэлт</div>
+    <div class="order-detail-grid${isDelivery ? '' : ' full'}">
+      <div class="order-detail-item"><label>Арга</label><span>${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</span></div>
+      ${isDelivery ? `<div class="order-detail-item"><label>Хаяг</label><span>${o.address || '-'}</span></div>` : ''}
+    </div>
+
+    <div class="order-detail-section-title">Бараа</div>
     <table style="width:100%;border-collapse:collapse">
-      <thead><tr><th style="text-align:left;font-size:10.5px;color:var(--ink-soft);padding-bottom:6px">БАРАА</th><th style="text-align:right;font-size:10.5px;color:var(--ink-soft);padding-bottom:6px">ДҮН</th></tr></thead>
+      <thead><tr><th style="text-align:left;font-size:11px;color:var(--ink-soft);padding-bottom:8px">БАРАА</th><th style="text-align:right;font-size:11px;color:var(--ink-soft);padding-bottom:8px">ДҮН</th></tr></thead>
       <tbody>${itemsRows}</tbody>
     </table>
-    <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13px">
+    <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:7px;font-size:14.5px">
       <div style="display:flex;justify-content:space-between"><span>Барааны дүн</span><span class="mono">${fmt(o.subtotal)}</span></div>
       ${isDelivery ? `<div style="display:flex;justify-content:space-between"><span>Хүргэлтийн хураамж</span><span class="mono">${fmt(o.delivery_fee || 0)}</span></div>` : ''}
-      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>Нийт</span><span class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:17px"><span>Нийт</span><span class="mono">${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
     </div>`;
   openModal(`Захиалга ${o.order_number}`, body,
     `<button class="btn btn-outline" onclick="closeModal()">Хаах</button><button class="btn btn-primary" onclick="printOrderReceipt('${orderNumber}')">Хэвлэх</button>`, true);
