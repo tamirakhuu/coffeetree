@@ -1007,7 +1007,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
 
           {suggestions.length > 0 && (
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
-              <div style={{ ...sideLabel, marginBottom: 10 }}>Шүүж үзэх</div>
+              <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {suggestions.map((s) => (
                   <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
