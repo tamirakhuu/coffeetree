@@ -1534,7 +1534,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                 </div>
                 {catImg && (
                   <img src={catImg} alt="" aria-hidden="true" style={{
-                    height: "92%", maxWidth: "48%", objectFit: "contain", objectPosition: "bottom", flexShrink: 0, pointerEvents: "none",
+                    width: "52%", height: "88%", objectFit: "contain", objectPosition: "center", flexShrink: 0, pointerEvents: "none",
                   }} />
                 )}
               </button>
