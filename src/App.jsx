@@ -1527,15 +1527,15 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               return (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
                 position: "relative", overflow: "hidden",
-                background: "rgb(255, 255, 255)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                background: "rgb(255, 255, 255)",
                 border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "14px",
-                display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", cursor: "pointer",
+                display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
                 aspectRatio: "0.5 / 0.5", boxSizing: "border-box",
                 boxShadow: "0 2px 10px rgba(36,28,20,.06)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
-                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, alignSelf: "flex-start" }}>
+                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start", flexShrink: 0, maxWidth: "50%" }}>
                   <span className="cuppa-category-icon-wrap" style={{
-                    width: 46, height: 46, borderRadius: "50%", background: "rgba(122,46,46,.1)",
+                    width: 46, height: 46,
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
                     <CategoryIcon icon={c.icon} size={26} color={T.ink} />
@@ -1543,9 +1543,11 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   <span className="cuppa-category-label" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "left" }}>{c.name}</span>
                 </div>
                 {catImg && (
-                  <img src={catImg} alt="" aria-hidden="true" style={{
-                    width: "52%", height: "88%", objectFit: "contain", objectPosition: "center", flexShrink: 0, pointerEvents: "none",
-                  }} />
+                  <div style={{ flex: 1, minWidth: 0, height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <img src={catImg} alt="" aria-hidden="true" style={{
+                      maxWidth: "90%", maxHeight: "85%", objectFit: "contain", pointerEvents: "none",
+                    }} />
+                  </div>
                 )}
               </button>
               );
