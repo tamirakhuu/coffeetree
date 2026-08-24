@@ -903,11 +903,11 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
               {availableTypes.map((t) => (
                 <button key={t} onClick={() => { setOptionType(t); setQty(1); }} style={{
                   flex: 1, textAlign: "center", padding: "14px 16px", borderRadius: 10, cursor: "pointer",
-                  border: `1.5px solid ${optionType === t ? T.cherry : T.line}`,
-                  background: optionType === t ? T.cream : "transparent",
-                  position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.cherry}22` : "none",
+                  border: `1.5px solid ${optionType === t ? T.ink : T.line}`,
+                  background: optionType === t ? T.paper : "transparent",
+                  position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.ink}22` : "none",
                 }}>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.ink, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
                     {t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
