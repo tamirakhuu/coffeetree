@@ -2197,7 +2197,7 @@ export const BRANCHES = [
     address: "Яармаг City Palace 3 давхар 11:00 - 19-00",
     mapUrl: "https://maps.app.goo.gl/CqwyKw4dLudAQbU68",
     phone: "76111772",
-    email: "test@gmail.com",
+    email: "cuppayarmag@gmail.com",
     socials: [
       { label: "CuppA Яармаг", href: "https://www.facebook.com/profile.php?id=61578460444954", Icon: Facebook },
       { label: "cuppa2026", href: "https://www.instagram.com/cuppa2026/", Icon: Instagram },

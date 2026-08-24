@@ -34,7 +34,7 @@ export async function fetchBootstrap() {
          { data: brands, error: be }, { data: products, error: pe }] = await Promise.all([
     supabase.from("categories").select("*").order("id"),
     supabase.from("subcategories").select("*"),
-    supabase.from("brands").select("*").order("id"),
+    supabase.from("brands").select("*"),
     supabase.from("products").select("*").order("id", { ascending: false }),
   ]);
   const err = ce || se || be || pe;
@@ -44,7 +44,8 @@ export async function fetchBootstrap() {
     id: c.id, name: c.name, icon: c.icon, tileImage: c.tile_image,
     sub: subcategories.filter((s) => s.category_id === c.id).map((s) => s.name),
   }));
-  return { categories: cats, brands, products: products.map(shapeProduct) };
+  const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
+  return { categories: cats, brands: sortedBrands, products: products.map(shapeProduct) };
 }
 
 // Аль хэдийн амжилттай хассан нөөцийг буцаах (захиалга цуцлагдах үед)
