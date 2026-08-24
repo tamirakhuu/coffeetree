@@ -1054,6 +1054,8 @@ function categoryIconPreviewHtml(icon) {
 }
 function openCategoryModal(c) {
   categoryIconFile = null;
+  categoryTileImageFile = null;
+  categoryTileImageRemoved = false;
   const subsValue = c ? subcategories.filter(s => s.category_id === c.id).map(s => s.name).join(', ') : '';
   openModal(c ? 'Ангилал засах' : 'Ангилал нэмэх', `
     <div class="form-grid">
@@ -1070,6 +1072,18 @@ function openCategoryModal(c) {
         <select id="cf-icon">${ICON_KEYS.map(k=>`<option value="${k}" ${c?.icon===k?'selected':''}>${ICON_EMOJI[k]} ${k}</option>`).join('')}</select>
         <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Өөрийн зураг оруулбал доорх жагсаалтаас сонгосон тэмдгийг орлоно.</div>
       </div>
+      <div class="fg full">
+        <label>Нүүр хуудасны карт дээрх зураг</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="cf-tileimg-preview" style="width:72px;height:72px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden;flex-shrink:0">${categoryTileImagePreviewHtml(c?.tile_image)}</div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cf-tileimg-file').click()">Зураг сонгох</button>
+            <input type="file" id="cf-tileimg-file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="onCategoryTileImageFileSelected(this.files[0])">
+            ${c?.tile_image ? `<button type="button" class="btn btn-outline btn-sm" onclick="removeCategoryTileImage()">Зураг арилгах</button>` : ''}
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Ангиллаж үзэх картын баруун талд харагдах зураг. Хоосон бол тухайн ангиллын нэг бүтээгдэхүүний зургийг автоматаар ашиглана.</div>
+      </div>
       <div class="fg"><label>Дэд ангилал (таслалаар тусгаарлана)</label><input id="cf-sub" placeholder="Соя, Овъёос, Ямаа" value="${subsValue}"></div>
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveCategory(${c ? c.id : 'null'})">${c ? 'Хадгалах' : 'Нэмэх'}</button>`
@@ -1079,6 +1093,23 @@ function onCategoryIconFileSelected(file) {
   if (!file) return;
   categoryIconFile = file;
   document.getElementById('cf-icon-preview').innerHTML = iconMaskHtml(URL.createObjectURL(file), 32, 'var(--cherry)');
+}
+let categoryTileImageFile = null;
+let categoryTileImageRemoved = false;
+function categoryTileImagePreviewHtml(url) {
+  if (url) return `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+  return `<span style="font-size:11px;color:var(--ink-soft)">Зураг алга</span>`;
+}
+function onCategoryTileImageFileSelected(file) {
+  if (!file) return;
+  categoryTileImageFile = file;
+  categoryTileImageRemoved = false;
+  document.getElementById('cf-tileimg-preview').innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover">`;
+}
+function removeCategoryTileImage() {
+  categoryTileImageFile = null;
+  categoryTileImageRemoved = true;
+  document.getElementById('cf-tileimg-preview').innerHTML = categoryTileImagePreviewHtml(null);
 }
 async function saveCategory(id) {
   const name = document.getElementById('cf-name').value.trim();
@@ -1096,13 +1127,26 @@ async function saveCategory(id) {
       const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
       icon = pub.publicUrl;
     }
+    let tileImage;
+    if (categoryTileImageFile) {
+      const ext = (categoryTileImageFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `category-tiles/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, categoryTileImageFile, { contentType: categoryTileImageFile.type });
+      if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
+      const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+      tileImage = pub.publicUrl;
+    } else if (categoryTileImageRemoved) {
+      tileImage = null;
+    }
+    const payload = { name, icon };
+    if (tileImage !== undefined) payload.tile_image = tileImage;
     let categoryId = id;
     if (id) {
-      const { error } = await sb.from('categories').update({ name, icon }).eq('id', id);
+      const { error } = await sb.from('categories').update(payload).eq('id', id);
       if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
       await sb.from('subcategories').delete().eq('category_id', id);
     } else {
-      const { data, error } = await sb.from('categories').insert({ name, icon }).select().single();
+      const { data, error } = await sb.from('categories').insert(payload).select().single();
       if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
       categoryId = data.id;
     }

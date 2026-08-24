@@ -41,7 +41,7 @@ export async function fetchBootstrap() {
   if (err) throw new Error(err.message);
 
   const cats = categories.map((c) => ({
-    id: c.id, name: c.name, icon: c.icon,
+    id: c.id, name: c.name, icon: c.icon, tileImage: c.tile_image,
     sub: subcategories.filter((s) => s.category_id === c.id).map((s) => s.name),
   }));
   return { categories: cats, brands, products: products.map(shapeProduct) };

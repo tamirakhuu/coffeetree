@@ -1512,23 +1512,34 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}>Ангиллаж үзэх</div>
           <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
-            {categories.map((c) => (
+            {categories.map((c) => {
+              const catImg = c.tileImage || products.find((p) => p.categoryId === c.id && p.images && p.images.length > 0)?.images[0];
+              return (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
+                position: "relative", overflow: "hidden",
                 background: "rgb(255, 255, 255)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
                 border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "14px",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, cursor: "pointer",
-                aspectRatio: "1 / 1", boxSizing: "border-box",
+                display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", cursor: "pointer",
+                aspectRatio: "0.5 / 0.5", boxSizing: "border-box",
                 boxShadow: "0 2px 10px rgba(36,28,20,.06)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
-                <span className="cuppa-category-icon-wrap" style={{
-                  width: 46, height: 46, borderRadius: "50%", background: "rgba(122,46,46,.1)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <CategoryIcon icon={c.icon} size={22} color={T.ink} />
-                </span>
-                <span className="cuppa-category-label" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "center" }}>{c.name}</span>
+                <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, alignSelf: "flex-start" }}>
+                  <span className="cuppa-category-icon-wrap" style={{
+                    width: 46, height: 46, borderRadius: "50%", background: "rgba(122,46,46,.1)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <CategoryIcon icon={c.icon} size={26} color={T.ink} />
+                  </span>
+                  <span className="cuppa-category-label" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "left" }}>{c.name}</span>
+                </div>
+                {catImg && (
+                  <img src={catImg} alt="" aria-hidden="true" style={{
+                    height: "92%", maxWidth: "48%", objectFit: "contain", objectPosition: "bottom", flexShrink: 0, pointerEvents: "none",
+                  }} />
+                )}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
