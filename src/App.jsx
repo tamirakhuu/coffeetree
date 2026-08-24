@@ -820,6 +820,16 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const productBaseName = stripSizeSuffix(product.name).toLowerCase();
   const sameNameOtherBrands = productBaseName ? products.filter((p) =>
     p.brandId !== product.brandId && stripSizeSuffix(p.name).toLowerCase() === productBaseName) : [];
+  // Мөн адил брэндийн, ИЖИЛ ДЭД АНГИЛЛЫН (sub) бусад бараа (жишээ нь Pomona Espresso
+  // (Blend)-гийн дор Pomona Premium (мөн Blend) гэх мэт нэр нь өөр ч тухайн брэндийн
+  // яг тэр дэд ангиллын төстэй бараа санал болгоно — ангиллаар нь ерөнхийлбөл
+  // жишээ нь сироп бүгдийг (жимсний, кофены гэх мэт ялгаагүй) харуулчихдаг тул sub-ийг мөн шалгана
+  const sameBrandSimilar = products.filter((p) =>
+    p.id !== product.id && p.brandId === product.brandId &&
+    p.categoryId === product.categoryId && p.sub === product.sub);
+  const similarProducts = [...new Map(
+    [...sameNameOtherBrands, ...sameBrandSimilar].map((p) => [p.id, p])
+  ).values()].slice(0, 8);
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
 
@@ -1022,11 +1032,11 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
         </div>
       </div>
 
-      {sameNameOtherBrands.length > 0 && (
+      {similarProducts.length > 0 && (
         <div style={{ marginTop: 54 }}>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Төстэй бүтээгдэхүүн</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
-            {sameNameOtherBrands.map((p) => (
+            {similarProducts.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
             ))}
