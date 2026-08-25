@@ -1545,11 +1545,11 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   maxWidth: "calc(100% - 20px)",
                 }}>
                   <span className="cuppa-category-icon-wrap" style={{
-                    width: 46, height: 46,
+                    width: 46, height: 46, borderRadius: "50%",
+                    background: catImg ? "rgba(255,255,255,.92)" : "transparent",
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    filter: catImg ? "drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 6px rgba(255,255,255,.85))" : "none",
                   }}>
-                    <CategoryIcon icon={c.icon} size={26} color={T.ink} />
+                    <CategoryIcon icon={c.icon} size={22} color={T.ink} />
                   </span>
                   <span className="cuppa-category-label" style={{
                     fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "left",

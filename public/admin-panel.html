@@ -354,7 +354,58 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-report">
-    <div class="page-header"><div><h1>Тайлан</h1><p>Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div></div>
+    <div class="page-header"><div><h1>Тайлан</h1><p>Борлуулалт, орлого болон агуулахын шилжилтийн тайлан</p></div></div>
+
+    <div class="page-header" style="margin-bottom:14px">
+      <div><div class="card-title" style="font-size:17px">Борлуулалтын тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Орлого, хүргэлтийн харьцаа, брэнд болон барааны борлуулалт</p></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="date" id="srDateFrom" onchange="renderSalesReport()"
+          style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+        <span style="color:var(--ink-soft);font-size:12px">–</span>
+        <input type="date" id="srDateTo" onchange="renderSalesReport()"
+          style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
+        <button class="btn btn-outline btn-sm" onclick="clearSalesReportDates()">Цэвэрлэх</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="sr-revenue">0</div><div class="stat-label">Нийт орлого</div></div>
+      <div class="stat-card"><div class="stat-val" id="sr-orders">0</div><div class="stat-label">Нийт захиалга</div></div>
+      <div class="stat-card"><div class="stat-val" id="sr-delivery-pct">0%</div><div class="stat-label">Хүргэлтээр авсан</div></div>
+      <div class="stat-card"><div class="stat-val" id="sr-pickup-pct">0%</div><div class="stat-label">Очиж авсан</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Орлого цаг хугацаагаар</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" id="sr-period-day" onclick="setRevenuePeriod('day')">Өдрөөр</button>
+          <button class="btn btn-outline btn-sm" id="sr-period-month" onclick="setRevenuePeriod('month')">Сараар</button>
+        </div>
+      </div>
+      <div id="revenueChart" style="padding:16px 20px 4px;display:flex;flex-direction:column;gap:7px"></div>
+      <div class="table-wrap">
+        <table><thead><tr><th id="sr-period-label">Огноо</th><th>Захиалгын тоо</th><th>Орлого</th></tr></thead><tbody id="revenueTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head"><div class="card-title">Брэндээр борлуулалт</div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Брэнд</th><th>Зарагдсан ширхэг</th><th>Орлого</th></tr></thead><tbody id="salesByBrandTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-head"><div class="card-title">Хамгийн их зарагдсан бараа</div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Бараа</th><th>Брэнд</th><th>Зарагдсан ширхэг</th><th>Орлого</th></tr></thead><tbody id="topProductsTable"></tbody></table>
+      </div>
+    </div>
+
+    <div class="page-header" style="margin-top:34px">
+      <div><div class="card-title" style="font-size:17px">Агуулахын шилжилтийн тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div>
+    </div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-val" id="rp-to-store">0</div><div class="stat-label">Агуулахаас татсан (нийт)</div></div>
       <div class="stat-card"><div class="stat-val" id="rp-to-warehouse">0</div><div class="stat-label">Агуулах руу буцаасан (нийт)</div></div>
@@ -516,7 +567,7 @@ async function loadAll() {
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
   stockTransfers = st.data || [];
   populateProductFilters();
-  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport();
+  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport(); renderSalesReport();
   checkLowStock();
 }
 
@@ -1305,6 +1356,106 @@ function renderOrders() {
       </td>
     </tr>`;
   }).join('') || `<tr><td colspan="8" class="empty">Захиалга алга байна</td></tr>`;
+}
+
+// Захиалгын "Цуцлагдсан" төлөвтэй захиалгыг борлуулалт/орлогод тооцохгүй
+function salesReportOrders() {
+  const dateFrom = document.getElementById('srDateFrom')?.value || '';
+  const dateTo = document.getElementById('srDateTo')?.value || '';
+  return orders.filter(o => {
+    if (o.status === 'cancelled') return false;
+    const d = (o.created_at || '').slice(0, 10);
+    return (!dateFrom || d >= dateFrom) && (!dateTo || d <= dateTo);
+  });
+}
+function clearSalesReportDates() {
+  document.getElementById('srDateFrom').value = '';
+  document.getElementById('srDateTo').value = '';
+  renderSalesReport();
+}
+
+let revenuePeriod = 'day';
+function setRevenuePeriod(period) {
+  revenuePeriod = period;
+  renderSalesReport();
+}
+
+function renderSalesReport() {
+  const validOrders = salesReportOrders();
+  const validOrderNumbers = new Set(validOrders.map(o => o.order_number));
+  const validItems = orderItems.filter(i => validOrderNumbers.has(i.order_number));
+
+  // Дээд стат карт: нийт орлого, захиалга, хүргэлт/очиж авах харьцаа
+  const totalRevenue = validOrders.reduce((sum, o) => sum + (o.subtotal || 0) + (o.delivery_fee || 0), 0);
+  const deliveryCount = validOrders.filter(o => o.delivery_method === 'delivery').length;
+  const pickupCount = validOrders.length - deliveryCount;
+  const pct = (n) => validOrders.length ? Math.round((n / validOrders.length) * 100) : 0;
+  document.getElementById('sr-revenue').textContent = fmt(totalRevenue);
+  document.getElementById('sr-orders').textContent = validOrders.length;
+  document.getElementById('sr-delivery-pct').textContent = pct(deliveryCount) + '%';
+  document.getElementById('sr-pickup-pct').textContent = pct(pickupCount) + '%';
+
+  // Орлого өдрөөр/сараар
+  document.getElementById('sr-period-day').classList.toggle('btn-primary', revenuePeriod === 'day');
+  document.getElementById('sr-period-day').classList.toggle('btn-outline', revenuePeriod !== 'day');
+  document.getElementById('sr-period-month').classList.toggle('btn-primary', revenuePeriod === 'month');
+  document.getElementById('sr-period-month').classList.toggle('btn-outline', revenuePeriod !== 'month');
+  document.getElementById('sr-period-label').textContent = revenuePeriod === 'day' ? 'Огноо' : 'Сар';
+
+  const byPeriod = new Map();
+  validOrders.forEach(o => {
+    const d = (o.created_at || '').slice(0, 10);
+    const key = revenuePeriod === 'day' ? d : d.slice(0, 7);
+    if (!byPeriod.has(key)) byPeriod.set(key, { count: 0, revenue: 0 });
+    const entry = byPeriod.get(key);
+    entry.count++;
+    entry.revenue += (o.subtotal || 0) + (o.delivery_fee || 0);
+  });
+  const periodRows = [...byPeriod.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 60);
+  const maxRevenue = Math.max(1, ...periodRows.map(([, v]) => v.revenue));
+
+  document.getElementById('revenueChart').innerHTML = periodRows.slice(0, 14).map(([key, v]) => `
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:78px;flex-shrink:0;font-size:11px;color:var(--ink-soft);font-family:'Ubuntu',sans-serif">${key}</div>
+      <div style="flex:1;background:var(--paper);border-radius:5px;overflow:hidden;height:16px">
+        <div style="width:${Math.max(2, Math.round(v.revenue / maxRevenue * 100))}%;background:var(--cherry);height:100%;border-radius:5px"></div>
+      </div>
+      <div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:600;color:var(--ink)" class="mono">${fmt(v.revenue)}</div>
+    </div>`).join('') || `<div class="empty" style="padding:10px 0">Мэдээлэл алга байна</div>`;
+
+  document.getElementById('revenueTable').innerHTML = periodRows.map(([key, v]) => `
+    <tr><td class="mono">${key}</td><td class="mono">${v.count}</td><td class="mono">${fmt(v.revenue)}</td></tr>
+  `).join('') || `<tr><td colspan="3" class="empty">Мэдээлэл алга байна</td></tr>`;
+
+  // Брэндээр борлуулалт
+  const byBrand = new Map();
+  validItems.forEach(i => {
+    const p = products.find(x => x.id === i.product_id);
+    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || 'Тодорхойгүй брэнд') : 'Устгагдсан бараа';
+    if (!byBrand.has(brandName)) byBrand.set(brandName, { qty: 0, revenue: 0 });
+    const entry = byBrand.get(brandName);
+    entry.qty += i.qty || 0;
+    entry.revenue += i.line_total || 0;
+  });
+  const brandRows = [...byBrand.entries()].sort((a, b) => b[1].revenue - a[1].revenue);
+  document.getElementById('salesByBrandTable').innerHTML = brandRows.map(([name, v]) => `
+    <tr><td><b>${name}</b></td><td class="mono">${v.qty}</td><td class="mono">${fmt(v.revenue)}</td></tr>
+  `).join('') || `<tr><td colspan="3" class="empty">Мэдээлэл алга байна</td></tr>`;
+
+  // Хамгийн их зарагдсан бараа (топ 20)
+  const byProduct = new Map();
+  validItems.forEach(i => {
+    if (!byProduct.has(i.product_id)) byProduct.set(i.product_id, { name: i.product_name, qty: 0, revenue: 0 });
+    const entry = byProduct.get(i.product_id);
+    entry.qty += i.qty || 0;
+    entry.revenue += i.line_total || 0;
+  });
+  const productRows = [...byProduct.entries()].sort((a, b) => b[1].qty - a[1].qty).slice(0, 20);
+  document.getElementById('topProductsTable').innerHTML = productRows.map(([productId, v], idx) => {
+    const p = products.find(x => x.id === productId);
+    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+    return `<tr><td class="mono">${idx + 1}</td><td>${v.name}</td><td>${brandName}</td><td class="mono">${v.qty}</td><td class="mono">${fmt(v.revenue)}</td></tr>`;
+  }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
 function renderReport() {
