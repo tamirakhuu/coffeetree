@@ -407,7 +407,7 @@ function draftRow(r){
       <button class="p" data-f="inc-extra">+</button>
       <span class="u">${p.unit_label || 'ширхэг'}</span>
     </div>` : ''}
-    ${p && hasBox(p) && p.box_per_box > 1 ? `<div class="calc">1 ${p.box_label||'хайрцаг'} = ${p.box_per_box} ${p.unit_label||'ш'}</div>` : ''}
+
   </div>`;
 }
 function bindDraft(container, listOf){
@@ -565,7 +565,7 @@ function render(){
     .map(p => { const n = p.warehouse_unit_stock || 0, low = hasUnit(p) && n < LOW;
       return `<div class="line">
         <div style="flex:1;min-width:0"><div class="n">${esc(p.name)}</div>
-        <div class="m">${esc(brandName(p))}${hasBox(p) ? ' · 1 ' + (p.box_label||'хайрцаг') + ' = ' + (p.box_per_box||1) + ' ' + (p.unit_label||'ш') : ''}</div></div>
+        <div class="m">${esc(brandName(p))}</div></div>
         <div style="text-align:right;line-height:1.15">
           <div class="num ${low?'low':''}">${n}</div>
           <div class="m">${esc(p.unit_label||'ш')}${hasBox(p) ? ' · ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}</div>
