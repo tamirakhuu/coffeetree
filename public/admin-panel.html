@@ -493,6 +493,10 @@ const MAX_PRODUCT_IMAGES = 3;
 let productImages = [];
 
 function fmt(n){ return '₮' + Math.round(n||0).toLocaleString(); }
+// unit_label/box_label нь "1 ширхэг", "1 хайрцаг" гэх мэт худалдан авах нэгжийн
+// бүтэн тайлбар тул, өмнө нь бодит тоо нэмэхэд "141 1 ширхэг" болж хос тоо
+// гардаг — тэргүүн "1 "-г хасаад цэвэр нэрийг л үлдээнэ
+function unitWord(label, fallback){ return String(label || '').replace(/^1\s+/, '').trim() || fallback || ''; }
 
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
@@ -689,8 +693,8 @@ function renderProducts() {
       <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
       <td>${brand?.name||'-'}</td>
       <td>${cat?.name||'-'}</td>
-      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${p.unit_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
-      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${p.box_label||''} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span>${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
+      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${unitWord(p.unit_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
+      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${unitWord(p.box_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span>${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="openSellProduct(${p.id})">Зарлаа</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
