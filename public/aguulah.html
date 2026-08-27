@@ -16,10 +16,10 @@
   --font-h:Podkova,Georgia,serif; --font-b:Rubik,system-ui,-apple-system,sans-serif;
   --shadow:0 3px 10px rgba(46,43,37,.16); --shadow-lg:0 12px 32px rgba(46,43,37,.22);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:15px;line-height:1.5;
-  padding-bottom:env(safe-area-inset-bottom)}
+  padding-bottom:env(safe-area-inset-bottom);width:100%;overflow-x:hidden}
 h1,h2,h3{font-family:var(--font-h);font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.15}
 button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer}
@@ -57,7 +57,7 @@ main{padding:16px 0 112px}
 .btn-line{background:transparent;color:rgba(32,30,29,.7);border:1px solid var(--line);font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
 .btn-icon{width:48px;min-height:48px;padding:0;flex:none;background:var(--text);color:var(--bg);font-size:18px}
 .input{width:100%;min-height:48px;padding:0 18px;background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;caret-color:var(--accent)}
+  border-radius:999px;caret-color:var(--accent);font-size:16px}
 .input::placeholder{color:rgba(32,30,29,.42)}
 .row{display:flex;gap:8px;align-items:center}
 .tag{display:inline-flex;align-items:center;font-size:11px;padding:4px 11px;border-radius:999px;white-space:nowrap}
