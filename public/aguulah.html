@@ -212,7 +212,7 @@ main{padding:16px 0 112px}
         <button class="btn btn-2" style="flex:1" data-goto="add">Бараа нэмэх</button>
       </div>
       <div class="head"><h2 style="font-size:20px">Мэдэгдэл</h2></div>
-      <div id="notif" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="notif" style="display:flex;flex-direction:column;gap:20px"></div>
     </section>
 
     <!-- Бараа нэмэх -->
@@ -250,6 +250,7 @@ main{padding:16px 0 112px}
     <section class="screen" id="s-stock" hidden>
       <div class="head"><h2>Агуулахын үлдэгдэл</h2><p>Нэмэх, илгээх хөдөлгөөн бүрээр автоматаар шинэчлэгдэнэ.</p></div>
       <input class="input" id="stock-q" placeholder="Хайх" />
+      <div class="chips" id="stock-filters"></div>
       <div id="stock-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </section>
 
@@ -287,6 +288,7 @@ let products = [], brands = [];
 let stockTransfers = [];
 let screen = 'home', store = STORES[0];
 let addDraft = [], sendDraft = [], nextK = 1;
+let stockBrandFilter = 'all', stockLowOnly = false;
 let seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
 
 const $  = (s, r=document) => r.querySelector(s);
@@ -489,10 +491,13 @@ $('#send-commit').addEventListener('click', async () => {
   const rows = sendDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
   if (!rows.length) return toast('Бараа болон тоог оруулна уу');
   const btn = $('#send-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
+  // Нэг "Илгээх" дарахад үүссэн бүх мөрийг ижил batchId-аар холбож, admin
+  // талд тус тусдаа багц болгон харагдуулна (өмнөх/дараагийн илгээлттэй холилдохгүй)
+  const batchId = (crypto.randomUUID ? crypto.randomUUID() : 'b' + Date.now() + Math.random().toString(36).slice(2));
   const calls = [];
   rows.forEach(r => {
-    if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store }));
-    if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store }));
+    if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
+    if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
   });
   const results = await Promise.all(calls);
   btn.disabled = false; btn.textContent = 'Илгээх';
@@ -514,13 +519,23 @@ function renderSums(){
   $('#send-commit').disabled = b === 0;
 }
 
+function renderStockFilters(){
+  const brandChips = brands.map(b =>
+    `<button class="chip" data-brand="${b.id}" aria-pressed="${stockBrandFilter===b.id}">${esc(b.name)}</button>`
+  ).join('');
+  $('#stock-filters').innerHTML =
+    `<button class="chip" data-brand="all" aria-pressed="${stockBrandFilter==='all'}">Бүх брэнд</button>${brandChips}` +
+    `<button class="chip" data-low-toggle aria-pressed="${stockLowOnly}">⚠ Бага үлдэгдэл</button>`;
+}
+
 function transferMeta(t){
   const isIn = t.direction !== 'to_store';
   const label = t.direction === 'restock' ? 'Нийлүүлэгчээс' : (t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн');
   let status, tone;
   if (t.direction === 'restock') { status = 'Нэмэгдсэн'; tone = 'in'; }
   else if (t.status === 'pending') { status = 'Хүлээгдэж байна'; tone = 'wait'; }
-  else { status = 'Хүлээн авагдсан'; tone = 'ok'; }
+  else if (t.status === 'rejected') { status = 'Админ буцаасан'; tone = 'low'; }
+  else { status = 'Хүлээлгэн өгсөн'; tone = 'ok'; }
   return { isIn, label, status, tone };
 }
 
@@ -563,9 +578,12 @@ function render(){
     || `<div class="empty">Хайж сонгоно уу.</div>`;
 
   /* Үлдэгдэл */
+  renderStockFilters();
   const q = $('#stock-q').value.trim().toLowerCase();
   $('#stock-list').innerHTML = products
     .filter(p => !q || (p.name + ' ' + brandName(p)).toLowerCase().includes(q))
+    .filter(p => stockBrandFilter === 'all' || p.brand_id === stockBrandFilter)
+    .filter(p => !stockLowOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) < LOW))
     .map(p => { const n = p.warehouse_unit_stock || 0, low = hasUnit(p) && n < LOW;
       return `<div class="line">
         <div style="flex:1;min-width:0"><div class="n">${esc(p.name)}</div>
@@ -603,6 +621,10 @@ document.addEventListener('click', e => {
     seen.add(id); localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
     screen = 'history'; render();
   }
+  const bc = e.target.closest('[data-brand]');
+  if (bc) { stockBrandFilter = bc.dataset.brand === 'all' ? 'all' : +bc.dataset.brand; render(); }
+  const lt = e.target.closest('[data-low-toggle]');
+  if (lt) { stockLowOnly = !stockLowOnly; render(); }
 });
 bindDraft($('#add-list'),  () => addDraft);
 bindDraft($('#send-list'), () => sendDraft);

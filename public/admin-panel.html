@@ -404,24 +404,30 @@ tr:hover td{background:rgba(255,255,255,.4)}
     </div>
 
     <div class="page-header" style="margin-top:34px">
-      <div><div class="card-title" style="font-size:17px">Агуулахын шилжилтийн тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div>
+      <div><div class="card-title" style="font-size:17px">Агуулахын таталтын тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div>
     </div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-val" id="rp-to-store">0</div><div class="stat-label">Агуулахаас татсан (нийт)</div></div>
       <div class="stat-card"><div class="stat-val" id="rp-to-warehouse">0</div><div class="stat-label">Агуулах руу буцаасан (нийт)</div></div>
       <div class="stat-card"><div class="stat-val" id="rp-warehouse-left">0</div><div class="stat-label">Агуулахад үлдсэн нийт нөөц</div></div>
-      <div class="stat-card"><div class="stat-val" id="rp-count">0</div><div class="stat-label">Нийт бүртгэгдсэн шилжилт</div></div>
+      <div class="stat-card"><div class="stat-val" id="rp-count">0</div><div class="stat-label">Нийт татан авалт</div></div>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-title">Хүлээгдэж буй шилжилтүүд</div><p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй шилжилтүүд</p></div>
+      <div class="card-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="card-title">Хүлээгдэж буй таталтууд</div>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй бараанууд. Check-лэгдээгүй бараа агуулах руу автоматаар буцаагдана.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="receivePendingBatch()">Хүлээн авах</button>
+      </div>
       <div class="table-wrap">
-        <table><thead><tr><th>Огноо</th><th>Бараа</th><th>Брэнд</th><th>Чиглэл</th><th>Тоо</th><th>Илгээсэн</th><th></th></tr></thead><tbody id="pendingTransfersTable"></tbody></table>
+        <table><thead><tr><th style="width:36px"></th><th>Огноо</th><th>Бараа</th><th>Брэнд</th><th>Чиглэл</th><th>Тоо</th><th>Илгээсэн</th></tr></thead><tbody id="pendingTransfersTable"></tbody></table>
       </div>
     </div>
 
     <div class="card" style="margin-top:20px">
-      <div class="card-head"><div class="card-title">Брэнд/бараагаар нийт шилжилт</div><p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Хүлээн авагдсан шилжилтүүдийн (буцалтгүй) нийт дүн</p></div>
+      <div class="card-head"><div class="card-title">Брэнд/бараагаар нийт таталт</div><p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Хүлээн авагдсан шилжилтүүдийн (буцалтгүй) нийт дүн</p></div>
       <div class="table-wrap">
         <table><thead><tr><th>Брэнд</th><th>Бараа</th><th>Нийлүүлэгчээс нэмэгдсэн</th><th>Нийт татагдсан</th><th>Нийт буцаагдсан</th></tr></thead><tbody id="transferTotalsTable"></tbody></table>
       </div>
@@ -696,7 +702,7 @@ function renderProducts() {
       <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${unitWord(p.unit_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
       <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${unitWord(p.box_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span>${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
       <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="openSellProduct(${p.id})">Зарлаа</button><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
@@ -954,69 +960,6 @@ async function saveProduct(id) {
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
   }
-}
-
-// Агуулах ⇄ дэлгүүрийн хооронд нөөц шилжүүлэх: тоог ганц л удаа оруулбал
-// (өмнө нь 2 газар тус тусад нь гараар засдаг байсан) чиглэлээсээ хамааран
-// нэг талаас хасаад нөгөө талд нэмнэ, мөн Тайлан хуудсанд харагдах түүх бичнэ
-// Бодит дэлгүүрт (кассаар) зарагдсан барааг вебсайтын нөөцөөс хурдан хасах
-// хэрэгсэл — POS системтэй автомат холбогдож чадахгүй үед гараар ашиглана.
-function openSellProduct(id) {
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-  const hasUnit = !!(p.unit_price || p.unit_stock);
-  const hasBox = !!(p.box_price || p.box_stock) && !p.unified_stock;
-  const body = `
-    <p style="margin-bottom:14px">Бодит дэлгүүрт зарагдсан барааг вебсайтын нөөцөөс хасна.</p>
-    <p style="margin-bottom:10px"><b>${p.name}</b></p>
-    <div class="form-grid">
-      ${hasUnit ? `<div class="fg full">
-        <label>Ширхэгээр (одоогийн нөөц: ${p.unit_stock || 0})</label>
-        <input type="number" id="sp-unit-qty" placeholder="0" min="0" value="1">
-      </div>` : ''}
-      ${hasBox ? `<div class="fg full">
-        <label>Хайрцгаар (одоогийн нөөц: ${p.box_stock || 0})</label>
-        <input type="number" id="sp-box-qty" placeholder="0" min="0">
-      </div>` : ''}
-    </div>`;
-  openModal('Зарагдсан бараа хасах', body,
-    `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="submitSellProduct(${id})">Хасах</button>`);
-}
-
-async function submitSellProduct(id) {
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-  const unified = !!(p.unified_stock && p.box_per_box > 0);
-  const perBox = p.box_per_box || 1;
-  const unitQtyEl = document.getElementById('sp-unit-qty');
-  const boxQtyEl = document.getElementById('sp-box-qty');
-  const unitQty = unitQtyEl ? (parseInt(unitQtyEl.value, 10) || 0) : 0;
-  const boxQty = boxQtyEl ? (parseInt(boxQtyEl.value, 10) || 0) : 0;
-  if (!unitQty && !boxQty) { toast('Зарагдсан тоогоо оруулна уу', 'err'); return; }
-
-  const row = {};
-  if (unified) {
-    const newUnitStock = (p.unit_stock || 0) - unitQty - boxQty * perBox;
-    if (newUnitStock < 0) { toast('Дэлгүүрийн нөөцөөс их тоо зарлаа гэж байна', 'err'); return; }
-    row.unit_stock = newUnitStock;
-    row.box_stock = Math.floor(newUnitStock / perBox);
-  } else {
-    if (unitQty > (p.unit_stock || 0) || boxQty > (p.box_stock || 0)) {
-      toast('Дэлгүүрийн нөөцөөс их тоо зарлаа гэж байна', 'err');
-      return;
-    }
-    if (unitQty) row.unit_stock = (p.unit_stock || 0) - unitQty;
-    if (boxQty) row.box_stock = (p.box_stock || 0) - boxQty;
-  }
-
-  const btn = document.querySelector('#modalFoot .btn-primary');
-  if (btn) { btn.disabled = true; btn.textContent = 'Хасаж байна…'; }
-  const { error } = await sb.from('products').update(row).eq('id', id);
-  if (error) { if (btn) { btn.disabled = false; btn.textContent = 'Хасах'; } toast('Алдаа: ' + error.message, 'err'); return; }
-
-  closeModal();
-  toast('✅ Нөөцөөс хасагдлаа');
-  await loadAll();
 }
 
 // Шилжүүлэх (агуулах ⇄ дэлгүүр) үйлдлийг агуулахын ажилтны тусдаа
@@ -1481,26 +1424,56 @@ function renderPendingTransfers() {
   const pending = stockTransfers.filter(t => t.status === 'pending').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   const tb = document.getElementById('pendingTransfersTable');
   if (!tb) return;
-  tb.innerHTML = pending.map(t => {
-    const p = products.find(x => x.id === t.product_id);
-    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    const dirBadge = directionBadge(t.direction);
-    return `<tr>
-      <td class="mono" style="font-size:11px">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
-      <td>${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
-      <td>${brandName}</td>
-      <td>${dirBadge}</td>
-      <td class="mono">${t.qty}</td>
-      <td style="font-size:12px">${t.admin_email || '-'}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="receiveTransfer(${t.id})">Хүлээн авах</button></td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="7" class="empty">Хүлээгдэж буй шилжилт алга байна</td></tr>`;
+  if (!pending.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">Хүлээгдэж буй бараа алга байна</td></tr>`; return; }
+
+  // Нэг "Илгээх" дархад агуулахаас үүссэн мөрүүд ижил batch_id-тай тул
+  // тэднийг нэг багц болгож бүлэглэнэ; batch_id-гүй (хуучин) мөр бүр
+  // өөрийн ганц багц болж, өөр багцтай холилдохгүй
+  const groups = [];
+  const byBatch = new Map();
+  pending.forEach(t => {
+    const key = t.batch_id || ('__single_' + t.id);
+    if (!byBatch.has(key)) { const g = { items: [] }; byBatch.set(key, g); groups.push(g); }
+    byBatch.get(key).items.push(t);
+  });
+
+  tb.innerHTML = groups.map(g => {
+    const first = g.items[0];
+    const header = `<tr><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
+      📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа
+    </td></tr>`;
+    const rows = g.items.map(t => {
+      const p = products.find(x => x.id === t.product_id);
+      const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+      const dirBadge = directionBadge(t.direction);
+      return `<tr>
+        <td><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
+        <td class="mono" style="font-size:11px">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+        <td>${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
+        <td>${brandName}</td>
+        <td>${dirBadge}</td>
+        <td class="mono">${t.qty}</td>
+        <td style="font-size:12px">${t.admin_email || '-'}</td>
+      </tr>`;
+    }).join('');
+    return header + rows;
+  }).join('');
 }
 
-async function receiveTransfer(id) {
-  const { error } = await sb.rpc('admin_receive_transfer', { p_transfer_id: id });
-  if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
-  toast('✅ Шилжилт хүлээн авагдлаа');
+async function receivePendingBatch() {
+  const checks = [...document.querySelectorAll('#pendingTransfersTable .pending-check')];
+  if (!checks.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
+  const accepted = checks.filter(c => c.checked).map(c => +c.dataset.id);
+  const rejected = checks.filter(c => !c.checked).map(c => +c.dataset.id);
+  if (rejected.length && !confirm(`${rejected.length} бараа хүлээн авагдаагүй тул агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
+
+  const results = await Promise.all([
+    ...accepted.map(id => sb.rpc('admin_receive_transfer', { p_transfer_id: id })),
+    ...rejected.map(id => sb.rpc('admin_reject_transfer', { p_transfer_id: id })),
+  ]);
+  const failed = results.find(r => r.error);
+  if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
+  else { toast(`✅ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
   await loadAll();
 }
 
