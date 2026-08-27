@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Агуулах</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Podkova:wght@600;700;800&family=Rubik:wght@400;500;600;700&display=swap" />
+<style>
+:root{
+  --bg:#f5ead8; --surface:#ebddc5; --text:#201e1d;
+  --accent:#c67139; --accent-600:#b2622d; --accent-700:#8c491a; --accent-100:#fff2eb; --accent-200:#ffe1d0;
+  --sage:#7a8a5e; --sage-100:#f0fae1; --sage-200:#e1eecc; --sage-800:#3d472b;
+  --line:rgba(32,30,29,.16); --muted:rgba(32,30,29,.55);
+  --r:28px; --r-sm:22px;
+  --font-h:Podkova,Georgia,serif; --font-b:Rubik,system-ui,-apple-system,sans-serif;
+  --shadow:0 3px 10px rgba(46,43,37,.16); --shadow-lg:0 12px 32px rgba(46,43,37,.22);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:15px;line-height:1.5;
+  padding-bottom:env(safe-area-inset-bottom)}
+h1,h2,h3{font-family:var(--font-h);font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.15}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:rgba(198,113,57,.3)}
+a{color:var(--accent-700)}
+[hidden]{display:none !important}
+
+/* layout */
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+.topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,30,29,.08)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);
+  display:grid;place-items:center;font-family:var(--font-h);font-size:17px}
+.who{min-width:0;line-height:1.2}
+.who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span{font-size:11.5px;color:var(--muted)}
+.spacer{margin-left:auto}
+main{padding:16px 0 112px}
+.screen{display:flex;flex-direction:column;gap:14px}
+.head h2{font-size:26px}
+.head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+
+/* atoms */
+.card{background:var(--surface);border-radius:var(--r);padding:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;
+  border:none;border-radius:999px;background:var(--accent);color:var(--bg);font-family:var(--font-h);font-size:16px}
+.btn:hover{background:var(--accent-600)}
+.btn:active{background:var(--accent-700)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-2{background:var(--sage);color:var(--sage-100)}
+.btn-2:hover{filter:brightness(.94)}
+.btn-ghost{background:transparent;color:var(--accent-700);border:1px dashed rgba(32,30,29,.28);font-family:var(--font-b);font-weight:600;min-height:44px}
+.btn-ghost:hover{background:var(--accent-100)}
+.btn-line{background:transparent;color:rgba(32,30,29,.7);border:1px solid var(--line);font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
+.btn-icon{width:48px;min-height:48px;padding:0;flex:none;background:var(--text);color:var(--bg);font-size:18px}
+.input{width:100%;min-height:48px;padding:0 18px;background:var(--surface);border:1px solid var(--line);
+  border-radius:999px;caret-color:var(--accent)}
+.input::placeholder{color:rgba(32,30,29,.42)}
+.row{display:flex;gap:8px;align-items:center}
+.tag{display:inline-flex;align-items:center;font-size:11px;padding:4px 11px;border-radius:999px;white-space:nowrap}
+.t-wait{background:var(--accent-100);color:var(--accent-700)}
+.t-ok{background:var(--sage-100);color:var(--sage-800)}
+.t-in{background:var(--sage-200);color:var(--sage-800)}
+.t-low{background:var(--accent-200);color:var(--accent-700)}
+.muted{color:var(--muted)}
+.empty{border:1px dashed rgba(32,30,29,.25);border-radius:var(--r);padding:22px;text-align:center;font-size:13.5px;color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:12.5px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--sage);color:var(--sage-100);border-color:transparent}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border-radius:var(--r);padding:14px 16px;background:var(--surface)}
+.stat.sage{background:var(--sage);color:var(--sage-100)}
+.stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-700)}
+.stat.sage .k{color:rgba(240,250,225,.8)}
+.stat .v{font-family:var(--font-h);font-size:28px;line-height:1.05;margin-top:2px}
+.stat .s{font-size:12px;color:var(--muted)}
+.stat.sage .s{color:rgba(240,250,225,.8)}
+
+/* list rows */
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;background:transparent;border-radius:var(--r-sm);text-align:left}
+.pick:hover{background:var(--bg)}
+.pick .plus{width:32px;height:32px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);display:grid;place-items:center;font-size:18px}
+.line{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:var(--r-sm);padding:12px 16px}
+.line .n{font-size:15px;font-weight:600}
+.line .m{font-size:11.5px;color:var(--muted)}
+.num{font-family:var(--font-h);font-size:20px}
+.num.low{color:var(--accent-600)}
+
+/* item card (draft rows) */
+.item{background:var(--surface);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.item .top{display:flex;align-items:flex-start;gap:10px}
+.item .name{width:100%;font-size:15.5px;font-weight:600;background:transparent;border:none;padding:0;caret-color:var(--accent)}
+.item .meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.x{width:30px;height:30px;flex:none;border-radius:999px;border:none;background:transparent;color:rgba(32,30,29,.45);font-size:15px}
+.step{display:flex;align-items:center;gap:8px}
+.step button{width:46px;height:46px;flex:none;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:22px;line-height:1}
+.step button.p{background:var(--accent);color:var(--bg);border-color:transparent}
+.step button.p2{background:var(--sage);color:var(--sage-100);border-color:transparent}
+.step input{flex:1;min-width:0;width:0;height:46px;text-align:center;font-size:19px;font-weight:700;
+  background:var(--bg);border:1px solid var(--line);border-radius:999px}
+.step .u{flex:none;font-size:12.5px;color:var(--muted);min-width:58px;text-align:center}
+.calc{font-size:12.5px;color:var(--accent-700);background:var(--accent-100);border-radius:999px;padding:6px 14px;align-self:flex-start}
+
+/* sticky action bar */
+.bar{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:25;padding:0 16px;pointer-events:none}
+.bar .in{max-width:928px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
+  padding:12px 12px 12px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);pointer-events:auto}
+.bar .in small{display:block;font-size:11px;opacity:.6}
+.bar .in strong{font-family:var(--font-h);font-size:19px;font-weight:700}
+.bar .in .btn{margin-left:auto;min-height:44px;font-size:15px}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid rgba(32,30,29,.08);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tabbar .in{max-width:960px;margin:0 auto;display:flex;gap:2px;padding:8px 10px}
+.tab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 6px;
+  border:none;border-radius:20px;background:transparent;color:var(--muted);font-size:11px}
+.tab i{width:7px;height:7px;border-radius:999px;background:rgba(32,30,29,.28)}
+.tab[aria-current="page"]{background:var(--bg);color:var(--accent-700);font-weight:700}
+.tab[aria-current="page"] i{background:var(--accent)}
+.tab b{position:absolute;top:4px;right:14px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
+  background:var(--accent);color:var(--bg);font-size:10px;font-weight:600;display:grid;place-items:center}
+
+/* login */
+.login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:14px;
+  max-width:420px;margin:0 auto;padding:32px 20px 40px;position:relative;overflow:hidden}
+.login .blob{position:absolute;width:340px;height:340px;border-radius:999px;background:var(--sage-200);top:-140px;right:-150px}
+.login .z{position:relative}
+.login h1{font-size:34px;margin-bottom:8px}
+.field label{display:block;font-size:12px;margin-bottom:6px;color:rgba(32,30,29,.7)}
+
+/* scanner */
+.scanner{position:fixed;inset:0;z-index:60;background:#201e1d;color:var(--bg);display:flex;flex-direction:column}
+.scanner .sh{display:flex;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 20px 10px}
+.scanner .sh h3{font-family:var(--font-h);font-size:18px;margin-right:auto}
+.scanner .close{width:36px;height:36px;border-radius:999px;border:1px solid rgba(245,234,216,.3);background:transparent;color:var(--bg)}
+.stage{flex:1;margin:10px 20px;border-radius:var(--r);background:#2e2b25;position:relative;overflow:hidden}
+.stage video{width:100%;height:100%;object-fit:cover}
+.stage .frame{position:absolute;inset:16%;border:2px solid rgba(245,234,216,.55);border-radius:var(--r-sm)}
+.stage .laser{position:absolute;left:16%;right:16%;height:2px;background:#f6a06b;box-shadow:0 0 18px var(--accent);animation:scan 1.1s ease-in-out infinite alternate}
+@keyframes scan{from{top:18%}to{top:78%}}
+.scanner .foot{padding:12px 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+.scanner .foot .input{background:#3a352e;border-color:rgba(245,234,216,.25);color:var(--bg)}
+.scanner .hint{font-size:12.5px;color:rgba(245,234,216,.65);text-align:center}
+
+/* toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom));z-index:70;
+  display:flex;align-items:center;gap:9px;padding:12px 18px;border-radius:999px;background:var(--text);color:var(--bg);
+  font-size:13.5px;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
+#toast i{width:20px;height:20px;flex:none;border-radius:999px;background:#8fa073;color:#272e1b;display:grid;place-items:center;font-size:12px}
+
+/* desktop */
+@media (min-width:760px){
+  body{font-size:16px}
+  main{padding:24px 0 40px}
+  .head h2{font-size:34px}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .tabbar{position:sticky;top:62px;bottom:auto;background:var(--bg);border-top:none;border-bottom:1px solid rgba(32,30,29,.08)}
+  .tabbar .in{padding:8px 16px}
+  .tab{flex:none;flex-direction:row;gap:8px;padding:8px 18px;font-size:14px}
+  .tab b{position:static;margin-left:2px}
+  .bar{position:static;bottom:auto;padding:0}
+  .bar .in{border-radius:var(--r)}
+  #toast{bottom:32px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ НЭВТРЭХ ══════════ -->
+<div class="login" id="login">
+  <div class="blob"></div>
+  <div class="z">
+    <div class="brand" style="width:56px;height:56px;font-size:26px;margin-bottom:24px">C</div>
+    <h1>Агуулахын<br />бүртгэл</h1>
+  </div>
+  <div class="field"><label for="li-email">Ажилтны имэйл</label><input class="input" id="li-email" type="email" placeholder="И-мэйл хаяг" autocomplete="username" /></div>
+  <div class="field"><label for="li-pass">Нууц үг</label><input class="input" id="li-pass" type="password" placeholder="Нууц үг" autocomplete="current-password" /></div>
+  <button class="btn" id="li-go" style="width:100%;min-height:54px">Ажлаа эхлэх</button>
+  <div class="muted" id="li-err" style="font-size:12.5px;min-height:16px"></div>
+</div>
+
+<!-- ══════════ АПП ══════════ -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand" id="avatar">А</div>
+      <div class="who"><b id="w-name">—</b><span id="w-phone">—</span></div>
+      <button class="btn btn-line spacer" id="logout">Гарах</button>
+    </div>
+  </header>
+
+  <nav class="tabbar"><div class="in" id="tabs"></div></nav>
+
+  <main class="wrap">
+    <!-- Нүүр -->
+    <section class="screen" id="s-home" hidden>
+      <div class="stats">
+        <div class="stat"><div class="k">Нийт үлдэгдэл</div><div class="v" id="h-total">0</div><div class="s">ширхэг</div></div>
+        <div class="stat sage"><div class="k">Өнөөдөр нэмсэн</div><div class="v" id="h-added">0</div><div class="s">ширхэг</div></div>
+        <div class="stat"><div class="k">Хүлээгдэж буй</div><div class="v" id="h-pending">0</div><div class="s">илгээсэн хүсэлт</div></div>
+        <div class="stat"><div class="k">Үлдэгдэл бага</div><div class="v" id="h-low">0</div><div class="s">нэр төрөл</div></div>
+      </div>
+      <div class="row" style="gap:10px">
+        <button class="btn btn-2" style="flex:1" data-goto="add">Бараа нэмэх</button>
+      </div>
+      <div class="head"><h2 style="font-size:20px">Мэдэгдэл</h2></div>
+      <div id="notif" style="display:flex;flex-direction:column;gap:10px"></div>
+    </section>
+
+    <!-- Бараа нэмэх -->
+    <section class="screen" id="s-add" hidden>
+      <div class="head"><h2>Агуулахын бараа нэмэх</h2><p>Нийлүүлэгчээс ирсэн барааг агуулахын үлдэгдэлд нэмнэ.</p></div>
+      <div class="row">
+        <input class="input" id="add-q" placeholder="Барааны нэр / брэндээр хайх" />
+      </div>
+      <div class="card" id="add-results" hidden style="padding:6px"></div>
+      <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Нэмэх жагсаалт</h3><span class="muted" id="add-count" style="font-size:12px"></span></div>
+      <div id="add-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="bar"><div class="in">
+        <div><small id="add-sum-label">Агуулахад нэмэгдэх</small><strong id="add-sum">0 ширхэг</strong></div>
+        <button class="btn btn-2" id="add-commit">Үлдэгдэлд нэмэх</button>
+      </div></div>
+    </section>
+
+    <!-- Дэлгүүрт илгээх -->
+    <section class="screen" id="s-send" hidden>
+      <div class="head"><h2>Дэлгүүрт илгээх</h2><p>Хүсэлт админ руу явж, дэлгүүр хүлээн авснаа баталгаажуулна.</p></div>
+      <div class="chips" id="stores"></div>
+      <div class="row">
+        <input class="input" id="send-q" placeholder="Барааны нэр / брэндээр хайх" />
+      </div>
+      <div class="card" id="send-results" hidden style="padding:6px"></div>
+      <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Илгээх жагсаалт</h3><span class="muted" id="send-count" style="font-size:12px"></span></div>
+      <div id="send-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="bar"><div class="in">
+        <div><small id="send-store">—</small><strong id="send-sum">0 ширхэг</strong></div>
+        <button class="btn" id="send-commit">Илгээх</button>
+      </div></div>
+    </section>
+
+    <!-- Үлдэгдэл -->
+    <section class="screen" id="s-stock" hidden>
+      <div class="head"><h2>Агуулахын үлдэгдэл</h2><p>Нэмэх, илгээх хөдөлгөөн бүрээр автоматаар шинэчлэгдэнэ.</p></div>
+      <input class="input" id="stock-q" placeholder="Хайх" />
+      <div id="stock-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </section>
+
+    <!-- Түүх -->
+    <section class="screen" id="s-history" hidden>
+      <div class="head"><h2>Бараа татан авалт,буцаалтын түүх</h2><p>Нэмсэн болон илгээсэн бараанууд</p></div>
+      <div id="history-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" hidden><i>✓</i><span></span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Cuppa MN · Агуулахын ажилтны хуудас  (/aguulah)
+   admin-panel.html-ийн адил Supabase-тай шууд холбогдоно: products/
+   brands-ийг бодитоор татаж, шилжилтийг warehouse_create_transfer /
+   warehouse_add_stock RPC-ээр илгээж, admin-panel.html "Хүлээгдэж буй
+   шилжилтүүд" хэсгээр хүлээн авдаг — 2 хуудас нэг stock_transfers
+   хүснэгт дээр хамтран ажиллана.
+   ══════════════════════════════════════════════════════════════════ */
+
+const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STORES = ['Саруул зах', 'Яармаг'];
+const LOW = 20;
+const SEEN_KEY = 'cuppamn_aguulah_seen_v1';
+
+let worker = null;                 // { email }
+let products = [], brands = [];
+let stockTransfers = [];
+let screen = 'home', store = STORES[0];
+let addDraft = [], sendDraft = [], nextK = 1;
+let seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
+
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const prod = (id) => products.find(p => p.id === id);
+const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
+const hasUnit = (p) => !!(p.unit_price || p.warehouse_unit_stock);
+const hasBox = (p) => !!(p.box_price || p.warehouse_box_stock);
+const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
+
+let toastT;
+function toast(msg){
+  const t = $('#toast'); $('#toast span').textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
+}
+
+/* ── НЭВТРЭХ ─────────────────────────────────────────────── */
+async function doLogin(){
+  const email = $('#li-email').value.trim();
+  const password = $('#li-pass').value;
+  const err = $('#li-err'); err.textContent = '';
+  if (!email || !password) { err.textContent = 'Имэйл, нууц үгээ оруулна уу'; return; }
+  const btn = $('#li-go'); btn.disabled = true; btn.textContent = 'Нэвтэрч байна…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Ажлаа эхлэх';
+  if (error) { err.textContent = 'Имэйл эсвэл нууц үг буруу байна.'; return; }
+  checkAuth();
+}
+$('#li-go').addEventListener('click', doLogin);
+$('#li-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('#li-pass').focus(); });
+$('#li-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('#logout').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+async function checkAuth(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  // Session байгаа ч гэсэн зөвхөн warehouse_staff хүснэгтэд байгаа имэйл
+  // хаяг л энэ хуудас руу орох ёстой тул is_warehouse_staff()-ээр шалгана
+  const { data: isWarehouseStaff, error } = await sb.rpc('is_warehouse_staff');
+  if (error || !isWarehouseStaff) {
+    await sb.auth.signOut();
+    $('#li-err').textContent = 'Танд агуулахын ажилтны эрх байхгүй байна.';
+    return;
+  }
+  worker = { email: session.user.email };
+  $('#login').hidden = true; $('#app').hidden = false;
+  $('#w-name').textContent = worker.email;
+  $('#w-phone').textContent = 'Агуулахын ажилтан';
+  $('#avatar').textContent = worker.email.slice(0,1).toUpperCase();
+  await loadAll();
+}
+
+async function loadAll(){
+  const [p, b, st] = await Promise.all([
+    sb.from('products').select('*').order('name'),
+    sb.from('brands').select('*').order('id'),
+    sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
+  ]);
+  products = p.data || [];
+  brands = b.data || [];
+  stockTransfers = st.data || [];
+  render();
+}
+
+/* ── ТАБ ─────────────────────────────────────────────────── */
+const TABS = [['home','Нүүр'],['add','Нэмэх'],['send','Илгээх'],['stock','Үлдэгдэл'],['history','Түүх']];
+function renderTabs(){
+  const unreadCount = stockTransfers.filter(t => !seen.has(t.id)).length;
+  $('#tabs').innerHTML = TABS.map(([id,label]) => {
+    const unread = id === 'home' ? unreadCount : 0;
+    return `<button class="tab" data-goto="${id}" ${screen===id?'aria-current="page"':''}><i></i>${label}${unread?`<b>${unread}</b>`:''}</button>`;
+  }).join('');
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (g) go(g.dataset.goto);
+});
+function go(s){ screen = s; render(); window.scrollTo({top:0}); }
+
+/* ── ЖАГСААЛТЫН МӨР (нийтлэг) ────────────────────────────── */
+function draftRow(r){
+  const p = prod(r.productId);
+  const meta = p
+    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${p.unit_label||'ш'}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}`
+    : '';
+  return `<div class="item" data-k="${r.k}">
+    <div class="top">
+      <div style="flex:1;min-width:0">
+        <div class="name">${esc(r.name)}</div>
+        <div class="meta">${esc(meta)}</div>
+      </div>
+      <button class="x" data-f="del" title="Устгах">✕</button>
+    </div>
+    ${p && hasBox(p) ? `
+    <div class="step">
+      <button data-f="dec-case">−</button>
+      <input inputmode="numeric" value="${r.cases}" data-f="cases" />
+      <button class="p2" data-f="inc-case">+</button>
+      <span class="u">${p.box_label || 'хайрцаг'}</span>
+    </div>` : ''}
+    ${p && hasUnit(p) ? `
+    <div class="step">
+      <button data-f="dec-extra">−</button>
+      <input inputmode="numeric" value="${r.extra}" data-f="extra" />
+      <button class="p" data-f="inc-extra">+</button>
+      <span class="u">${p.unit_label || 'ширхэг'}</span>
+    </div>` : ''}
+    ${p && hasBox(p) && p.box_per_box > 1 ? `<div class="calc">1 ${p.box_label||'хайрцаг'} = ${p.box_per_box} ${p.unit_label||'ш'}</div>` : ''}
+  </div>`;
+}
+function bindDraft(container, listOf){
+  container.addEventListener('click', e => {
+    const b = e.target.closest('[data-f]'); if (!b || b.tagName === 'INPUT') return;
+    const k = +e.target.closest('.item').dataset.k, list = listOf(), r = list.find(x => x.k === k); if (!r) return;
+    const f = b.dataset.f;
+    if (f === 'del') { const idx = list.indexOf(r); list.splice(idx, 1); }
+    if (f === 'inc-case')  r.cases = (Number(r.cases)||0) + 1;
+    if (f === 'dec-case')  r.cases = Math.max(0, (Number(r.cases)||0) - 1);
+    if (f === 'inc-extra') r.extra = (Number(r.extra)||0) + 1;
+    if (f === 'dec-extra') r.extra = Math.max(0, (Number(r.extra)||0) - 1);
+    render();
+  });
+  container.addEventListener('input', e => {
+    const f = e.target.dataset.f; if (!f) return;
+    const k = +e.target.closest('.item').dataset.k, r = listOf().find(x => x.k === k); if (!r) return;
+    if (f === 'cases' || f === 'extra') {
+      const v = e.target.value.replace(/\D/g,''); e.target.value = v;
+      r[f] = v === '' ? 0 : +v; renderSums();
+    }
+  });
+}
+
+/* ── ХАЙЛТ ───────────────────────────────────────────────── */
+function results(q, mode){
+  const s = q.trim().toLowerCase();
+  if (!s) return '';
+  const hits = products.filter(p => (p.name + ' ' + brandName(p)).toLowerCase().includes(s)).slice(0,6);
+  if (!hits.length) return `<div style="padding:14px;font-size:13.5px" class="muted">Бараа олдсонгүй.</div>`;
+  return hits.map(p => `<button class="pick" data-pick="${p.id}" data-mode="${mode}">
+    <div style="flex:1;min-width:0">
+      <div class="n" style="font-weight:600">${esc(p.name)}</div>
+      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${p.unit_label||'ш'}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}</div>
+    </div><div class="plus">+</div></button>`).join('');
+}
+document.addEventListener('click', e => {
+  const p = e.target.closest('[data-pick]'); if (!p) return;
+  addToDraft(p.dataset.mode, prod(+p.dataset.pick));
+  const q = p.dataset.mode === 'add' ? $('#add-q') : $('#send-q'); q.value = '';
+  render();
+});
+$('#add-q').addEventListener('input', () => render());
+$('#send-q').addEventListener('input', () => render());
+$('#stock-q').addEventListener('input', () => render());
+
+function addToDraft(mode, product){
+  if (!product) return;
+  const list = mode === 'add' ? addDraft : sendDraft;
+  const hit = list.find(r => r.productId === product.id);
+  if (hit) { if (hasBox(product)) hit.cases++; else hit.extra++; return; }
+  list.push({ k: nextK++, productId: product.id, name: product.name,
+    cases: hasBox(product) ? 1 : 0, extra: hasBox(product) ? 0 : 1 });
+}
+
+/* ── ХАДГАЛАХ ҮЙЛДЛҮҮД ───────────────────────────────────── */
+$('#add-commit').addEventListener('click', async () => {
+  const rows = addDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
+  if (!rows.length) return toast('Бараа болон тоог оруулна уу');
+  const btn = $('#add-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
+  const calls = [];
+  rows.forEach(r => {
+    if (r.cases > 0) calls.push(sb.rpc('warehouse_add_stock', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases }));
+    if (r.extra > 0) calls.push(sb.rpc('warehouse_add_stock', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra }));
+  });
+  const results = await Promise.all(calls);
+  btn.disabled = false; btn.textContent = 'Үлдэгдэлд нэмэх';
+  const failed = results.find(r => r.error);
+  if (failed) { toast('Алдаа: ' + failed.error.message); return; }
+  addDraft = []; screen = 'stock'; await loadAll();
+  toast('✅ Агуулахын үлдэгдэлд нэмэгдлээ');
+});
+
+$('#send-commit').addEventListener('click', async () => {
+  const rows = sendDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
+  if (!rows.length) return toast('Бараа болон тоог оруулна уу');
+  const btn = $('#send-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
+  const calls = [];
+  rows.forEach(r => {
+    if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store }));
+    if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store }));
+  });
+  const results = await Promise.all(calls);
+  btn.disabled = false; btn.textContent = 'Илгээх';
+  const failed = results.find(r => r.error);
+  if (failed) { toast('Алдаа: ' + failed.error.message); return; }
+  sendDraft = []; screen = 'history'; await loadAll();
+  toast('✅ Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
+});
+
+/* ── РЕНДЕР ──────────────────────────────────────────────── */
+function renderSums(){
+  const sum = (list) => list.reduce((s,r) => s + (Number(r.cases)||0) + (Number(r.extra)||0), 0);
+  const a = sum(addDraft), b = sum(sendDraft);
+  $('#add-sum').textContent  = a + ' мөр';
+  $('#send-sum').textContent = b + ' мөр';
+  $('#add-count').textContent  = addDraft.length + ' нэр төрөл';
+  $('#send-count').textContent = sendDraft.length + ' нэр төрөл';
+  $('#add-commit').disabled  = a === 0;
+  $('#send-commit').disabled = b === 0;
+}
+
+function transferMeta(t){
+  const isIn = t.direction !== 'to_store';
+  const label = t.direction === 'restock' ? 'Нийлүүлэгчээс' : (t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн');
+  let status, tone;
+  if (t.direction === 'restock') { status = 'Нэмэгдсэн'; tone = 'in'; }
+  else if (t.status === 'pending') { status = 'Хүлээгдэж байна'; tone = 'wait'; }
+  else { status = 'Хүлээн авагдсан'; tone = 'ok'; }
+  return { isIn, label, status, tone };
+}
+
+function render(){
+  if (!worker) return;
+  renderTabs();
+  TABS.forEach(([id]) => $('#s-' + id).hidden = screen !== id);
+
+  /* Нүүр */
+  const totalStock = products.reduce((s,p) => s + (p.warehouse_unit_stock||0), 0);
+  const addedToday = stockTransfers.filter(t => t.direction === 'restock' && isToday(t.created_at)).reduce((s,t) => s + t.qty, 0);
+  $('#h-total').textContent   = totalStock;
+  $('#h-added').textContent   = addedToday;
+  $('#h-pending').textContent = stockTransfers.filter(t => t.status === 'pending').length;
+  $('#h-low').textContent     = products.filter(p => hasUnit(p) && (p.warehouse_unit_stock||0) < LOW).length;
+  const notifItems = stockTransfers.slice(0, 8);
+  $('#notif').innerHTML = notifItems.map(t => {
+    const m = transferMeta(t);
+    const unread = !seen.has(t.id);
+    return `<button class="pick" data-notif="${t.id}" style="background:${unread?'var(--surface)':'transparent'};border:1px solid ${unread?'transparent':'var(--line)'}">
+      <span style="width:8px;height:8px;flex:none;border-radius:999px;background:${unread?'var(--accent)':'rgba(32,30,29,.2)'};margin-top:6px;align-self:flex-start"></span>
+      <span style="flex:1;min-width:0"><b style="display:block;font-size:14px">${esc(t.product_name)} ×${t.qty}</b>
+      <span class="m">${esc(m.label)}${t.store_name ? ' · ' + esc(t.store_name) : ''} · ${esc(m.status)}</span></span>
+      <span class="m" style="flex:none">${new Date(t.created_at).toLocaleDateString('mn-MN')}</span>
+    </button>`;
+  }).join('') || `<div class="empty">Мэдэгдэл байхгүй</div>`;
+
+  /* Нэмэх */
+  const aq = $('#add-q').value, ar = results(aq, 'add');
+  $('#add-results').hidden = !aq; $('#add-results').innerHTML = ar;
+  $('#add-list').innerHTML = addDraft.map(r => draftRow(r)).join('')
+    || `<div class="empty">Хайж сонгоно уу.</div>`;
+
+  /* Илгээх */
+  $('#stores').innerHTML = STORES.map(s => `<button class="chip" data-store="${esc(s)}" aria-pressed="${store===s}">${esc(s)}</button>`).join('');
+  $('#send-store').textContent = store;
+  const sq = $('#send-q').value, sr = results(sq, 'send');
+  $('#send-results').hidden = !sq; $('#send-results').innerHTML = sr;
+  $('#send-list').innerHTML = sendDraft.map(r => draftRow(r)).join('')
+    || `<div class="empty">Хайж сонгоно уу.</div>`;
+
+  /* Үлдэгдэл */
+  const q = $('#stock-q').value.trim().toLowerCase();
+  $('#stock-list').innerHTML = products
+    .filter(p => !q || (p.name + ' ' + brandName(p)).toLowerCase().includes(q))
+    .map(p => { const n = p.warehouse_unit_stock || 0, low = hasUnit(p) && n < LOW;
+      return `<div class="line">
+        <div style="flex:1;min-width:0"><div class="n">${esc(p.name)}</div>
+        <div class="m">${esc(brandName(p))}${hasBox(p) ? ' · 1 ' + (p.box_label||'хайрцаг') + ' = ' + (p.box_per_box||1) + ' ' + (p.unit_label||'ш') : ''}</div></div>
+        <div style="text-align:right;line-height:1.15">
+          <div class="num ${low?'low':''}">${n}</div>
+          <div class="m">${esc(p.unit_label||'ш')}${hasBox(p) ? ' · ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}</div>
+        </div>
+        ${low ? '<span class="tag t-low">бага</span>' : ''}
+      </div>`; }).join('') || `<div class="empty">Бараа алга</div>`;
+
+  /* Түүх */
+  $('#history-list').innerHTML = stockTransfers.map(t => {
+    const m = transferMeta(t);
+    return `<div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <b style="font-family:var(--font-h);font-size:16px">#${t.id}</b>
+        <span class="m">${new Date(t.created_at).toLocaleString('mn-MN')}</span>
+        <span class="tag t-${m.tone}" style="margin-left:auto">${esc(m.status)}</span>
+      </div>
+      <div style="font-size:13.5px;line-height:1.45;color:rgba(32,30,29,.75)">${esc(t.product_name)} ×${t.qty} (${t.option_type==='box'?'хайрцаг':'ширхэг'})</div>
+      <div class="row" style="margin-top:10px;font-size:12.5px;color:var(--muted)">
+        <span>${esc(m.label)}${t.store_name ? ' · ' + esc(t.store_name) : ''}</span>
+        <span style="margin-left:auto">${esc(t.admin_email||'')}</span>
+      </div></div>`;
+  }).join('') || `<div class="empty">Бичилт байхгүй</div>`;
+
+  renderSums();
+}
+document.addEventListener('click', e => {
+  const s = e.target.closest('[data-store]'); if (s) { store = s.dataset.store; render(); }
+  const n = e.target.closest('[data-notif]');
+  if (n) {
+    const id = +n.dataset.notif;
+    seen.add(id); localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
+    screen = 'history'; render();
+  }
+});
+bindDraft($('#add-list'),  () => addDraft);
+bindDraft($('#send-list'), () => sendDraft);
+
+checkAuth();
+</script>
+</body>
+</html>

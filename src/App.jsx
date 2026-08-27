@@ -1480,7 +1480,7 @@ function HeroSlideshow({ products, onOpen, index, setIndex }) {
 function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
   const featured = products.filter((p) => p.tag === "бестселлэр").slice(0, 4);
-  const discounted = products.filter((p) => p.tag === "хямдралтай").slice(0, 4);
+  const newProducts = products.filter((p) => p.tag === "шинэ").slice(0, 4);
   const heroSlides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [heroIndex, setHeroIndex] = useState(0);
   return (
@@ -1583,23 +1583,18 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background:T.ink, padding: "20px 20px 60px" }}>
-       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
-          <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Хямдралтай бүтээгдэхүүн</div>
-          <button onClick={() => setView({ name: "discounts" })} style={{
-            background: "transparent", border: `1.5px solid ${T.paper}`, borderRadius: 999, padding: "8px 16px",
-            cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
-            fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
-          }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
-          {discounted.map((p) => (
-            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
-          ))}
-          {discounted.length === 0 && <div style={{ color: T.paper, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор хямдралтай бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
-        </div>
+      <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Шинэ бүтээгдэхүүн</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+            {newProducts.map((p) => (
+              <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
+            ))}
+            {newProducts.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор шинэ бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          </div>
         </div>
       </section>
     </div>
