@@ -217,7 +217,7 @@ main{padding:16px 0 112px}
 
     <!-- Бараа нэмэх -->
     <section class="screen" id="s-add" hidden>
-      <div class="head"><h2>Агуулахын бараа нэмэх</h2><p>Нийлүүлэгчээс ирсэн барааг агуулахын үлдэгдэлд нэмнэ.</p></div>
+      <div class="head"><h2>Агуулахын бараа нэмэх</h2></div>
       <div class="row">
         <input class="input" id="add-q" placeholder="Барааны нэр / брэндээр хайх" />
       </div>
@@ -297,6 +297,10 @@ const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
 const hasUnit = (p) => !!(p.unit_price || p.warehouse_unit_stock);
 const hasBox = (p) => !!(p.box_price || p.warehouse_box_stock);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
+// unit_label/box_label нь "1 ширхэг", "1 хайрцаг" гэх мэт худалдан авах нэгжийн
+// бүтэн тайлбар тул, өмнө нь бодит тоо (12, 2 гэх мэт) нэмэхэд "12 1 ширхэг"
+// болж хос тоо гардаг — тэргүүн "1 "-г хасаад цэвэр нэрийг л үлдээнэ
+const unitWord = (label, fallback) => String(label || '').replace(/^1\s+/, '').trim() || fallback;
 
 /* Гар утасны дэлгэцийн гар (keyboard) нээгдэхэд доод tab bar/action bar-ыг
    гарын дор бүрхэгдэхээс сэргийлж, gарын өндрөөр дээшлүүлнэ */
@@ -342,7 +346,7 @@ async function checkAuth(){
   const { data: isWarehouseStaff, error } = await sb.rpc('is_warehouse_staff');
   if (error || !isWarehouseStaff) {
     await sb.auth.signOut();
-    $('#li-err').textContent = 'Танд агуулахын ажилтны эрх байхгүй байна.';
+    $('#li-err').textContent = 'Танд хандах эрхгүй байна.';
     return;
   }
   worker = { email: session.user.email };
@@ -383,7 +387,7 @@ function go(s){ screen = s; render(); window.scrollTo({top:0}); }
 function draftRow(r){
   const p = prod(r.productId);
   const meta = p
-    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${p.unit_label||'ш'}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}`
+    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}`
     : '';
   return `<div class="item" data-k="${r.k}">
     <div class="top">
@@ -398,14 +402,14 @@ function draftRow(r){
       <button data-f="dec-case">−</button>
       <input inputmode="numeric" value="${r.cases}" data-f="cases" />
       <button class="p2" data-f="inc-case">+</button>
-      <span class="u">${p.box_label || 'хайрцаг'}</span>
+      <span class="u">${unitWord(p.box_label, 'хайрцаг')}</span>
     </div>` : ''}
     ${p && hasUnit(p) ? `
     <div class="step">
       <button data-f="dec-extra">−</button>
       <input inputmode="numeric" value="${r.extra}" data-f="extra" />
       <button class="p" data-f="inc-extra">+</button>
-      <span class="u">${p.unit_label || 'ширхэг'}</span>
+      <span class="u">${unitWord(p.unit_label, 'ширхэг')}</span>
     </div>` : ''}
 
   </div>`;
@@ -441,7 +445,7 @@ function results(q, mode){
   return hits.map(p => `<button class="pick" data-pick="${p.id}" data-mode="${mode}">
     <div style="flex:1;min-width:0">
       <div class="n" style="font-weight:600">${esc(p.name)}</div>
-      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${p.unit_label||'ш'}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}</div>
+      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}</div>
     </div><div class="plus">+</div></button>`).join('');
 }
 document.addEventListener('click', e => {
@@ -502,8 +506,8 @@ $('#send-commit').addEventListener('click', async () => {
 function renderSums(){
   const sum = (list) => list.reduce((s,r) => s + (Number(r.cases)||0) + (Number(r.extra)||0), 0);
   const a = sum(addDraft), b = sum(sendDraft);
-  $('#add-sum').textContent  = a + ' мөр';
-  $('#send-sum').textContent = b + ' мөр';
+  $('#add-sum').textContent  = a + ' ширхэг бараа';
+  $('#send-sum').textContent = b + ' ширхэг бараа';
   $('#add-count').textContent  = addDraft.length + ' нэр төрөл';
   $('#send-count').textContent = sendDraft.length + ' нэр төрөл';
   $('#add-commit').disabled  = a === 0;
@@ -568,7 +572,7 @@ function render(){
         <div class="m">${esc(brandName(p))}</div></div>
         <div style="text-align:right;line-height:1.15">
           <div class="num ${low?'low':''}">${n}</div>
-          <div class="m">${esc(p.unit_label||'ш')}${hasBox(p) ? ' · ' + (p.warehouse_box_stock||0) + ' ' + (p.box_label||'хайрцаг') : ''}</div>
+          <div class="m">${esc(unitWord(p.unit_label,'ш'))}${hasBox(p) ? ' · ' + (p.warehouse_box_stock||0) + ' ' + esc(unitWord(p.box_label,'хайрцаг')) : ''}</div>
         </div>
         ${low ? '<span class="tag t-low">бага</span>' : ''}
       </div>`; }).join('') || `<div class="empty">Бараа алга</div>`;
