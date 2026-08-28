@@ -98,6 +98,10 @@ html {
   .cuppa-category-icon-wrap svg { width: 18px !important; height: 18px !important; }
   .cuppa-category-label { font-size: 12.5px !important; }
 
+  .cuppa-product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .cuppa-product-footer { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+  .cuppa-product-detail-btn { width: 100% !important; justify-content: center !important; padding: 8px 10px !important; }
+
   .cuppa-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
   .cuppa-detail-title { font-size: 26px !important; }
   .cuppa-thumb-row { overflow-x: auto !important; }

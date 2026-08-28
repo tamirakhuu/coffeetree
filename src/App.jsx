@@ -515,11 +515,11 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
           {product.name}
         </div>
         <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, color: inkCard ? "rgba(255,255,255,.7)" : T.inkSoft }}>{product.origin}</div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8 }}>
-          <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.paper : T.ink }}>{money(option.price)}</span>
-          <button onClick={() => onOpen(product)} style={{
+        <div className="cuppa-product-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8, gap: 6 }}>
+          <span className="cuppa-product-price" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.paper : T.ink }}>{money(option.price)}</span>
+          <button className="cuppa-product-detail-btn" onClick={() => onOpen(product)} style={{
             background: inkCard ? "#fff" : T.ink, color: inkCard ? T.ink : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
-            fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+            fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
           }}>Дэлгэрэнгүй</button>
         </div>
       </div>
@@ -582,7 +582,7 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
@@ -646,7 +646,7 @@ function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish, setVie
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
@@ -1035,7 +1035,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
       {similarProducts.length > 0 && (
         <div style={{ marginTop: 54 }}>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Төстэй бүтээгдэхүүн</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+          <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {similarProducts.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
@@ -1573,7 +1573,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
             }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+          <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
@@ -1588,7 +1588,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
           <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
             <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Шинэ бүтээгдэхүүн</div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+          <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {newProducts.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
@@ -1742,7 +1742,7 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish, setView }) {
       {items.length === 0 ? (
         <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Жагсаалт хоосон байна.</div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd} isWished onToggleWish={onToggleWish} />
           ))}
@@ -2097,7 +2097,7 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView })
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
@@ -2171,7 +2171,7 @@ function DiscountsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) 
             <option value="price_desc">Үнэ ихээс бага</option>
           </select>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
               isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
@@ -2478,7 +2478,7 @@ export default function App() {
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
         <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>“{view.query}” хайлтын үр дүн</h1>
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 22 }}>{results.length} олдлоо</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {results.map((p) => <ProductCard key={p.id} product={p} onOpen={openProduct} onQuickAdd={quickAdd} isWished={wishlist.includes(p.id)} onToggleWish={toggleWish} />)}
         </div>
       </div>
