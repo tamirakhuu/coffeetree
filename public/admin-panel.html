@@ -694,8 +694,8 @@ function subscribeRealtimeNotifications() {
       const t = payload.new;
       if (t.status !== 'pending' || (t.direction !== 'to_store' && t.direction !== 'to_warehouse')) return;
       const dirText = t.direction === 'to_store' ? 'Дэлгүүрт илгээлээ' : 'Агуулах руу буцаалаа';
-      toast(`📦 Агуулахаас бараа илгээлээ: ${t.product_name}`, 'success', 8000);
-      pushNotification({ type: 'transfer', title: '📦 Агуулахаас бараа илгээлээ', sub: `${t.product_name} ×${t.qty} · ${dirText}` });
+      toast(`Агуулахаас бараа илгээлээ: ${t.product_name}`, 'success', 8000);
+      pushNotification({ type: 'transfer', title: 'Агуулахаас бараа илгээлээ', sub: `${t.product_name} ×${t.qty} · ${dirText}` });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification('CUPPA — Агуулахаас илгээлээ', { body: `${t.product_name} ×${t.qty}` });
       }
