@@ -114,6 +114,17 @@ const discountPercent = (option) => {
   return Math.round((1 - option.price / option.originalPrice) * 100);
 };
 const initials = (str) => (str || "").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+const formatCountdown = (endsAt) => {
+  if (!endsAt) return null;
+  const diff = new Date(endsAt).getTime() - Date.now();
+  if (diff <= 0) return null;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (days > 0) return `${days} өдөр ${hours} цаг`;
+  if (hours > 0) return `${hours} цаг ${mins} мин`;
+  return `${mins} мин`;
+};
 
 export const DataContext = createContext({ categories: [], brands: [], products: [] });
 
@@ -1486,6 +1497,12 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const newProducts = products.filter((p) => p.tag === "шинэ").slice(0, 4);
   const heroSlides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [heroIndex, setHeroIndex] = useState(0);
+  // Хямдралын үлдсэн хугацааг минут тутам шинэчилж харуулна
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => forceTick((x) => x + 1), 60000);
+    return () => clearInterval(t);
+  }, []);
   return (
     <div>
       <section style={{ background: T.paper, color: T.cream, padding: "70px 20px 60px" }}>
@@ -1506,6 +1523,20 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                 }}>
                   <span className="cuppa-hero-price-old" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 13.5, color: T.inkSoft, textDecoration: "line-through" }}>{money(opt.originalPrice)}</span>
                   <span className="cuppa-hero-price-new" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 19, fontWeight: 800, color: T.cherry }}>{money(opt.price)}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="cuppa-hero-countdown-block" style={{ position: "relative", height: 20, marginTop: 4, width: "100%" }}>
+            {heroSlides.map((p, i) => {
+              const countdown = formatCountdown(p.discountEndsAt);
+              if (!countdown) return null;
+              return (
+                <div key={p.id} style={{
+                  position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                  opacity: i === heroIndex ? 1 : 0, transition: "opacity .6s ease", pointerEvents: "none",
+                }}>
+                  <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, fontWeight: 600, color: T.cherry }}>⏳ Хямдрал дуусахад: {countdown}</span>
                 </div>
               );
             })}
