@@ -33,7 +33,9 @@ a{color:var(--accent-700)}
 .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,30,29,.08)}
 .topbar .wrap{display:flex;align-items:center;gap:12px;padding:12px 16px}
 .brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);
-  display:grid;place-items:center;font-family:var(--font-h);font-size:17px}
+  display:grid;place-items:center;font-family:var(--font-h);font-size:17px;overflow:hidden}
+.brand img{width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box}
+#avatar img{padding:4px}
 .who{min-width:0;line-height:1.2}
 .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who span{font-size:11.5px;color:var(--muted)}
@@ -178,7 +180,7 @@ main{padding:16px 0 112px}
 <div class="login" id="login">
   <div class="blob"></div>
   <div class="z">
-    <div class="brand" style="width:56px;height:56px;font-size:26px;margin-bottom:24px">C</div>
+    <div class="brand" style="width:56px;height:56px;margin-bottom:24px"><img src="cuppa-logo1.png" alt="CUPPA"></div>
     <h1>Агуулахын<br />бүртгэл</h1>
   </div>
   <div class="field"><label for="li-email">Ажилтны имэйл</label><input class="input" id="li-email" type="email" placeholder="И-мэйл хаяг" autocomplete="username" /></div>
@@ -191,7 +193,7 @@ main{padding:16px 0 112px}
 <div id="app" hidden>
   <header class="topbar">
     <div class="wrap">
-      <div class="brand" id="avatar">А</div>
+      <div class="brand" id="avatar"><img src="cuppa-logo1.png" alt="CUPPA"></div>
       <div class="who"><b id="w-name">—</b><span id="w-phone">—</span></div>
       <button class="btn btn-line spacer" id="logout">Гарах</button>
     </div>
@@ -355,7 +357,6 @@ async function checkAuth(){
   $('#login').hidden = true; $('#app').hidden = false;
   $('#w-name').textContent = worker.email;
   $('#w-phone').textContent = 'Агуулахын ажилтан';
-  $('#avatar').textContent = worker.email.slice(0,1).toUpperCase();
   await loadAll();
 }
 
