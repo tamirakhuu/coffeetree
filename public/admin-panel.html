@@ -131,24 +131,45 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .modal-body{padding:20px 22px}
 .modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
 .toast-wrap{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.notif-bell{position:fixed;top:20px;right:32px;z-index:200}
+.notif-bell #notifBellBtn{position:relative;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);box-shadow:var(--sh);cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center}
+.notif-bell #notifBellBtn:hover{background:var(--paper)}
+.notif-badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+  background:var(--cherry);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;
+  font-family:'Ubuntu',sans-serif}
+.notif-badge.show{display:flex}
+.notif-panel{display:none;position:absolute;top:54px;right:0;width:340px;max-width:calc(100vw - 40px);max-height:70vh;
+  overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh)}
+.notif-panel.open{display:block}
+.notif-panel-head{padding:13px 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;color:var(--ink);
+  position:sticky;top:0;background:var(--card)}
+.notif-item{display:flex;gap:10px;width:100%;padding:12px 16px;border:none;background:none;text-align:left;cursor:pointer;
+  border-bottom:1px solid rgba(217,201,168,.4);border-left:3px solid transparent}
+.notif-item:hover{background:var(--paper)}
+.notif-item.unread{background:rgba(184,134,46,.08);border-left-color:var(--gold)}
+.notif-item .ni-dot{width:8px;height:8px;border-radius:999px;background:var(--gold);flex:none;margin-top:5px;visibility:hidden}
+.notif-item.unread .ni-dot{visibility:visible}
+.notif-item .ni-body{flex:1;min-width:0}
+.notif-item .ni-title{font-size:13px;font-weight:700;color:var(--ink)}
+.notif-item .ni-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.notif-item .ni-time{font-size:10.5px;color:var(--ink-soft);margin-top:4px}
+.notif-empty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--ink-soft)}
+@media (max-width:860px){
+  .notif-bell{top:9px;right:14px}
+  .notif-bell #notifBellBtn{width:38px;height:38px;font-size:17px}
+}
 .toast{background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;transform:translateX(20px);opacity:0;transition:all .25s;min-width:240px}
 .toast.show{transform:translateX(0);opacity:1}
 .toast.success{border-left:3px solid var(--moss)}
 .toast.err{border-left:3px solid var(--red)}
 .chip{display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--ink-soft);margin:2px 4px 2px 0}
-.stocktake-brand{font-family:'Ubuntu',sans-serif;font-weight:700;font-size:14px;color:var(--ink);margin-top:14px}
-.stocktake-brand:first-child{margin-top:0}
-.stocktake-category{font-family:'Ubuntu',sans-serif;font-weight:600;font-size:12px;color:var(--moss);margin:8px 0 3px 18px;text-transform:uppercase;letter-spacing:.03em}
-.stocktake-product{display:flex;align-items:baseline;gap:6px;margin:3px 0;margin-left:36px;font-size:13px;color:var(--ink)}
-.stocktake-dots{flex:1;border-bottom:1px dotted var(--line);height:1px;margin-bottom:4px}
-.stocktake-qty{font-weight:700;font-family:'Ubuntu',sans-serif;min-width:24px;text-align:right}
 .empty{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px}
 .icon-emoji{font-size:16px}
 .mobile-topbar{display:none}
 .sidebar-backdrop{display:none}
 
 #printReceipt{display:none}
-#printInventory{display:none}
 .receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px}
 .receipt-hr{border-top:1px dashed #000;margin:6px 0}
 .receipt-item{margin-bottom:6px}
@@ -162,17 +183,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
     display:block;position:fixed;top:0;left:0;width:100%;padding:6px;
     font-family:'Ubuntu',monospace;color:#000;
   }
-  body.printing-inventory > *{visibility:hidden}
-  body.printing-inventory #printInventory,
-  body.printing-inventory #printInventory *{visibility:visible}
-  body.printing-inventory #printInventory{
-    display:block;position:fixed;top:0;left:0;width:100%;padding:16px;
-    font-family:'Ubuntu',sans-serif;color:#000;
-  }
-  body.printing-inventory #printInventory table{width:100%;border-collapse:collapse;margin-bottom:18px}
-  body.printing-inventory #printInventory th,
-  body.printing-inventory #printInventory td{border:1px solid #999;padding:6px 10px;font-size:12px;text-align:left}
-  body.printing-inventory #printInventory h2{font-size:14px;margin:14px 0 6px}
 }
 
 @media (max-width: 860px) {
@@ -251,7 +261,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <div id="printReceipt"></div>
-<div id="printInventory"></div>
 
 <div class="modal-bg" id="modalBg">
   <div class="modal" id="modalBox">
@@ -272,6 +281,16 @@ tr:hover td{background:rgba(255,255,255,.4)}
 </div>
 
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
+<div class="notif-bell" id="notifBell">
+  <button id="notifBellBtn" onclick="toggleNotifPanel(event)" aria-label="Мэдэгдэл">
+    🔔<span class="notif-badge" id="notifBadge">0</span>
+  </button>
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-head">Мэдэгдэл</div>
+    <div id="notifList"></div>
+  </div>
+</div>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
@@ -413,7 +432,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div class="stat-card"><div class="stat-val" id="rp-count">0</div><div class="stat-label">Нийт татан авалт</div></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="pendingTransfersCard">
       <div class="card-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div>
           <div class="card-title">Хүлээгдэж буй таталтууд</div>
@@ -458,17 +477,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div class="table-wrap">
         <table><thead><tr><th>Огноо</th><th>Бараа</th><th>Төрөл</th><th>Чиглэл</th><th>Тоо</th><th>Илгээсэн</th><th>Төлөв</th></tr></thead><tbody id="reportTable"></tbody></table>
       </div>
-    </div>
-
-    <div class="card" style="margin-top:20px">
-      <div class="card-head">
-        <div>
-          <div class="card-title">Тооллогын хуудас</div>
-          <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Брэнд → Ангилал → Бараа тус бүрийн дэлгүүрт байгаа нийт үлдэгдэл (ширхэгээр)</p>
-        </div>
-        <button class="btn btn-outline btn-sm" onclick="printStocktakeSheet()">Хэвлэх</button>
-      </div>
-      <div id="stocktakeTree" style="padding:16px 20px;max-height:480px;overflow-y:auto"></div>
     </div>
   </div>
 
@@ -521,15 +529,119 @@ async function checkAuth() {
   }
   document.getElementById('loginScreen').style.display = 'none';
   loadAll();
-  subscribeOrderNotifications();
+  renderNotifBell();
+  subscribeRealtimeNotifications();
 }
 
-// Шинэ захиалга орж ирэхэд хуудсаа refresh хийхгүйгээр мэдэгдэл өгнө
-// (Supabase Realtime — orders хүснэгтэд INSERT орох бүрт дуудагдана)
-let orderNotifySubscribed = false;
-function subscribeOrderNotifications() {
-  if (orderNotifySubscribed) return;
-  orderNotifySubscribed = true;
+/* ══════════ МЭДЭГДЭЛ (realtime) ══════════
+   Шинэ захиалга (orders INSERT) болон агуулахаас илгээсэн/буцаасан бараа
+   (stock_transfers INSERT, status='pending') орж ирэх бүрт Supabase Realtime-
+   ээр дуудагдаж, дуут дохио + bell-ийн жагсаалтад нэмнэ. aguulah.html дээрх
+   "Илгээх" товч дархад л энд мэдэгдэл ирнэ (restock — нийлүүлэгчээс нэмэх
+   нь шууд received болдог тул админы шийдвэр шаардахгүй, мэдэгдэхгүй). */
+const NOTIF_KEY = 'cuppa_admin_notifications_v1';
+let notifications = [];
+try { notifications = JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch(e) { notifications = []; }
+
+function saveNotifications() {
+  notifications = notifications.slice(0, 30);
+  try { localStorage.setItem(NOTIF_KEY, JSON.stringify(notifications)); } catch(e) {}
+}
+
+function pushNotification(n) {
+  notifications.unshift(Object.assign({ id: 'n' + Date.now() + Math.random().toString(36).slice(2), read: false, time: new Date().toISOString() }, n));
+  saveNotifications();
+  renderNotifBell();
+  playNotifySound();
+}
+
+function renderNotifBell() {
+  const unread = notifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notifBadge');
+  if (badge) { badge.textContent = unread > 9 ? '9+' : unread; badge.classList.toggle('show', unread > 0); }
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  list.innerHTML = notifications.length ? notifications.map(n => `
+    <button class="notif-item ${n.read ? '' : 'unread'}" onclick="handleNotifClick('${n.id}')">
+      <span class="ni-dot"></span>
+      <span class="ni-body">
+        <div class="ni-title">${n.title}</div>
+        ${n.sub ? `<div class="ni-sub">${n.sub}</div>` : ''}
+        <div class="ni-time">${new Date(n.time).toLocaleString('mn-MN')}</div>
+      </span>
+    </button>`).join('') : `<div class="notif-empty">Мэдэгдэл алга байна</div>`;
+}
+
+function toggleNotifPanel(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('notifPanel').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const bell = document.getElementById('notifBell');
+  if (bell && !bell.contains(e.target)) document.getElementById('notifPanel').classList.remove('open');
+});
+
+function handleNotifClick(id) {
+  const n = notifications.find(x => x.id === id);
+  if (!n) return;
+  n.read = true; saveNotifications(); renderNotifBell();
+  document.getElementById('notifPanel').classList.remove('open');
+  if (n.type === 'order' && n.orderNumber) {
+    navTo('orders');
+    openOrderDetailFresh(n.orderNumber);
+  } else if (n.type === 'transfer') {
+    navTo('report');
+    setTimeout(() => document.getElementById('pendingTransfersCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
+}
+
+// Захиалга үүсэхэд orders/order_items 2 тусдаа insert-ээр бичигддэг тул
+// (src/api.js submitOrder) Realtime нь эхнийх дээр л шууд гардаг — мэдэгдлээс
+// шууд орж ирэхэд item мөрүүд хараахан бичигдэж амжаагүй байж болзошгүй тул
+// loadAll()-ийн хуучирсан үр дүнд итгэхгүй, тухайн захиалгыг тусдаа дахин татна
+async function openOrderDetailFresh(orderNumber) {
+  const [{ data: freshOrder }, { data: items }] = await Promise.all([
+    sb.from('orders').select('*').eq('order_number', orderNumber).maybeSingle(),
+    sb.from('order_items').select('*').eq('order_number', orderNumber),
+  ]);
+  if (freshOrder) {
+    const idx = orders.findIndex(o => o.order_number === orderNumber);
+    if (idx >= 0) orders[idx] = freshOrder; else orders.unshift(freshOrder);
+  }
+  if (items) orderItems = orderItems.filter(i => i.order_number !== orderNumber).concat(items);
+  renderOrders();
+  if (orders.some(o => o.order_number === orderNumber)) openOrderDetail(orderNumber);
+}
+
+// Эхний хэрэглэгчийн click дээр л AudioContext-оо нээнэ (autoplay policy)
+let notifAudioCtx;
+document.addEventListener('click', function unlockNotifAudio() {
+  if (!notifAudioCtx) { try { notifAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+  document.removeEventListener('click', unlockNotifAudio);
+}, { once: true });
+
+function playNotifySound() {
+  try {
+    if (!notifAudioCtx) notifAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (notifAudioCtx.state === 'suspended') notifAudioCtx.resume();
+    const now = notifAudioCtx.currentTime;
+    [[880, 0], [1318.5, .11]].forEach(([freq, delay]) => {
+      const osc = notifAudioCtx.createOscillator();
+      const gain = notifAudioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(.2, now + delay + .015);
+      gain.gain.exponentialRampToValueAtTime(.001, now + delay + .24);
+      osc.connect(gain).connect(notifAudioCtx.destination);
+      osc.start(now + delay); osc.stop(now + delay + .26);
+    });
+  } catch(e) {}
+}
+
+let realtimeNotifySubscribed = false;
+function subscribeRealtimeNotifications() {
+  if (realtimeNotifySubscribed) return;
+  realtimeNotifySubscribed = true;
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
@@ -537,8 +649,23 @@ function subscribeOrderNotifications() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
       const o = payload.new;
       toast(`🛎️ Шинэ захиалга ирлээ: ${o.order_number}`, 'success', 8000);
+      pushNotification({ type: 'order', title: '🛎️ Шинэ захиалга', sub: `${o.order_number} · ${fmt(o.subtotal)}`, orderNumber: o.order_number });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification('CUPPA — Шинэ захиалга', { body: `${o.order_number} · ${fmt(o.subtotal)}` });
+      }
+      loadAll();
+    })
+    .subscribe();
+
+  sb.channel('admin-stock-transfers')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stock_transfers' }, (payload) => {
+      const t = payload.new;
+      if (t.status !== 'pending' || (t.direction !== 'to_store' && t.direction !== 'to_warehouse')) return;
+      const dirText = t.direction === 'to_store' ? 'Дэлгүүрт илгээлээ' : 'Агуулах руу буцаалаа';
+      toast(`📦 Агуулахаас бараа илгээлээ: ${t.product_name}`, 'success', 8000);
+      pushNotification({ type: 'transfer', title: '📦 Агуулахаас бараа илгээлээ', sub: `${t.product_name} ×${t.qty} · ${dirText}` });
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification('CUPPA — Агуулахаас илгээлээ', { body: `${t.product_name} ×${t.qty}` });
       }
       loadAll();
     })
@@ -588,7 +715,7 @@ let lowStockAlerted = false;
 function checkLowStock() {
   if (lowStockAlerted) return;
   lowStockAlerted = true;
-  const lowStockItems = products.filter(p => (p.unit_stock ?? 0) < 10);
+  const lowStockItems = products.filter(p => (p.warehouse_unit_stock ?? 0) < 10);
   if (lowStockItems.length === 0) return;
   const names = lowStockItems.slice(0, 3).map(p => p.name).join(', ');
   const extra = lowStockItems.length > 3 ? ` +${lowStockItems.length - 3}` : '';
@@ -686,7 +813,7 @@ function renderProducts() {
     ? `${filtered.length} / Нийт ${products.length} бараа`
     : `Нийт ${products.length} бараа`;
   if (document.getElementById('lowStockFirst')?.checked) {
-    filtered.sort((a, b) => ((a.unit_stock ?? 0) < 10 ? 0 : 1) - ((b.unit_stock ?? 0) < 10 ? 0 : 1));
+    filtered.sort((a, b) => ((a.warehouse_unit_stock ?? 0) < 10 ? 0 : 1) - ((b.warehouse_unit_stock ?? 0) < 10 ? 0 : 1));
   }
   const tb = document.getElementById('productTable');
   tb.innerHTML = filtered.map(p => {
@@ -699,9 +826,9 @@ function renderProducts() {
       <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
       <td>${brand?.name||'-'}</td>
       <td>${cat?.name||'-'}</td>
-      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.unit_stock} ${unitWord(p.unit_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_unit_stock||0})</span></div></td>
-      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.box_stock} ${unitWord(p.box_label)} <span style="opacity:.7">(агуулах: ${p.warehouse_box_stock||0})</span>${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
-      <td>${p.unit_stock === 0 ? '<span class="badge cancelled">Дууссан</span>' : (p.unit_stock < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
+      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.warehouse_unit_stock||0} ${unitWord(p.unit_label)}</div></td>
+      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${p.warehouse_box_stock||0} ${unitWord(p.box_label)}${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
+      <td>${(p.warehouse_unit_stock||0) === 0 ? '<span class="badge cancelled">Дууссан</span>' : ((p.warehouse_unit_stock||0) < 10 ? '<span class="badge pending">Бага</span>' : '<span class="badge done">Хэвийн</span>')}</td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
@@ -764,8 +891,8 @@ function productFormHtml(p) {
     const pct = (1 - impliedUnit / p.unit_price) * 100;
     if (pct > 0) boxDiscount = Math.round(pct * 10) / 10;
   }
-  const hasBox = !!(p.box_price || p.box_stock || p.box_per_box);
-  const hasUnit = !p.id || !!(p.unit_price || p.unit_stock);
+  const hasBox = !!(p.box_price || p.warehouse_box_stock || p.box_per_box);
+  const hasUnit = !p.id || !!(p.unit_price || p.warehouse_unit_stock);
   return `
     <div class="form-grid form-grid-2">
       <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}"></div>
@@ -791,7 +918,7 @@ function productFormHtml(p) {
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxSmart()" value="${p.unit_price||''}"></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"></div>
         <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
-        <div class="fg"><label>Дэлгүүрийн нөөц</label><input type="number" id="pf-unit-stock" oninput="recalcUnifiedStock()" value="${p.unit_stock||''}"></div>
+        <div class="fg"><label>Агуулахын нөөц</label><input type="number" id="pf-unit-warehouse" oninput="recalcUnifiedStock()" value="${p.warehouse_unit_stock||''}"></div>
         <div class="form-hint">"Бөөнөөр эхлэх тоо" бөглөвөл тэр тооноос дээш авахад доорх "Хайрцгаар" үнээр (÷ хайрцагт багтах тоо) бүх ширхэгийг автоматаар тооцно.</div>
       </div>
     </div>
@@ -812,7 +939,7 @@ function productFormHtml(p) {
           </label>
           <div>
             <div style="font-family:'Ubuntu',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink)">🔗 Нэгдсэн нөөц</div>
-            <div style="font-size:11px;color:var(--ink-soft)">Хайрцгийг задалж лангуунд ширхэгээр өрдөг бол асаана. Асаавал "Дэлгүүрийн нөөц (хайрцаг)" утга ширхэгийн нөөцөөс автоматаар тооцогдож, "Шилжүүлэх" үед хайрцгийн тоо шууд ширхэг болж нэмэгдэнэ.</div>
+            <div style="font-size:11px;color:var(--ink-soft)">Хайрцгийг задалж агуулахад ширхэгээр хадгалдаг бол асаана. Асаавал "Агуулахын нөөц (хайрцаг)" утга ширхэгийн нөөцөөс автоматаар тооцогдоно.</div>
           </div>
         </div>
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-box-label" value="${p.box_label||'1 хайрцаг'}"></div>
@@ -823,10 +950,9 @@ function productFormHtml(p) {
         <div class="fg" id="pf-box-preview-wrap"><label>&nbsp;</label><div id="pf-box-preview" style="font-size:12px;color:var(--ink-soft)"></div></div>
         <div class="fg"><label>Хямдрахаас өмнөх үнэ (₮) — хайрцаг</label><input type="number" id="pf-box-original-price" placeholder="Зөвхөн хямдралтай бол" value="${p.box_original_price||''}"></div>
         <div class="fg">
-          <label>Дэлгүүрийн нөөц (хайрцаг)</label>
-          <input type="number" id="pf-box-stock" ${p.unified_stock ? 'readonly' : ''} style="${p.unified_stock ? 'background:var(--paper);color:var(--ink-soft)' : ''}" value="${p.unified_stock ? Math.floor((p.unit_stock||0) / (p.box_per_box||1)) : (p.box_stock||'')}">
+          <label>Агуулахын нөөц (хайрцаг)</label>
+          <input type="number" id="pf-box-warehouse" ${p.unified_stock ? 'readonly' : ''} style="${p.unified_stock ? 'background:var(--paper);color:var(--ink-soft)' : ''}" value="${p.unified_stock ? Math.floor((p.warehouse_unit_stock||0) / (p.box_per_box||1)) : (p.warehouse_box_stock||'')}">
         </div>
-        <div class="fg"><label>Агуулахын нөөц (хайрцаг)</label><input type="number" id="pf-box-warehouse" value="${p.warehouse_box_stock||''}"></div>
       </div>
     </div>`;
 }
@@ -838,11 +964,11 @@ function toggleBoxSection() {
   const enabled = document.getElementById('pf-box-enable').checked;
   document.getElementById('pf-box-fields').style.display = enabled ? 'grid' : 'none';
 }
-// "Нэгдсэн нөөц" асаавал "Дэлгүүрийн нөөц (хайрцаг)" талбарыг гараар засварлахгүй,
-// ширхэгийн нөөцөөс автоматаар (floor) тооцдог болгоно
+// "Нэгдсэн нөөц" асаавал "Агуулахын нөөц (хайрцаг)" талбарыг гараар засварлахгүй,
+// ширхэгийн (агуулахын) нөөцөөс автоматаар (floor) тооцдог болгоно
 function toggleUnifiedStock() {
   const unified = document.getElementById('pf-unified-enable').checked;
-  const boxStockInput = document.getElementById('pf-box-stock');
+  const boxStockInput = document.getElementById('pf-box-warehouse');
   boxStockInput.readOnly = unified;
   boxStockInput.style.background = unified ? 'var(--paper)' : '';
   boxStockInput.style.color = unified ? 'var(--ink-soft)' : '';
@@ -850,9 +976,9 @@ function toggleUnifiedStock() {
 }
 function recalcUnifiedStock() {
   if (!document.getElementById('pf-unified-enable')?.checked) return;
-  const unitStock = parseInt(document.getElementById('pf-unit-stock').value, 10) || 0;
+  const unitStock = parseInt(document.getElementById('pf-unit-warehouse').value, 10) || 0;
   const perBox = parseInt(document.getElementById('pf-box-per').value, 10) || 0;
-  document.getElementById('pf-box-stock').value = perBox > 0 ? Math.floor(unitStock / perBox) : 0;
+  document.getElementById('pf-box-warehouse').value = perBox > 0 ? Math.floor(unitStock / perBox) : 0;
 }
 function applyBoxPrice(discountedUnit, perBox) {
   const boxPrice = Math.round(discountedUnit * perBox);
@@ -940,13 +1066,12 @@ async function saveProduct(id) {
       unit_label: unitEnabled ? (document.getElementById('pf-unit-label').value || '1 ширхэг') : '1 ширхэг',
       unit_price: unitEnabled ? (Number(document.getElementById('pf-unit-price').value) || 0) : 0,
       unit_original_price: unitEnabled ? (Number(document.getElementById('pf-unit-original-price').value) || null) : null,
-      unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-stock').value, 10) || 0) : 0,
+      warehouse_unit_stock: unitEnabled ? (parseInt(document.getElementById('pf-unit-warehouse').value, 10) || 0) : 0,
       bulk_qty: unitEnabled ? (parseInt(document.getElementById('pf-bulk-qty').value, 10) || null) : null,
       box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
       box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
       box_original_price: boxEnabled ? (Number(document.getElementById('pf-box-original-price').value) || null) : null,
       box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
-      box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-stock').value, 10) || 0) : 0,
       warehouse_box_stock: boxEnabled ? (parseInt(document.getElementById('pf-box-warehouse').value, 10) || 0) : 0,
       unified_stock: boxEnabled ? document.getElementById('pf-unified-enable').checked : false,
     };
@@ -1391,8 +1516,6 @@ function renderReport() {
   document.getElementById('rp-to-warehouse').textContent = toWarehouseTotal;
   document.getElementById('rp-warehouse-left').textContent = warehouseLeft;
   document.getElementById('rp-count').textContent = filtered.length;
-
-  renderStocktakeTree();
   renderPendingTransfers();
   renderTransferTotals();
 
@@ -1603,71 +1726,6 @@ function setPrintPageSize(size, margin) {
 }
 function clearPrintPageSize() {
   document.getElementById('dynamicPageStyle')?.remove();
-}
-
-// Барааны дэлгүүрт байгаа (агуулах биш) нийт үлдэгдлийг ганц "ширхэг"-ээр
-// илэрхийлнэ. "Нэгдсэн нөөц" барааны хувьд box_stock нь unit_stock-оос
-// аль хэдийн тооцогдсон дүрслэл тул давхардуулахгүй; бусад барааны хувьд
-// хайрцгийг ширхэг болгож хөрвүүлж unit_stock дээр нэмнэ.
-function totalUnitsInStore(p) {
-  if (p.unified_stock) return p.unit_stock || 0;
-  return (p.unit_stock || 0) + (p.box_stock || 0) * (p.box_per_box || 1);
-}
-
-// Тооллогын хуудас: Брэнд → Ангилал → Бараа тус бүрийн ширхэгээр тооцсон
-// үлдэгдэл, цагаан толгойн дарааллаар эрэмблэсэн (хэвлэхэд тогтвортой байх)
-function computeStocktakeSheet() {
-  const byBrand = new Map();
-  products.forEach(p => {
-    const brandName = brands.find(b => b.id === p.brand_id)?.name || 'Тодорхойгүй брэнд';
-    const catName = categories.find(c => c.id === p.category_id)?.name || 'Тодорхойгүй ангилал';
-    if (!byBrand.has(brandName)) byBrand.set(brandName, new Map());
-    const byCat = byBrand.get(brandName);
-    if (!byCat.has(catName)) byCat.set(catName, []);
-    byCat.get(catName).push({ name: p.name, qty: totalUnitsInStore(p) });
-  });
-  const collator = new Intl.Collator('mn');
-  return [...byBrand.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([brand, byCat]) => ({
-    brand,
-    categories: [...byCat.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([cat, items]) => ({
-      cat, items: items.sort((a, b) => collator.compare(a.name, b.name)),
-    })),
-  }));
-}
-function renderStocktakeTree() {
-  const data = computeStocktakeSheet();
-  const html = data.map(({ brand, categories }) => `
-    <div class="stocktake-brand">${brand}</div>
-    ${categories.map(({ cat, items }) => `
-      <div class="stocktake-category">${cat}</div>
-      ${items.map(i => `<div class="stocktake-product"><span>${i.name}</span><span class="stocktake-dots"></span><span class="stocktake-qty">${i.qty}</span></div>`).join('')}
-    `).join('')}
-  `).join('') || `<div class="empty">Бараа алга байна</div>`;
-  document.getElementById('stocktakeTree').innerHTML = html;
-}
-function printStocktakeSheet() {
-  const data = computeStocktakeSheet();
-  const sectionsHtml = data.map(({ brand, categories }) => `
-    <div style="font-weight:700;font-size:15px;margin-top:16px">${brand}</div>
-    ${categories.map(({ cat, items }) => `
-      <div style="font-weight:600;font-size:12px;margin:8px 0 3px 18px;color:#333;text-transform:uppercase;letter-spacing:.03em">${cat}</div>
-      ${items.map(i => `
-        <div style="display:flex;align-items:baseline;margin:4px 0;margin-left:36px;font-size:13px">
-          <span>${i.name}</span>
-          <span style="flex:1;border-bottom:1px dotted #999;height:1px;margin:0 6px"></span>
-          <span style="font-weight:700;min-width:24px;text-align:right">${i.qty}</span>
-        </div>`).join('')}
-    `).join('')}
-  `).join('') || `<div>Бараа алга байна</div>`;
-  const html = `
-    <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:2px">CUPPA — Тооллогын хуудас</div>
-    <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
-    ${sectionsHtml}`;
-  document.getElementById('printInventory').innerHTML = html;
-  document.body.classList.add('printing-inventory');
-  setPrintPageSize('A4', '14mm');
-  window.print();
-  setTimeout(() => { document.body.classList.remove('printing-inventory'); clearPrintPageSize(); }, 500);
 }
 
 checkAuth();

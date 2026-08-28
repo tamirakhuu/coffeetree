@@ -511,8 +511,8 @@ $('#send-commit').addEventListener('click', async () => {
 function renderSums(){
   const sum = (list) => list.reduce((s,r) => s + (Number(r.cases)||0) + (Number(r.extra)||0), 0);
   const a = sum(addDraft), b = sum(sendDraft);
-  $('#add-sum').textContent  = a + ' ширхэг бараа';
-  $('#send-sum').textContent = b + ' ширхэг бараа';
+  $('#add-sum').textContent  = a + ' бараа';
+  $('#send-sum').textContent = b + ' бараа';
   $('#add-count').textContent  = addDraft.length + ' нэр төрөл';
   $('#send-count').textContent = sendDraft.length + ' нэр төрөл';
   $('#add-commit').disabled  = a === 0;
