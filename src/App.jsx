@@ -1536,7 +1536,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
                   opacity: i === heroIndex ? 1 : 0, transition: "opacity .6s ease", pointerEvents: "none",
                 }}>
-                  <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, fontWeight: 600, color: T.cherry }}>⏳ Хямдрал дуусахад: {countdown}</span>
+                  <span style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 12, fontWeight: 600, color: T.cherry }}>Хямдрал дуусахад: {countdown}</span>
                 </div>
               );
             })}
