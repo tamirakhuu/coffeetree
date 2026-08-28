@@ -9,12 +9,13 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --ink:#241C15;--ink-soft:#5C4E3E;--paper:#EFE3CF;--card:#FBF5E9;--line:#D9C9A8;
-  --cherry:#7A2E2E;--cherry-dark:#5C2222;--moss:#48583A;--gold:#B8862E;--cream:#F6EFE0;
+  --ink:#241C15;--ink-soft:#5C4E3E;--paper:#ffffff;--card:#FBF5E9;--line:#D9C9A8;
+  --cherry:#a86d51;--cherry-dark:#5C2222;--moss:#48583A;--gold:#B8862E;--cream:#F6EFE0;
   --red:#B3261E;--red-light:#FBE9E7;--green-light:#E7EEDF;
   --radius:12px;--sh:0 1px 3px rgba(36,28,20,.08),0 1px 2px rgba(36,28,20,.05);
 }
-body{font-family:'Ubuntu',sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+html{overflow-x:hidden}
+body{font-family:'Ubuntu',sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;touch-action:manipulation}
 .mono{font-family:'Ubuntu',sans-serif}
 .login-screen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:500}
 .login-card{background:var(--paper);border-radius:16px;padding:38px 34px;width:360px;max-width:90vw}
@@ -131,16 +132,14 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .modal-body{padding:20px 22px}
 .modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
 .toast-wrap{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:8px}
-.notif-bell{position:fixed;top:20px;right:32px;z-index:200}
-.notif-bell #notifBellBtn{position:relative;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);
-  background:var(--card);box-shadow:var(--sh);cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center}
-.notif-bell #notifBellBtn:hover{background:var(--paper)}
-.notif-badge{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+.notif-bell{position:relative;padding:10px 10px 0}
+.notif-bell #notifBellBtn{position:relative;width:100%}
+.notif-badge{margin-left:auto;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
   background:var(--cherry);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;
   font-family:'Ubuntu',sans-serif}
 .notif-badge.show{display:flex}
-.notif-panel{display:none;position:absolute;top:54px;right:0;width:340px;max-width:calc(100vw - 40px);max-height:70vh;
-  overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh)}
+.notif-panel{display:none;position:absolute;top:0;left:100%;margin-left:8px;width:340px;max-width:calc(100vw - 40px);max-height:70vh;
+  overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh);z-index:250}
 .notif-panel.open{display:block}
 .notif-panel-head{padding:13px 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px;color:var(--ink);
   position:sticky;top:0;background:var(--card)}
@@ -155,10 +154,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .notif-item .ni-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
 .notif-item .ni-time{font-size:10.5px;color:var(--ink-soft);margin-top:4px}
 .notif-empty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--ink-soft)}
-@media (max-width:860px){
-  .notif-bell{top:9px;right:14px}
-  .notif-bell #notifBellBtn{width:38px;height:38px;font-size:17px}
-}
 .toast{background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;transform:translateX(20px);opacity:0;transition:all .25s;min-width:240px}
 .toast.show{transform:translateX(0);opacity:1}
 .toast.success{border-left:3px solid var(--moss)}
@@ -194,6 +189,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   .mobile-topbar .hamburger{background:none;border:none;color:var(--cream);cursor:pointer;padding:4px;display:flex}
   .mobile-topbar .a{font-family:'Ubuntu',sans-serif;font-weight:700;font-size:18px}
   .mobile-topbar .b{font-family:'Ubuntu',sans-serif;font-size:8px;color:var(--gold);letter-spacing:.1em}
+  .notif-panel{left:0;top:100%;margin-left:0;margin-top:8px}
   .sidebar{
     transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 30px rgba(0,0,0,.3);
   }
@@ -212,6 +208,13 @@ tr:hover td{background:rgba(255,255,255,.4)}
   .modal{max-width:100%;width:100%;height:100%;max-height:100%;border-radius:0}
   #orderSearch{width:100% !important}
   input, textarea, select { font-size:16px !important; }
+
+  /* Барааны/тайлангийн хайлт-шүүлтүүрийн мөрүүд (хайх, select, огнооны хос
+     г.м.) нарийхан дэлгэц дээр хажуу тийшээ дэлбэрдэггүй, доош овоолж эгнэдэг */
+  .page-filter-row{flex-direction:column;align-items:stretch !important}
+  .page-filter-row > input, .page-filter-row > select, .page-filter-row > button, .page-filter-row > .page-filter-row{
+    width:100% !important;max-width:100% !important;
+  }
 
   /* Захиалгын хүснэгтийг гар утсанд хэвтээ scroll хийдэг хүснэгт биш,
      тус бүр карт болгож эгнэ дараалуулна (багана → мөр) */
@@ -240,6 +243,28 @@ tr:hover td{background:rgba(255,255,255,.4)}
   .orders-table select{width:100%}
 
   .order-detail-grid{grid-template-columns:1fr !important;gap:12px !important}
+
+  /* Бусад бүх хүснэгтийг (Бараа/Ангилал/Брэнд/Тайлан г.м.) хажуу тийш
+     гүйлгэдэггүй, дээрхтэй адил карт жагсаалт болгоно */
+  .card:has(.table-wrap table:not(.orders-table)){background:none;border:none;box-shadow:none}
+  .table-wrap table:not(.orders-table) thead{display:none}
+  .table-wrap table:not(.orders-table),
+  .table-wrap table:not(.orders-table) tbody,
+  .table-wrap table:not(.orders-table) tr{display:block;width:100%}
+  .table-wrap table:not(.orders-table) tr{
+    display:flex;flex-direction:column;gap:8px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--sh);
+  }
+  .table-wrap table:not(.orders-table) tr.pt-batch-header{
+    padding:0;background:none;box-shadow:none;border:none;margin-bottom:4px;
+  }
+  .table-wrap table:not(.orders-table) td{display:block;width:100%;border-bottom:none;padding:0}
+  .table-wrap table:not(.orders-table) td[data-th]:before{
+    content:attr(data-th);display:block;font-size:10px;font-weight:700;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;
+  }
+  .table-wrap table:not(.orders-table) td:empty{display:none}
+  .table-wrap table:not(.orders-table) td.empty{padding:24px 0}
 }
 </style>
 </head>
@@ -282,20 +307,19 @@ tr:hover td{background:rgba(255,255,255,.4)}
 
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
-<div class="notif-bell" id="notifBell">
-  <button id="notifBellBtn" onclick="toggleNotifPanel(event)" aria-label="Мэдэгдэл">
-    🔔<span class="notif-badge" id="notifBadge">0</span>
-  </button>
-  <div class="notif-panel" id="notifPanel">
-    <div class="notif-panel-head">Мэдэгдэл</div>
-    <div id="notifList"></div>
-  </div>
-</div>
-
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <img src="cuppa-logo.png" alt="CUPPA" style="height:22px;display:block;margin-bottom:4px">
     <div class="b">ADMIN PANEL</div>
+  </div>
+  <div class="notif-bell" id="notifBell">
+    <button id="notifBellBtn" class="nav-item" onclick="toggleNotifPanel(event)" aria-label="Мэдэгдэл">
+      <span class="icon-emoji">🔔</span> Мэдэгдэл <span class="notif-badge" id="notifBadge">0</span>
+    </button>
+    <div class="notif-panel" id="notifPanel">
+      <div class="notif-panel-head">Мэдэгдэл</div>
+      <div id="notifList"></div>
+    </div>
   </div>
   <div class="sidebar-body">
     <button class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/dashboard.svg');mask-image:url('/admin-icons/dashboard.svg')"></span> Нүүр хуудас</button>
@@ -329,7 +353,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   <div class="page" id="page-products">
     <div class="page-header">
       <div><h1>Бараа</h1><p id="prodCount">Нийт 0 бараа</p></div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="page-filter-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <input id="productSearch" oninput="renderProducts()" placeholder="Нэр эсвэл үнээр хайх..."
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:220px">
         <select id="productBrandFilter" onchange="renderProducts()"
@@ -374,7 +398,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
 
     <div class="page-header" style="margin-bottom:14px">
       <div><div class="card-title" style="font-size:17px">Борлуулалтын тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Орлого, хүргэлтийн харьцаа, брэнд болон барааны борлуулалт</p></div>
-      <div style="display:flex;align-items:center;gap:6px">
+      <div class="page-filter-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         <input type="date" id="srDateFrom" onchange="renderSalesReport()"
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
         <span style="color:var(--ink-soft);font-size:12px">–</span>
@@ -452,7 +476,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="card" style="margin-top:20px">
       <div class="card-head">
         <div class="card-title">Таталт/Буцаалтын түүх</div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="page-filter-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input id="reportSearch" oninput="renderReport()" placeholder="Барааны нэрээр хайх..."
             style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:200px">
           <select id="reportDirection" onchange="renderReport()"
@@ -462,7 +486,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
             <option value="to_store">Агуулахаас → Дэлгүүр (татсан)</option>
             <option value="to_warehouse">Дэлгүүрээс → Агуулах (буцаасан)</option>
           </select>
-          <div style="display:flex;align-items:center;gap:6px">
+          <div class="page-filter-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <input type="date" id="reportDateFrom" onchange="renderReport()"
               style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
             <span style="color:var(--ink-soft);font-size:12px">–</span>
@@ -811,12 +835,12 @@ function renderProducts() {
       ? `<img src="${p.images[0]}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">`
       : `<div style="width:36px;height:36px;border-radius:8px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--ink))"></div>`;
     return `<tr>
-      <td><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
-      <td>${brand?.name||'-'}</td>
-      <td>${cat?.name||'-'}</td>
-      <td class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.unit_label)}</div></td>
-      <td class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.box_label)}${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог">🔗</span>' : ''}</div></td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
+      <td data-th="Бараа"><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
+      <td data-th="Брэнд">${brand?.name||'-'}</td>
+      <td data-th="Ангилал">${cat?.name||'-'}</td>
+      <td data-th="Ширхэг үнэ" class="mono">${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.unit_label)}</div></td>
+      <td data-th="Хайрцаг үнэ" class="mono">${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.box_label)}${p.unified_stock ? ' <span title="Нэгдсэн нөөц — ширхэгээс автоматаар тооцогддог"></span>' : ''}</div></td>
+      <td data-th="Үйлдэл"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="6" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
 }
@@ -840,7 +864,7 @@ function imagesSectionHtml() {
       <button type="button" class="rm-btn" onclick="removeProductImage(${i})">✕</button>
     </div>`).join('');
   const addTile = productImages.length < MAX_PRODUCT_IMAGES
-    ? `<div class="img-add-tile" onclick="document.getElementById('pf-image-file').click()"><span>➕</span>Зураг нэмэх</div>`
+    ? `<div class="img-add-tile" onclick="document.getElementById('pf-image-file').click()"><span>+</span>Зураг нэмэх</div>`
     : '';
   return `
     <div class="img-thumbs">${thumbs}${addTile}</div>
@@ -899,7 +923,7 @@ function productFormHtml(p) {
           <input type="checkbox" id="pf-unit-enable" ${hasUnit ? 'checked' : ''} onchange="toggleUnitSection()">
           <span class="toggle-slider"></span>
         </label>
-        <span class="form-section-title">🔢 Ширхэгээр зарах</span>
+        <span class="form-section-title">Ширхэгээр зарах</span>
       </div>
       <div id="pf-unit-fields" class="form-grid form-grid-2" style="display:${hasUnit ? 'grid' : 'none'}">
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'ширхэг'}"></div>
@@ -916,7 +940,7 @@ function productFormHtml(p) {
           <input type="checkbox" id="pf-box-enable" ${hasBox ? 'checked' : ''} onchange="toggleBoxSection()">
           <span class="toggle-slider"></span>
         </label>
-        <span class="form-section-title">📦 Хайрцгаар мөн зарах</span>
+        <span class="form-section-title">Хайрцгаар зарах</span>
       </div>
       <div id="pf-box-fields" class="form-grid form-grid-2" style="display:${hasBox ? 'grid' : 'none'}">
         <div class="fg full" style="flex-direction:row;align-items:center;gap:10px;background:var(--cream);border-radius:8px;padding:10px 12px">
@@ -925,7 +949,7 @@ function productFormHtml(p) {
             <span class="toggle-slider"></span>
           </label>
           <div>
-            <div style="font-family:'Ubuntu',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink)">🔗 Нэгдсэн нөөц</div>
+            <div style="font-family:'Ubuntu',sans-serif;font-size:12.5px;font-weight:600;color:var(--ink)"> Нэгдсэн нөөц</div>
             <div style="font-size:11px;color:var(--ink-soft)">Хайрцгийг задалж агуулахад ширхэгээр хадгалдаг бол асаана — агуулахын гүйлгээ хийхэд хайрцгийн тоо автоматаар ширхэг рүү хөрвүүлэгдэнэ.</div>
           </div>
         </div>
@@ -1077,10 +1101,10 @@ function renderCategories() {
     const subs = subcategories.filter(s => s.category_id === c.id);
     const count = products.filter(p => p.category_id === c.id).length;
     return `<tr>
-      <td><span class="icon-emoji" style="display:inline-flex;vertical-align:middle">${isIconUrl(c.icon) ? iconMaskHtml(c.icon, 18, 'var(--cherry)') : (ICON_EMOJI[c.icon]||'☕')}</span> <b>${c.name}</b></td>
-      <td>${subs.map(s => `<span class="chip">${s.name}</span>`).join('') || '-'}</td>
-      <td>${count}</td>
-      <td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditCategory(${c.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">Устгах</button></div></td>
+      <td data-th="Ангилал"><span class="icon-emoji" style="display:inline-flex;vertical-align:middle">${isIconUrl(c.icon) ? iconMaskHtml(c.icon, 18, 'var(--cherry)') : (ICON_EMOJI[c.icon]||'☕')}</span> <b>${c.name}</b></td>
+      <td data-th="Дэд ангилал">${subs.map(s => `<span class="chip">${s.name}</span>`).join('') || '-'}</td>
+      <td data-th="Бараа тоо">${count}</td>
+      <td data-th="Үйлдэл"><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditCategory(${c.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory(${c.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="4" class="empty">Ангилал алга байна</td></tr>`;
 }
@@ -1233,7 +1257,7 @@ function renderBrands() {
     const logo = b.logo
       ? `<img src="${b.logo}" style="width:28px;height:28px;border-radius:6px;object-fit:contain;background:var(--card);border:1px solid var(--line);vertical-align:middle;margin-right:8px">`
       : `<span style="display:inline-flex;width:28px;height:28px;border-radius:6px;background:var(--muted);color:var(--ink-soft);align-items:center;justify-content:center;font-size:11px;font-weight:700;vertical-align:middle;margin-right:8px">${(b.name||'?')[0].toUpperCase()}</span>`;
-    return `<tr><td>${logo}<b>${b.name}</b></td><td>${count}</td><td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditBrand(${b.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">Устгах</button></div></td></tr>`;
+    return `<tr><td data-th="Брэнд">${logo}<b>${b.name}</b></td><td data-th="Бараа тоо">${count}</td><td data-th="Үйлдэл"><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditBrand(${b.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">Устгах</button></div></td></tr>`;
   }).join('') || `<tr><td colspan="3" class="empty">Брэнд алга байна</td></tr>`;
 }
 let brandLogoFile = null;
@@ -1425,8 +1449,9 @@ function renderSalesReport() {
       <div style="width:90px;flex-shrink:0;text-align:right;font-size:12px;font-weight:600;color:var(--ink)" class="mono">${fmt(v.revenue)}</div>
     </div>`).join('') || `<div class="empty" style="padding:10px 0">Мэдээлэл алга байна</div>`;
 
+  const periodLabel = revenuePeriod === 'day' ? 'Огноо' : 'Сар';
   document.getElementById('revenueTable').innerHTML = periodRows.map(([key, v]) => `
-    <tr><td class="mono">${key}</td><td class="mono">${v.count}</td><td class="mono">${fmt(v.revenue)}</td></tr>
+    <tr><td class="mono" data-th="${periodLabel}">${key}</td><td class="mono" data-th="Захиалгын тоо">${v.count}</td><td class="mono" data-th="Орлого">${fmt(v.revenue)}</td></tr>
   `).join('') || `<tr><td colspan="3" class="empty">Мэдээлэл алга байна</td></tr>`;
 
   // Брэндээр борлуулалт
@@ -1441,7 +1466,7 @@ function renderSalesReport() {
   });
   const brandRows = [...byBrand.entries()].sort((a, b) => b[1].revenue - a[1].revenue);
   document.getElementById('salesByBrandTable').innerHTML = brandRows.map(([name, v]) => `
-    <tr><td><b>${name}</b></td><td class="mono">${v.qty}</td><td class="mono">${fmt(v.revenue)}</td></tr>
+    <tr><td data-th="Брэнд"><b>${name}</b></td><td class="mono" data-th="Зарагдсан ширхэг">${v.qty}</td><td class="mono" data-th="Орлого">${fmt(v.revenue)}</td></tr>
   `).join('') || `<tr><td colspan="3" class="empty">Мэдээлэл алга байна</td></tr>`;
 
   // Хамгийн их зарагдсан бараа (топ 20)
@@ -1456,7 +1481,7 @@ function renderSalesReport() {
   document.getElementById('topProductsTable').innerHTML = productRows.map(([productId, v], idx) => {
     const p = products.find(x => x.id === productId);
     const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    return `<tr><td class="mono">${idx + 1}</td><td>${v.name}</td><td>${brandName}</td><td class="mono">${v.qty}</td><td class="mono">${fmt(v.revenue)}</td></tr>`;
+    return `<tr><td class="mono" data-th="#">${idx + 1}</td><td data-th="Бараа">${v.name}</td><td data-th="Брэнд">${brandName}</td><td class="mono" data-th="Зарагдсан ширхэг">${v.qty}</td><td class="mono" data-th="Орлого">${fmt(v.revenue)}</td></tr>`;
   }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
@@ -1492,13 +1517,13 @@ function renderReport() {
       ? `<span class="badge pending">Хүлээгдэж байна</span>`
       : `<span class="badge done">Хүлээгдсэн</span>`;
     return `<tr>
-      <td class="mono" style="font-size:11px">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
-      <td>${t.product_name}</td>
-      <td>${t.option_type === 'box' ? 'Хайрцаг' : 'Ширхэг'}</td>
-      <td>${dirBadge}</td>
-      <td class="mono">${t.qty}</td>
-      <td style="font-size:12px">${t.admin_email || '-'}</td>
-      <td>${statusBadgeHtml}</td>
+      <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+      <td data-th="Бараа">${t.product_name}</td>
+      <td data-th="Төрөл">${t.option_type === 'box' ? 'Хайрцаг' : 'Ширхэг'}</td>
+      <td data-th="Чиглэл">${dirBadge}</td>
+      <td class="mono" data-th="Тоо">${t.qty}</td>
+      <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
+      <td data-th="Төлөв">${statusBadgeHtml}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" class="empty">Таталт/Буцаалтын түүх алга байна</td></tr>`;
 }
@@ -1528,7 +1553,7 @@ function renderPendingTransfers() {
 
   tb.innerHTML = groups.map(g => {
     const first = g.items[0];
-    const header = `<tr><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
+    const header = `<tr class="pt-batch-header"><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
       📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа
     </td></tr>`;
     const rows = g.items.map(t => {
@@ -1536,13 +1561,13 @@ function renderPendingTransfers() {
       const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
       const dirBadge = directionBadge(t.direction);
       return `<tr>
-        <td><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
-        <td class="mono" style="font-size:11px">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
-        <td>${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
-        <td>${brandName}</td>
-        <td>${dirBadge}</td>
-        <td class="mono">${t.qty}</td>
-        <td style="font-size:12px">${t.admin_email || '-'}</td>
+        <td data-th="Хүлээн авах уу?"><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
+        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+        <td data-th="Бараа">${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
+        <td data-th="Брэнд">${brandName}</td>
+        <td data-th="Чиглэл">${dirBadge}</td>
+        <td class="mono" data-th="Тоо">${t.qty}</td>
+        <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
       </tr>`;
     }).join('');
     return header + rows;
@@ -1582,7 +1607,7 @@ function renderTransferTotals() {
   tb.innerHTML = rows.map(([productId, v]) => {
     const p = products.find(x => x.id === productId);
     const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    return `<tr><td>${brandName}</td><td>${v.name}</td><td class="mono">${v.restocked}</td><td class="mono">${v.toStore}</td><td class="mono">${v.toWarehouse}</td></tr>`;
+    return `<tr><td data-th="Брэнд">${brandName}</td><td data-th="Бараа">${v.name}</td><td class="mono" data-th="Нийлүүлэгчээс нэмэгдсэн">${v.restocked}</td><td class="mono" data-th="Нийт татагдсан">${v.toStore}</td><td class="mono" data-th="Нийт буцаагдсан">${v.toWarehouse}</td></tr>`;
   }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
