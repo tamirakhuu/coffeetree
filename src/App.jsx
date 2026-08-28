@@ -1518,9 +1518,9 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.ink }}>
+      <section style={{ background: `linear-gradient(180deg, ${T.paper} 0%, ${T.ink} 180px)` }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
-          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}>Ангиллаж үзэх</div>
+          <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}></div>
           <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
             {categories.map((c) => {
               const catImg = c.tileImage || products.find((p) => p.categoryId === c.id && p.images && p.images.length > 0)?.images[0];
