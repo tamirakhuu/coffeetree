@@ -26,6 +26,7 @@ export const T = {
   blue: "#1b00b4",
   saaral: "#494949",
   lightgreen: "#85f75c",
+  grey: "#8C8C8C",
 };
 
 const FONT_IMPORT =
@@ -42,6 +43,7 @@ export function viewFromLocation(pathname, search) {
   if ((m = pathname.match(/^\/brand\/([^/]+)\/?$/))) return { name: "brand", brandSlug: m[1] };
   if ((m = pathname.match(/^\/product\/(\d+)\/?$/))) return { name: "product", productId: Number(m[1]) };
   if (pathname === "/bestseller") return { name: "bestseller" };
+  if (pathname === "/new") return { name: "new" };
   if (pathname === "/training") return { name: "training" };
   if (pathname === "/discount") return { name: "discounts" };
   if (pathname === "/profile") return { name: "profile", section: params.get("section") || "info" };
@@ -61,6 +63,7 @@ export function pathForView(view, brands = []) {
     }
     case "product": return `/product/${view.productId}`;
     case "bestseller": return "/bestseller";
+    case "new": return "/new";
     case "training": return "/training";
     case "discounts": return "/discount";
     case "profile": return view.section && view.section !== "info" ? `/profile?section=${view.section}` : "/profile";
@@ -1518,7 +1521,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: `linear-gradient(180deg, ${T.paper} 0%, ${T.ink} 180px)` }}>
+      <section style={{ background: `linear-gradient(180deg, ${T.paper} 0%, ${T.grey} 240px)` }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}></div>
           <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
@@ -1565,6 +1568,26 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 
       <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Шинэ бүтээгдэхүүн</div>
+            <button onClick={() => setView({ name: "new" })} style={{
+              background: "transparent", border: `1.5px solid rgba(0, 0, 0, 0.4)`, borderRadius: 999, padding: "8px 16px",
+              cursor: "pointer", color: T.ink, whiteSpace: "nowrap", flexShrink: 0,
+              fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
+            }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
+          </div>
+          <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
+            {newProducts.map((p) => (
+              <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
+            ))}
+            {newProducts.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор шинэ бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
             <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Бестселлэр бүтээгдэхүүн</div>
             <button onClick={() => setView({ name: "bestseller" })} style={{
@@ -1579,21 +1602,6 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
             ))}
             {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
-          </div>
-        </div>
-      </section>
-
-      <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
-            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Шинэ бүтээгдэхүүн</div>
-          </div>
-          <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
-            {newProducts.map((p) => (
-              <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
-            ))}
-            {newProducts.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор шинэ бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
           </div>
         </div>
       </section>
@@ -2110,6 +2118,80 @@ function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView })
 }
 
 /* ------------------------------------------------------------------ */
+/*  New Products Page — "шинэ" шошготой бүх бараа, ангилал+брэндээр    */
+/*  шүүх боломжтой (BestsellerPage-тэй ижил бүтэц)                     */
+/* ------------------------------------------------------------------ */
+function NewProductsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
+  const { products, brands, categories } = useContext(DataContext);
+  const [brandFilter, setBrandFilter] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState([]);
+  const [sortBy, setSortBy] = useState("default");
+
+  const newItems = products.filter((p) => p.tag === "шинэ");
+  const brandsInNew = brands.filter((b) => newItems.some((p) => p.brandId === b.id));
+  const categoriesInNew = categories.filter((c) => newItems.some((p) => p.categoryId === c.id));
+  let items = newItems;
+  if (categoryFilter.length) items = items.filter((p) => categoryFilter.includes(p.categoryId));
+  if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
+  if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
+
+  return (
+    <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title="Шинэ бүтээгдэхүүн" />
+      <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
+        <CollapsibleSection label="Ангилал">
+          {categoriesInNew.map((c) => (
+            <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+              <input type="checkbox" checked={categoryFilter.includes(c.id)}
+                onChange={() => setCategoryFilter(categoryFilter.includes(c.id) ? categoryFilter.filter((x) => x !== c.id) : [...categoryFilter, c.id])}
+                style={{ accentColor: T.cherry }} />
+              {c.name}
+            </label>
+          ))}
+          {categoriesInNew.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Ангилал алга</div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection label="Брэнд">
+          {brandsInNew.map((b) => (
+            <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
+              <input type="checkbox" checked={brandFilter.includes(b.id)}
+                onChange={() => setBrandFilter(brandFilter.includes(b.id) ? brandFilter.filter((x) => x !== b.id) : [...brandFilter, b.id])}
+                style={{ accentColor: T.cherry }} />
+              {b.name}
+            </label>
+          ))}
+          {brandsInNew.length === 0 && (
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Брэнд алга</div>
+          )}
+        </CollapsibleSection>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 280 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+            style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, padding: "7px 10px", background: T.card, color: T.ink }}>
+            <option value="default">Шүүж үзэх</option>
+            <option value="price_asc">Үнэ багаас их</option>
+            <option value="price_desc">Үнэ ихээс бага</option>
+          </select>
+        </div>
+        <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 20 }}>
+          {items.map((p) => (
+            <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
+              isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
+          ))}
+          {items.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Шинэ бүтээгдэхүүн олдсонгүй.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Discounts Page — "хямдралтай" шошготой бүх бараа, ангилал+брэндээр  */
 /*  шүүх боломжтой                                                      */
 /* ------------------------------------------------------------------ */
@@ -2495,6 +2577,8 @@ export default function App() {
     body = <AboutPage />;
   } else if (view.name === "bestseller") {
     body = <BestsellerPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
+  } else if (view.name === "new") {
+    body = <NewProductsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "discounts") {
     body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "profile") {
