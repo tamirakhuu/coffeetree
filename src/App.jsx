@@ -1586,20 +1586,20 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
         </div>
       </section>
 
-      <section style={{ background: T.paper, padding: "20px 20px 60px" }}>
+      <section style={{ background: T.ink, padding: "20px 20px 60px" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div className="cuppa-section-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 26 }}>
-            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.ink }}>Бестселлэр бүтээгдэхүүн</div>
+            <div className="cuppa-section-title" style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper }}>Бестселлэр бүтээгдэхүүн</div>
             <button onClick={() => setView({ name: "bestseller" })} style={{
-              background: "transparent", border: `1.5px solid rgba(0, 0, 0, 0.4)`, borderRadius: 999, padding: "8px 16px",
-              cursor: "pointer", color: T.ink, whiteSpace: "nowrap", flexShrink: 0,
+              background: "transparent", border: `1.5px solid rgb(255, 255, 255)`, borderRadius: 999, padding: "8px 16px",
+              cursor: "pointer", color: T.paper, whiteSpace: "nowrap", flexShrink: 0,
               fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 6,
             }}>Бүгдийг үзэх <ArrowRight size={14} /></button>
           </div>
           <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
-                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} variant="ink" />
+                isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
             ))}
             {featured.length === 0 && <div style={{ color: T.inkSoft, fontFamily: "'Nunito Sans', sans-serif" }}>Одоогоор бестселлэр бүтээгдэхүүн тэмдэглэгдээгүй байна.</div>}
           </div>
