@@ -524,13 +524,13 @@ function renderStockFilters(){
     `<button class="chip" data-brand="${b.id}" aria-pressed="${stockBrandFilter===b.id}">${esc(b.name)}</button>`
   ).join('');
   $('#stock-filters').innerHTML =
-    `<button class="chip" data-brand="all" aria-pressed="${stockBrandFilter==='all'}">Бүх брэнд</button>${brandChips}` +
-    `<button class="chip" data-low-toggle aria-pressed="${stockLowOnly}">⚠ Бага үлдэгдэл</button>`;
+      `<button class="chip" data-low-toggle aria-pressed="${stockLowOnly}">⚠ Бага үлдэгдэл</button>` +
+    `<button class="chip" data-brand="all" aria-pressed="${stockBrandFilter==='all'}">Бүх брэнд</button>${brandChips}` ;
 }
 
 function transferMeta(t){
   const isIn = t.direction !== 'to_store';
-  const label = t.direction === 'restock' ? 'Нийлүүлэгчээс' : (t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн');
+  const label = t.direction === 'restock' ? 'Шинээр буусан' : (t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн');
   let status, tone;
   if (t.direction === 'restock') { status = 'Нэмэгдсэн'; tone = 'in'; }
   else if (t.status === 'pending') { status = 'Хүлээгдэж байна'; tone = 'wait'; }

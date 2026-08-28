@@ -314,7 +314,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
   <div class="notif-bell" id="notifBell">
     <button id="notifBellBtn" class="nav-item" onclick="toggleNotifPanel(event)" aria-label="Мэдэгдэл">
-      <span class="icon-emoji">🔔</span> Мэдэгдэл <span class="notif-badge" id="notifBadge">0</span>
+      <span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/bell.svg');mask-image:url('/admin-icons/bell.svg')"></span> Мэдэгдэл <span class="notif-badge" id="notifBadge">0</span>
     </button>
     <div class="notif-panel" id="notifPanel">
       <div class="notif-panel-head">Мэдэгдэл</div>
@@ -327,6 +327,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <button class="nav-item" data-page="categories" onclick="navTo('categories')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/categories.svg');mask-image:url('/admin-icons/categories.svg')"></span> Ангилал</button>
     <button class="nav-item" data-page="brands" onclick="navTo('brands')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/brands.svg');mask-image:url('/admin-icons/brands.svg')"></span>Брэнд</button>
     <button class="nav-item" data-page="orders" onclick="navTo('orders')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/orders.svg');mask-image:url('/admin-icons/orders.svg')"></span> Захиалга <span class="badge" id="nb-orders" style="background:var(--gold);color:var(--ink)">0</span></button>
+    <button class="nav-item" data-page="transfers" onclick="navTo('transfers')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/swap.svg');mask-image:url('/admin-icons/swap.svg')"></span> Бараа татан авалт <span class="badge" id="nb-transfers" style="background:var(--gold);color:var(--ink)">0</span></button>
     <button class="nav-item" data-page="report" onclick="navTo('report')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/report.svg');mask-image:url('/admin-icons/report.svg')"></span> Тайлан</button>
   </div>
   <div class="sidebar-foot">
@@ -394,7 +395,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-report">
-    <div class="page-header"><div><h1>Тайлан</h1><p>Борлуулалт, орлого болон агуулахын шилжилтийн тайлан</p></div></div>
+    <div class="page-header"><div><h1>Тайлан</h1><p>Борлуулалт, орлогын тайлан</p></div></div>
 
     <div class="page-header" style="margin-bottom:14px">
       <div><div class="card-title" style="font-size:17px">Борлуулалтын тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Орлого, хүргэлтийн харьцаа, брэнд болон барааны борлуулалт</p></div>
@@ -443,9 +444,11 @@ tr:hover td{background:rgba(255,255,255,.4)}
       </div>
     </div>
 
-    <div class="page-header" style="margin-top:34px">
-      <div><div class="card-title" style="font-size:17px">Агуулахын таталтын тайлан</div><p style="font-size:12px;color:var(--ink-soft);margin-top:2px">Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын түүх</p></div>
-    </div>
+  </div>
+
+  <div class="page" id="page-transfers">
+    <div class="page-header"><div><h1>Бараа татан авалт</h1><p>Агуулах ⇄ дэлгүүрийн Таталт/Буцаалтын тайлан</p></div></div>
+
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-val" id="rp-to-store">0</div><div class="stat-label">Агуулахаас татсан (нийт)</div></div>
       <div class="stat-card"><div class="stat-val" id="rp-to-warehouse">0</div><div class="stat-label">Агуулах руу буцаасан (нийт)</div></div>
@@ -619,7 +622,7 @@ function handleNotifClick(id) {
     navTo('orders');
     openOrderDetailFresh(n.orderNumber);
   } else if (n.type === 'transfer') {
-    navTo('report');
+    navTo('transfers');
     setTimeout(() => document.getElementById('pendingTransfersCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 }
@@ -772,6 +775,7 @@ function closeModal() { document.getElementById('modalBg').classList.remove('ope
 function renderDashboard() {
   document.getElementById('nb-products').textContent = products.length;
   document.getElementById('nb-orders').textContent = orders.filter(o => o.status === 'pending').length;
+  document.getElementById('nb-transfers').textContent = stockTransfers.filter(t => t.status === 'pending').length;
   document.getElementById('st-products').textContent = products.length;
   document.getElementById('st-categories').textContent = categories.length;
   document.getElementById('st-brands').textContent = brands.length;
