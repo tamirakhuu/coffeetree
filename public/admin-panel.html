@@ -1069,10 +1069,17 @@ async function saveProduct(id) {
       box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
       unified_stock: boxEnabled ? document.getElementById('pf-unified-enable').checked : false,
     };
-    const { error } = id
-      ? await sb.from('products').update(row).eq('id', id)
-      : await sb.from('products').insert(row);
+    const { data: savedRows, error } = id
+      ? await sb.from('products').update(row).eq('id', id).select()
+      : await sb.from('products').insert(row).select();
     if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
+    // update() нь тохирох мөр олдоогүй/эрх хүрэлцээгүй тохиолдолд ч алдаа буцаадаггүй
+    // (0 мөр өөрчлөгдсөн ч гэсэн `error` хоосон байдаг) — тиймээс бодитоор
+    // өөрчлөгдсөн мөр буцсан эсэхийг шалгаж, эс бол хуурамч "амжилттай" мессеж өгөхгүй
+    if (!savedRows || savedRows.length === 0) {
+      toast('Хадгалагдсангүй — өөрчлөлт хэрэгжсэн эсэхийг шалгана уу (эрхийн асуудал байж магадгүй)', 'err');
+      return;
+    }
     closeModal();
     toast(id ? '✅ Бараа шинэчлэгдлээ' : '✅ Бараа нэмэгдлээ');
     await loadAll();

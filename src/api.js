@@ -81,7 +81,7 @@ export async function submitOrder({ form, cart, products, userId }) {
     if (error) { await rollbackReserved(reserved); throw new Error(error.message); }
     if (!ok) {
       await rollbackReserved(reserved);
-      throw new Error(`"${product.name}" барааны нөөц дуусчихжээ. Сагсаа шинэчилж дахин оролдоно уу.`);
+      throw new Error(`"${product.name}" барааны нөөц дууссан байна. Сагсаа шинэчилж дахин оролдоно уу.`);
     }
     reserved.push(entry);
   }
@@ -149,9 +149,32 @@ export async function fetchMyOrders() {
     deliveryMethod: o.delivery_method,
     deliveryFee: o.delivery_fee,
     boxCount: o.box_count,
+    paymentStatus: o.payment_status,
     createdAt: o.created_at,
     items: items.filter((i) => i.order_number === o.order_number).map((i) => ({
       productName: i.product_name, optionLabel: i.option_label, qty: i.qty, lineTotal: i.line_total,
     })),
   }));
+}
+
+// QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
+// дотор, хэзээ ч browser-т ирдэггүй. QPay мерчант эрх (secrets) тохируулаагүй
+// үед Edge Function demo QR буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.
+export async function createQpayInvoice({ orderNumber, amount, description }) {
+  const { data, error } = await supabase.functions.invoke("qpay-create-invoice", {
+    body: { orderNumber, amount, description },
+  });
+  if (error) throw new Error(error.message || "QPay нэхэмжлэл үүсгэхэд алдаа гарлаа");
+  if (data?.error) throw new Error(data.error);
+  return data; // { invoiceId, qrText, qrImage, urls, demo }
+}
+
+// Хэрэглэгч QR-аа төлсөн эсэхийг шалгах (checkout дэлгэц 3 секунд тутам polling хийнэ)
+export async function checkQpayPayment({ invoiceId, orderNumber }) {
+  const { data, error } = await supabase.functions.invoke("qpay-check-payment", {
+    body: { invoiceId, orderNumber },
+  });
+  if (error) throw new Error(error.message || "Төлбөр шалгахад алдаа гарлаа");
+  if (data?.error) throw new Error(data.error);
+  return data; // { paid, paidAmount, demo }
 }

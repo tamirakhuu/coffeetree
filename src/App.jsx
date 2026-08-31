@@ -6,7 +6,7 @@ import {
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount, sendPasswordReset, updatePassword } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
@@ -51,6 +51,7 @@ export function viewFromLocation(pathname, search) {
   if (pathname === "/wishlist") return { name: "wishlist" };
   if (pathname === "/about") return { name: "about" };
   if (pathname === "/search") return { name: "search", query: params.get("q") || "" };
+  if (pathname === "/payment") return { name: "payment" };
   if (pathname === "/confirmation") return { name: "confirmation" };
   return { name: "home" };
 }
@@ -71,6 +72,7 @@ export function pathForView(view, brands = []) {
     case "wishlist": return "/wishlist";
     case "about": return "/about";
     case "search": return view.query ? `/search?q=${encodeURIComponent(view.query)}` : "/search";
+    case "payment": return "/payment";
     case "confirmation": return "/confirmation";
     default: return "/";
   }
@@ -787,13 +789,14 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const [activeImg, setActiveImg] = useState(0);
   const [grindForm, setGrindForm] = useState("whole");
   const [brewMethod, setBrewMethod] = useState(null);
+  const [lidType, setLidType] = useState("Хавтгай");
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const zoomWrapRef = useRef(null);
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setZoomed(false);
+    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType("Хавтгай"); setZoomed(false);
   }, [product?.id]);
   useEffect(() => {
     const el = zoomWrapRef.current;
@@ -827,6 +830,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
   const isCoffee = productCategory?.name === "Кофе";
+  const isColdCup = product.sub === "Хүйтний аяга";
   const bulkBoxQty = product.box?.price > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   const suggestedPump = pumpName
@@ -849,6 +853,8 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   ).values()].slice(0, 8);
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
+  const lidNote = isColdCup ? `Таг: ${lidType}` : undefined;
+  const detailNote = grindNote || lidNote;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
@@ -965,7 +971,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                   <span style={{ width: 40, textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600 }}>{qty}</span>
                   <button onClick={() => setQty(Math.min(option.stock, qty + 1))} style={stepBtn}><Plus size={14} /></button>
                 </div>
-                <button onClick={() => onAddToCart(product, optionType, qty, grindNote)} style={{
+                <button onClick={() => onAddToCart(product, optionType, qty, detailNote)} style={{
                   flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
                   padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -1019,6 +1025,23 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {isColdCup && (
+            <div style={{ marginTop: 26, paddingTop: 22, borderTop: `1px solid ${T.line}` }}>
+              <div style={sideLabel}>Таг сонгох</div>
+              <div style={{ display: "flex", gap: 10 }}>
+                {["Хавтгай", "Бөмбгөр"].map((lt) => (
+                  <button key={lt} onClick={() => setLidType(lt)} style={{
+                    flex: 1, padding: "11px 16px", borderRadius: 999, cursor: "pointer",
+                    border: `1.5px solid ${lidType === lt ? T.cherry : T.line}`,
+                    background: lidType === lt ? T.cherry : "transparent",
+                    color: lidType === lt ? "#fff" : T.ink,
+                    fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
+                  }}>{lt}</button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1661,7 +1684,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
     && (form.receiptType !== "company" || form.registerNumber) && !submitting;
   const handleClick = async () => {
     setSubmitting(true);
-    await onConfirm(form);
+    await onConfirm(form, total);
     setSubmitting(false);
   };
   return (
@@ -1751,6 +1774,89 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
           }}>{submitting ? "Түр хүлээнэ үү..." : "Төлбөр төлөх"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function QpayPayment({ orderNumber, subtotal, invoice, onPaid, onCancel }) {
+  const [status, setStatus] = useState("pending"); // pending | paid | error
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!invoice?.invoiceId) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await checkQpayPayment({ invoiceId: invoice.invoiceId, orderNumber });
+        if (cancelled) return;
+        if (res.paid) {
+          setStatus("paid");
+          setTimeout(() => onPaid(), 900);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e.message);
+      }
+    };
+    const interval = setInterval(poll, 3000);
+    poll();
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [invoice?.invoiceId]);
+
+  return (
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: "50px 20px 90px", textAlign: "center" }}>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>QPay-ээр төлөх</h1>
+      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 26 }}>
+        Захиалга {orderNumber} — {money(subtotal)}
+      </div>
+      {invoice?.demo && (
+        <div style={{
+          fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, background: T.cream,
+          border: `1px solid ${T.line}`, borderRadius: 10, padding: "8px 14px", marginBottom: 20,
+        }}>Demo горим — QPay мерчант эрх тохируулаагүй тул {"15 секундийн дараа автоматаар \"төлөгдсөн\" гэж үзнэ."}</div>
+      )}
+
+      {status === "paid" ? (
+        <div style={{ padding: "40px 0" }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.moss, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Check size={30} color="#fff" />
+          </div>
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, color: T.ink }}>Төлбөр амжилттай хийгдлээ!</div>
+        </div>
+      ) : (
+        <>
+          {invoice?.qrImage && (
+            <img
+              src={`data:image/png;base64,${invoice.qrImage}`}
+              alt="QPay QR"
+              style={{ width: 220, height: 220, borderRadius: 14, border: `1px solid ${T.line}`, background: "#fff", padding: 10 }}
+            />
+          )}
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, margin: "18px 0 20px" }}>
+            Банкны аппаараа энэ QR кодыг уншуулж төлнө үү.
+          </div>
+
+          {invoice?.urls?.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 22 }}>
+              {invoice.urls.map((u) => (
+                <a key={u.name} href={u.link} style={{
+                  fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, color: T.ink,
+                  border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", textDecoration: "none", background: T.card,
+                }}>{u.name}</a>
+              ))}
+            </div>
+          )}
+
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: 20 }}>
+            Төлбөр хийгдэхийг автоматаар шалгаж байна…
+          </div>
+          {error && <div style={{ color: T.cherry, fontSize: 12.5, marginBottom: 14, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
+
+          <button onClick={onCancel} style={{
+            background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif",
+            fontSize: 13, cursor: "pointer", textDecoration: "underline",
+          }}>Дараа төлөх</button>
+        </>
+      )}
     </div>
   );
 }
@@ -2398,6 +2504,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [qpayInvoice, setQpayInvoice] = useState(null);
+  const [orderTotal, setOrderTotal] = useState(0);
   const [resetOpen, setResetOpen] = useState(false);
   const [brandFilter, setBrandFilter] = useState([]);
   const [subFilter, setSubFilter] = useState(null);
@@ -2552,7 +2660,7 @@ export default function App() {
     if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     setView({ name: "checkout" });
   };
-  const handleConfirm = async (form) => {
+  const handleConfirm = async (form, total) => {
     if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     try {
       const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
@@ -2568,10 +2676,29 @@ export default function App() {
         }),
       }));
       setCart([]);
-      setView({ name: "confirmation" });
+      // Захиалга аль хэдийн бүртгэгдсэн тул QPay нэхэмжлэл үүсгэхэд алдаа гарсан ч
+      // захиалгыг цуцлахгүй — зүгээр баталгаажуулах хуудас руу шууд оруулна
+      // (дараа нь бэлнээр/шилжүүлгээр төлж болно)
+      try {
+        const invoice = await createQpayInvoice({
+          orderNumber, amount: total ?? 0, description: `CUPPA захиалга ${orderNumber}`,
+        });
+        setQpayInvoice(invoice);
+        setOrderTotal(total ?? 0);
+        setView({ name: "payment" });
+      } catch (qpayErr) {
+        flash("QPay нэхэмжлэл үүсгэхэд алдаа гарлаа, дараа төлнө үү: " + qpayErr.message);
+        setView({ name: "confirmation" });
+      }
     } catch (err) {
       flash("Захиалга үүсгэхэд алдаа гарлаа: " + err.message);
     }
+  };
+  const handlePaid = () => setView({ name: "confirmation" });
+  const handleCancelPayment = () => {
+    setQpayInvoice(null);
+    flash(`Захиалга ${orderNumber} төлбөр хүлээгдэж байна`);
+    setView({ name: "home" });
   };
 
   if (dataStatus === "loading") {
@@ -2634,6 +2761,8 @@ export default function App() {
     body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "checkout") {
     body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} user={user} />;
+  } else if (view.name === "payment") {
+    body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} onCancel={handleCancelPayment} />;
   } else if (view.name === "confirmation") {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
   } else if (view.name === "training") {
