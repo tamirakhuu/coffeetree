@@ -176,7 +176,7 @@ function ProductArt({ product, height = 190 }) {
       {product.tag && (
         <span style={{
           position: "absolute", top: hasImage ? 10 : 80, left: 12, fontFamily: "'Ubuntu', sans-serif",
-          fontSize: 11, letterSpacing: "0.06em", color: T.paper, background: T.gold,
+          fontSize: 11, letterSpacing: "0.06em", color: T.paper, background: product.tag === "шинэ" ? T.green : T.gold,
           padding: "3px 9px", borderRadius: 999, fontWeight: 600, textTransform: "uppercase",
         }}>
           {product.tag === "хямдралтай" && discountPercent(product.unit) != null
