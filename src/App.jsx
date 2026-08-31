@@ -2406,6 +2406,8 @@ export default function App() {
   const [orderNumber, setOrderNumber] = useState("");
   const loaded = useRef(false);
   const storageKey = useRef("guest");
+  const cartRef = useRef([]);
+  const wishlistRef = useRef([]);
 
   // Лого animation
   const MIN_LOADING_MS = 1500;
@@ -2459,9 +2461,11 @@ export default function App() {
   const mergeWishlists = (guestList, userList) => [...new Set([...userList, ...guestList])];
 
   useEffect(() => {
+    cartRef.current = cart;
     if (loaded.current) localStorage.setItem(`cuppa:cart:${storageKey.current}`, JSON.stringify(cart));
   }, [cart]);
   useEffect(() => {
+    wishlistRef.current = wishlist;
     if (loaded.current) localStorage.setItem(`cuppa:wishlist:${storageKey.current}`, JSON.stringify(wishlist));
   }, [wishlist]);
 
@@ -2480,8 +2484,8 @@ export default function App() {
       const nextKey = u?.id || "guest";
       if (nextKey !== storageKey.current) {
         const wasGuest = storageKey.current === "guest";
-        const guestCart = cart;
-        const guestWishlist = wishlist;
+        const guestCart = cartRef.current;
+        const guestWishlist = wishlistRef.current;
         storageKey.current = nextKey;
         if (wasGuest && (guestCart.length || guestWishlist.length)) {
           let userCart = [], userWishlist = [];
