@@ -1519,7 +1519,7 @@ function renderReport() {
     const dirBadge = directionBadge(t.direction);
     const statusBadgeHtml = t.status === 'pending'
       ? `<span class="badge pending">Хүлээгдэж байна</span>`
-      : `<span class="badge done">Хүлээгдсэн</span>`;
+      : `<span class="badge done">Хүлээн авсан</span>`;
     return `<tr>
       <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
       <td data-th="Бараа">${t.product_name}</td>

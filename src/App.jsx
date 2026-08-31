@@ -360,7 +360,10 @@ function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBra
           <div style={{ padding: "14px 18px 4px" }}>
             <div style={sideLabel}>Бүтээгдэхүүн</div>
             {categories.map((c) => (
-              <button key={c.id} onClick={() => onGoCategory(c.id)} style={catBtnStyle}>
+              <button key={c.id} onClick={() => onGoCategory(c.id)} style={catBtnStyle}
+                onMouseEnter={(e) => { e.currentTarget.style.background = T.ink; e.currentTarget.style.color = T.cream; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = T.ink; }}
+              >
                 <CategoryIcon icon={c.icon} size={15} /> {c.name}
               </button>
             ))}
@@ -1555,7 +1558,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
       <section style={{ background: `linear-gradient(180deg, ${T.paper} 0%, ${T.grey} 240px)` }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "50px 20px 54px" }}>
           <div style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 26, fontWeight: 600, color: T.paper, marginBottom: 20 }}></div>
-          <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
+          <div className="cuppa-category-grid" style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16 }}>
             {categories.map((c) => {
               const catImg = c.tileImage || products.find((p) => p.categoryId === c.id && p.images && p.images.length > 0)?.images[0];
               return (
@@ -1588,6 +1591,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   <span className="cuppa-category-label" style={{
                     fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "left",
                     textShadow: catImg ? "0 0 4px rgba(255,255,255,.95), 0 0 8px rgba(255,255,255,.85)" : "none",
+                    alignSelf: "flex-start", marginTop: 4,
                   }}>{c.name}</span>
                 </div>
               </button>
@@ -2441,6 +2445,19 @@ export default function App() {
     try { const raw = localStorage.getItem(`cuppa:wishlist:${key}`); setWishlist(raw ? JSON.parse(raw) : []); } catch (e) { setWishlist([]); }
   };
 
+  // Зочны сагс/хүслийн жагсаалтыг тухайн хэрэглэгчийн хадгалсантай нийлүүлэх —
+  // сагсанд бараа хийчихээд төлбөр төлөх үед нэвтэрсэн ч зочны сагс алдагдахгүй байх учиртай
+  const mergeCarts = (guestCart, userCart) => {
+    const merged = [...userCart];
+    guestCart.forEach((gi) => {
+      const idx = merged.findIndex((i) => i.productId === gi.productId && i.optionType === gi.optionType && (i.note || "") === (gi.note || ""));
+      if (idx >= 0) merged[idx] = { ...merged[idx], qty: merged[idx].qty + gi.qty };
+      else merged.push(gi);
+    });
+    return merged;
+  };
+  const mergeWishlists = (guestList, userList) => [...new Set([...userList, ...guestList])];
+
   useEffect(() => {
     if (loaded.current) localStorage.setItem(`cuppa:cart:${storageKey.current}`, JSON.stringify(cart));
   }, [cart]);
@@ -2462,8 +2479,21 @@ export default function App() {
       setUser(u);
       const nextKey = u?.id || "guest";
       if (nextKey !== storageKey.current) {
+        const wasGuest = storageKey.current === "guest";
+        const guestCart = cart;
+        const guestWishlist = wishlist;
         storageKey.current = nextKey;
-        loadCartWishlist(nextKey);
+        if (wasGuest && (guestCart.length || guestWishlist.length)) {
+          let userCart = [], userWishlist = [];
+          try { const raw = localStorage.getItem(`cuppa:cart:${nextKey}`); userCart = raw ? JSON.parse(raw) : []; } catch (e) {}
+          try { const raw = localStorage.getItem(`cuppa:wishlist:${nextKey}`); userWishlist = raw ? JSON.parse(raw) : []; } catch (e) {}
+          setCart(mergeCarts(guestCart, userCart));
+          setWishlist(mergeWishlists(guestWishlist, userWishlist));
+          localStorage.removeItem(`cuppa:cart:guest`);
+          localStorage.removeItem(`cuppa:wishlist:guest`);
+        } else {
+          loadCartWishlist(nextKey);
+        }
       }
       if (_event === "PASSWORD_RECOVERY") {
         setAuthOpen(false);
