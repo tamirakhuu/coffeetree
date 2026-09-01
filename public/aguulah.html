@@ -67,6 +67,7 @@ main{padding:16px 0 112px}
 .t-ok{background:var(--sage-100);color:var(--sage-800)}
 .t-in{background:var(--sage-200);color:var(--sage-800)}
 .t-low{background:var(--accent-200);color:var(--accent-700)}
+.t-out{background:#f1d9d6;color:#96382c}
 .muted{color:var(--muted)}
 .empty{border:1px dashed rgba(32,30,29,.25);border-radius:var(--r);padding:22px;text-align:center;font-size:13.5px;color:var(--muted)}
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
@@ -95,18 +96,20 @@ main{padding:16px 0 112px}
 .num.low{color:var(--accent-600)}
 
 /* item card (draft rows) */
-.item{background:var(--surface);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-.item .top{display:flex;align-items:flex-start;gap:10px}
-.item .name{width:100%;font-size:15.5px;font-weight:600;background:transparent;border:none;padding:0;caret-color:var(--accent)}
+.item{background:var(--surface);border-radius:var(--r);padding:12px 14px;position:relative}
+.item-body{display:flex;gap:12px}
+.item-thumb{width:88px;min-height:96px;border-radius:14px;flex:none;align-self:stretch;overflow:hidden}
+.item-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.item .name{width:100%;font-size:15.5px;font-weight:600;background:transparent;border:none;padding:0 26px 0 0;caret-color:var(--accent)}
 .item .meta{font-size:11.5px;color:var(--muted);margin-top:2px}
-.x{width:30px;height:30px;flex:none;border-radius:999px;border:none;background:transparent;color:rgba(32,30,29,.45);font-size:15px}
+.x{position:absolute;top:10px;right:10px;width:30px;height:30px;flex:none;border-radius:999px;border:none;background:transparent;color:rgba(32,30,29,.45);font-size:15px}
 .step{display:flex;align-items:center;gap:8px}
 .step button{width:46px;height:46px;flex:none;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:22px;line-height:1}
 .step button.p{background:var(--accent);color:var(--bg);border-color:transparent}
 .step button.p2{background:var(--sage);color:var(--sage-100);border-color:transparent}
-.step input{flex:1;min-width:0;width:0;height:46px;text-align:center;font-size:19px;font-weight:700;
+.step input{flex:none;width:64px;height:46px;text-align:center;font-size:19px;font-weight:700;
   background:var(--bg);border:1px solid var(--line);border-radius:999px}
-.step .u{flex:none;font-size:12.5px;color:var(--muted);min-width:58px;text-align:center}
+.step .u{flex:none;font-size:12.5px;color:var(--muted);min-width:58px;text-align:right;margin-left:auto}
 .calc{font-size:12.5px;color:var(--accent-700);background:var(--accent-100);border-radius:999px;padding:6px 14px;align-self:flex-start}
 
 /* sticky action bar */
@@ -290,7 +293,7 @@ let products = [], brands = [];
 let stockTransfers = [];
 let screen = 'home', store = STORES[0];
 let addDraft = [], sendDraft = [], nextK = 1;
-let stockBrandFilter = 'all', stockLowOnly = false;
+let stockBrandFilter = 'all', stockLowOnly = false, stockOutOnly = false;
 let seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
 
 const $  = (s, r=document) => r.querySelector(s);
@@ -305,6 +308,9 @@ const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateStrin
 // бүтэн тайлбар тул, өмнө нь бодит тоо (12, 2 гэх мэт) нэмэхэд "12 1 ширхэг"
 // болж хос тоо гардаг — тэргүүн "1 "-г хасаад цэвэр нэрийг л үлдээнэ
 const unitWord = (label, fallback) => String(label || '').replace(/^1\s+/, '').trim() || fallback;
+const productThumb = (p, size=40) => p.images && p.images[0]
+  ? `<img src="${p.images[0]}" style="width:${size}px;height:${size}px;border-radius:10px;object-fit:cover;flex-shrink:0">`
+  : `<div style="width:${size}px;height:${size}px;border-radius:10px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))"></div>`;
 
 /* Гар утасны дэлгэцийн гар (keyboard) нээгдэхэд доод tab bar/action bar-ыг
    гарын дор бүрхэгдэхээс сэргийлж, gарын өндрөөр дээшлүүлнэ */
@@ -390,31 +396,35 @@ function go(s){ screen = s; render(); window.scrollTo({top:0}); }
 function draftRow(r){
   const p = prod(r.productId);
   const meta = p
-    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}`
+    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}`
     : '';
+  const thumbImg = p && p.images && p.images[0]
+    ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block">`
+    : '';
+  const thumb = p ? `<div class="item-thumb" style="background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))">${thumbImg}</div>` : '';
   return `<div class="item" data-k="${r.k}">
-    <div class="top">
-      <div style="flex:1;min-width:0">
+    <button class="x" data-f="del" title="Устгах">✕</button>
+    <div class="item-body">
+      ${thumb}
+      <div class="item-info">
         <div class="name">${esc(r.name)}</div>
         <div class="meta">${esc(meta)}</div>
+        ${p && hasBox(p) ? `
+        <div class="step">
+          <button data-f="dec-case">−</button>
+          <input inputmode="numeric" value="${r.cases}" data-f="cases" />
+          <button class="p2" data-f="inc-case">+</button>
+          <span class="u">${unitWord(p.box_label, 'хайрцаг')}</span>
+        </div>` : ''}
+        ${p && hasUnit(p) ? `
+        <div class="step">
+          <button data-f="dec-extra">−</button>
+          <input inputmode="numeric" value="${r.extra}" data-f="extra" />
+          <button class="p" data-f="inc-extra">+</button>
+          <span class="u">${unitWord(p.unit_label, 'ширхэг')}</span>
+        </div>` : ''}
       </div>
-      <button class="x" data-f="del" title="Устгах">✕</button>
     </div>
-    ${p && hasBox(p) ? `
-    <div class="step">
-      <button data-f="dec-case">−</button>
-      <input inputmode="numeric" value="${r.cases}" data-f="cases" />
-      <button class="p2" data-f="inc-case">+</button>
-      <span class="u">${unitWord(p.box_label, 'хайрцаг')}</span>
-    </div>` : ''}
-    ${p && hasUnit(p) ? `
-    <div class="step">
-      <button data-f="dec-extra">−</button>
-      <input inputmode="numeric" value="${r.extra}" data-f="extra" />
-      <button class="p" data-f="inc-extra">+</button>
-      <span class="u">${unitWord(p.unit_label, 'ширхэг')}</span>
-    </div>` : ''}
-
   </div>`;
 }
 function bindDraft(container, listOf){
@@ -446,9 +456,10 @@ function results(q, mode){
   const hits = products.filter(p => (p.name + ' ' + brandName(p)).toLowerCase().includes(s)).slice(0,6);
   if (!hits.length) return `<div style="padding:14px;font-size:13.5px" class="muted">Бараа олдсонгүй.</div>`;
   return hits.map(p => `<button class="pick" data-pick="${p.id}" data-mode="${mode}">
+    ${productThumb(p, 36)}
     <div style="flex:1;min-width:0">
       <div class="n" style="font-weight:600">${esc(p.name)}</div>
-      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' / ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}</div>
+      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}</div>
     </div><div class="plus">+</div></button>`).join('');
 }
 document.addEventListener('click', e => {
@@ -526,6 +537,7 @@ function renderStockFilters(){
   ).join('');
   $('#stock-filters').innerHTML =
       `<button class="chip" data-low-toggle aria-pressed="${stockLowOnly}">⚠ Бага үлдэгдэл</button>` +
+      `<button class="chip" data-out-toggle aria-pressed="${stockOutOnly}">✕ Дууссан</button>` +
     `<button class="chip" data-brand="all" aria-pressed="${stockBrandFilter==='all'}">Бүх брэнд</button>${brandChips}` ;
 }
 
@@ -585,15 +597,17 @@ function render(){
     .filter(p => !q || (p.name + ' ' + brandName(p)).toLowerCase().includes(q))
     .filter(p => stockBrandFilter === 'all' || p.brand_id === stockBrandFilter)
     .filter(p => !stockLowOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) < LOW))
-    .map(p => { const n = p.warehouse_unit_stock || 0, low = hasUnit(p) && n < LOW;
+    .filter(p => !stockOutOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) === 0))
+    .map(p => { const n = p.warehouse_unit_stock || 0, out = hasUnit(p) && n === 0, low = !out && hasUnit(p) && n < LOW;
       return `<div class="line">
+        ${productThumb(p)}
         <div style="flex:1;min-width:0"><div class="n">${esc(p.name)}</div>
         <div class="m">${esc(brandName(p))}</div></div>
         <div style="text-align:right;line-height:1.15">
-          <div class="num ${low?'low':''}">${n}</div>
-          <div class="m">${esc(unitWord(p.unit_label,'ш'))}${hasBox(p) ? ' · ' + (p.warehouse_box_stock||0) + ' ' + esc(unitWord(p.box_label,'хайрцаг')) : ''}</div>
+          <div class="num ${low||out?'low':''}">${n}</div>
+          <div class="m">${esc(unitWord(p.unit_label,'ш'))}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + esc(unitWord(p.box_label,'хайрцаг')) : ''}</div>
         </div>
-        ${low ? '<span class="tag t-low">бага</span>' : ''}
+        ${out ? '<span class="tag t-out">дууссан</span>' : (low ? '<span class="tag t-low">бага</span>' : '')}
       </div>`; }).join('') || `<div class="empty">Бараа алга</div>`;
 
   /* Түүх */
@@ -626,6 +640,8 @@ document.addEventListener('click', e => {
   if (bc) { stockBrandFilter = bc.dataset.brand === 'all' ? 'all' : +bc.dataset.brand; render(); }
   const lt = e.target.closest('[data-low-toggle]');
   if (lt) { stockLowOnly = !stockLowOnly; render(); }
+  const ot = e.target.closest('[data-out-toggle]');
+  if (ot) { stockOutOnly = !stockOutOnly; render(); }
 });
 bindDraft($('#add-list'),  () => addDraft);
 bindDraft($('#send-list'), () => sendDraft);
