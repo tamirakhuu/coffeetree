@@ -3,15 +3,34 @@ import { supabase } from "./supabaseClient.js";
 export const DELIVERY_FEE = 15000;
 export const FREE_DELIVERY_THRESHOLD = 500000;
 
-export function shapeProduct(r) {
+// Хямдралын хугацаа (discount_ends_at) өнгөрсөн бол тухайн барааг цаашид
+// "хямдралтай" гэж тооцохгүй — шошгыг унтраагаад, хямдрахаас өмнөх үнээр
+// (originalPrice) борлуулна. Аль хэдийн шинэчлэгдсэн (tag аль хэдийн null)
+// бол өөрчлөлтгүйгээр буцаана (идемпотент) — fetchBootstrap-с ирэх шинэ
+// мөрөнд (shapeProduct дотор), мөн аль хэдийн ачаалагдсан төлөвт (App.jsx-ийн
+// цаг тутмын шалгалт, хуудас refresh хийхгүйгээр) хоёуланд нь ашиглагдана.
+export function revertExpiredDiscount(p) {
+  const expired = p.tag === "хямдралтай" && p.discountEndsAt &&
+    new Date(p.discountEndsAt).getTime() <= Date.now();
+  if (!expired) return p;
   return {
+    ...p,
+    tag: null,
+    discountEndsAt: null,
+    unit: { ...p.unit, price: p.unit.originalPrice || p.unit.price, originalPrice: null },
+    box: { ...p.box, price: p.box.originalPrice || p.box.price, originalPrice: null },
+  };
+}
+
+export function shapeProduct(r) {
+  return revertExpiredDiscount({
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
     origin: r.origin, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
     discountEndsAt: r.discount_ends_at || null,
     unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.warehouse_unit_stock },
     box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.warehouse_box_stock },
     bulkQty: r.bulk_qty || null,
-  };
+  });
 }
 
 // Барааг ширхэгээр авахад, тоо нь тухайн барааны "бөөний тоо"-нд хүрвэл

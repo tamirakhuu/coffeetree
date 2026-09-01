@@ -6,7 +6,7 @@ import {
   Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Eye, EyeOff, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
+import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount, sendPasswordReset, updatePassword } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
@@ -123,9 +123,11 @@ const formatCountdown = (endsAt) => {
   const days = Math.floor(diff / 86400000);
   const hours = Math.floor((diff % 86400000) / 3600000);
   const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
   if (days > 0) return `${days} өдөр ${hours} цаг`;
   if (hours > 0) return `${hours} цаг ${mins} мин`;
-  return `${mins} мин`;
+  if (mins > 0) return `${mins} мин`;
+  return `${secs} сек`;
 };
 
 export const DataContext = createContext({ categories: [], brands: [], products: [] });
@@ -479,11 +481,15 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
               <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
             </button>
             {user ? (
-              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={{
-                width: 30, height: 30, borderRadius: "50%", background: T.cherry, color: "#fff",
-                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
+              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={iconBtnStyle}>
+                <span style={{
+                  width: 19, height: 19, display: "block", backgroundColor: T.cream, borderRadius: 999,
+                  WebkitMaskImage: "url(/profile.svg)", maskImage: "url(/profile.svg)",
+                  WebkitMaskSize: "contain", maskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center", maskPosition: "center",
+                }} />
+              </button>
             ) : (
               <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
             )}
@@ -1403,7 +1409,7 @@ function ResetPasswordModal({ open, onClose }) {
 }
 const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none", boxSizing: "border-box" };
 const fieldLabelStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5 };
-const profileInputStyle = { ...inputStyle, width: "100%", background: T.cream, border: `1.5px solid ${T.line}` };
+const profileInputStyle = { ...inputStyle, width: "100%", background: T.paper, border: `1.5px solid ${T.line}` };
 const eyeBtnStyle = {
   position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
   background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
@@ -1523,10 +1529,9 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const newProducts = products.filter((p) => p.tag === "шинэ").slice(0, 4);
   const heroSlides = products.filter((p) => p.tag === "хямдралтай" && p.images && p.images.length > 0).slice(0, 6);
   const [heroIndex, setHeroIndex] = useState(0);
-  // Хямдралын үлдсэн хугацааг минут тутам шинэчилж харуулна
   const [, forceTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => forceTick((x) => x + 1), 60000);
+    const t = setInterval(() => forceTick((x) => x + 1), 1000);
     return () => clearInterval(t);
   }, []);
   return (
@@ -1716,7 +1721,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
             </div>
           </div>
           {form.deliveryMethod === "delivery" && (
-            <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} style={{ ...inputStyle, resize: "none", fontFamily: "'Ubuntu', sans-serif" }} />
+            <textarea placeholder="Дэлгэрэнгүй хаяг" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={4} maxLength={200} style={{ ...inputStyle, resize: "none", fontFamily: "'Ubuntu', sans-serif" }} />
           )}
 
           <div>
@@ -2008,7 +2013,7 @@ function ProfileInfoSection({ user, onUserUpdate }) {
           <div style={fieldLabelStyle}>Утасны дугаар</div>
           <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={profileInputStyle} />
         </div>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>Имэйл: {user.email}</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>Имэйл: {user.email}</div>
         {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
         {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
         <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
@@ -2045,7 +2050,7 @@ function ProfileAddressSection({ user, onUserUpdate }) {
         <div>
           <div style={fieldLabelStyle}>Дэлгэрэнгүй хаяг</div>
           <textarea placeholder="Дүүрэг, хороо, байр, орц г.м" value={address}
-            onChange={(e) => setAddress(e.target.value)} rows={4} style={{ ...profileInputStyle, resize: "vertical" }} />
+            onChange={(e) => setAddress(e.target.value)} rows={4} maxLength={200} style={{ ...profileInputStyle, resize: "none" }} />
         </div>
 
         {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
@@ -2548,6 +2553,24 @@ export default function App() {
         }
       });
     return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Mobile/tab background руу орох үед browser нь setInterval-ыг удаашруулдаг
+  // (throttle) тул tab дахин идэвхжих бүрд шууд шалгаж хуучирсан үзүүлэлт
+  // үлдэхээс сэргийлнэ
+  useEffect(() => {
+    const checkExpired = () => {
+      setData((prev) => {
+        const next = prev.products.map(revertExpiredDiscount);
+        return next.some((p, i) => p !== prev.products[i]) ? { ...prev, products: next } : prev;
+      });
+    };
+    const t = setInterval(checkExpired, 5000);
+    document.addEventListener("visibilitychange", checkExpired);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", checkExpired);
+    };
   }, []);
 
   const loadCartWishlist = (key) => {
