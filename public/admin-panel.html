@@ -1267,14 +1267,9 @@ function renderBrands() {
     const count = products.filter(p => p.brand_id === b.id).length;
     const logo = b.logo
       ? `<img src="${b.logo}" style="width:28px;height:28px;border-radius:6px;object-fit:contain;background:var(--card);border:1px solid var(--line);vertical-align:middle;margin-right:8px">`
-      : `<span style="display:inline-flex;width:28px;height:28px;border-radius:6px;background:var(--muted);color:var(--ink-soft);align-items:center;justify-content:center;font-size:11px;font-weight:700;vertical-align:middle;margin-right:8px">${(b.name||'?')[0].toUpperCase()}</span>`;
+      : '';
     return `<tr><td data-th="Брэнд">${logo}<b>${b.name}</b></td><td data-th="Бараа тоо">${count}</td><td data-th="Үйлдэл"><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="openEditBrand(${b.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteBrand(${b.id})">Устгах</button></div></td></tr>`;
   }).join('') || `<tr><td colspan="3" class="empty">Брэнд алга байна</td></tr>`;
-}
-let brandLogoFile = null;
-function brandLogoPreviewHtml(logo) {
-  if (logo) return `<img src="${logo}" style="width:100%;height:100%;object-fit:contain">`;
-  return `<span style="font-size:11px;color:var(--ink-soft)">Лого алга</span>`;
 }
 function openAddBrand() {
   openBrandModal(null);
@@ -1285,27 +1280,11 @@ function openEditBrand(id) {
   openBrandModal(b);
 }
 function openBrandModal(b) {
-  brandLogoFile = null;
   openModal(b ? 'Брэнд засах' : 'Брэнд нэмэх', `
     <div class="form-grid">
       <div class="fg"><label>Брэндийн нэр</label><input id="bf-name" placeholder="жишээ: Nescafé" value="${b?.name || ''}"></div>
-      <div class="fg full">
-        <label>Лого</label>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div id="bf-logo-preview" style="width:52px;height:52px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;background:var(--card);overflow:hidden;flex-shrink:0">${brandLogoPreviewHtml(b?.logo)}</div>
-          <div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('bf-logo-file').click()">Лого зураг сонгох</button>
-            <input type="file" id="bf-logo-file" accept="image/svg+xml,image/png,image/jpeg,image/webp" style="display:none" onchange="onBrandLogoFileSelected(this.files[0])">
-          </div>
-        </div>
-      </div>
     </div>`,
     `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveBrand(${b ? b.id : 'null'})">${b ? 'Хадгалах' : 'Нэмэх'}</button>`);
-}
-function onBrandLogoFileSelected(file) {
-  if (!file) return;
-  brandLogoFile = file;
-  document.getElementById('bf-logo-preview').innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:contain">`;
 }
 async function saveBrand(id) {
   const name = document.getElementById('bf-name').value.trim();
@@ -1314,14 +1293,6 @@ async function saveBrand(id) {
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Хадгалж байна…'; }
   try {
     const row = { name };
-    if (brandLogoFile) {
-      const ext = (brandLogoFile.name.split('.').pop() || 'png').toLowerCase();
-      const path = `brands/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, brandLogoFile, { contentType: brandLogoFile.type });
-      if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
-      const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
-      row.logo = pub.publicUrl;
-    }
     const { error } = id ? await sb.from('brands').update(row).eq('id', id) : await sb.from('brands').insert(row);
     if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
     closeModal();

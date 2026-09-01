@@ -285,9 +285,7 @@ function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCa
               onMouseEnter={(e) => { e.currentTarget.style.background = T.ink; e.currentTarget.style.color = T.cream; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = T.ink; }}
             >
-              {b.logo
-                ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
-                : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
+              {b.logo && <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />}
               {b.name}
             </button>
           ))}
@@ -378,9 +376,7 @@ function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBra
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px" }}>
               {brands.map((b) => (
                 <button key={b.id} onClick={() => onGoBrand(b.id)} style={brandBtnStyle}>
-                  {b.logo
-                    ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
-                    : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
+                  {b.logo && <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />}
                   {b.name}
                 </button>
               ))}
@@ -481,15 +477,11 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
               <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
             </button>
             {user ? (
-              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={iconBtnStyle}>
-                <span style={{
-                  width: 19, height: 19, display: "block", backgroundColor: T.cream, borderRadius: 999,
-                  WebkitMaskImage: "url(/profile.svg)", maskImage: "url(/profile.svg)",
-                  WebkitMaskSize: "contain", maskSize: "contain",
-                  WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat",
-                  WebkitMaskPosition: "center", maskPosition: "center",
-                }} />
-              </button>
+              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={{
+                width: 30, height: 30, borderRadius: "50%", background: T.grey, color: "#fff",
+                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
             ) : (
               <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
             )}
