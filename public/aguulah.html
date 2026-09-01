@@ -35,6 +35,8 @@ a{color:var(--accent-700)}
 .brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);
   display:grid;place-items:center;font-family:var(--font-h);font-size:17px;overflow:hidden}
 .brand img{width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box}
+#avatar,#login-brand{background:transparent}
+#avatar img,#login-brand img{padding:0}
 #avatar img{padding:4px}
 .who{min-width:0;line-height:1.2}
 .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -183,7 +185,7 @@ main{padding:16px 0 112px}
 <div class="login" id="login">
   <div class="blob"></div>
   <div class="z">
-    <div class="brand" style="width:56px;height:56px;margin-bottom:24px"><img src="cuppa-logo1.png" alt="CUPPA"></div>
+    <div class="brand" id="login-brand" style="width:196px;height:196px;margin-bottom:20px"><img src="cuppa-logo1.png" alt="CUPPA"></div>
     <h1>Агуулахын<br />бүртгэл</h1>
   </div>
   <div class="field"><label for="li-email">Ажилтны имэйл</label><input class="input" id="li-email" type="email" placeholder="И-мэйл хаяг" autocomplete="username" /></div>
