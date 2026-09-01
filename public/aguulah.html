@@ -473,7 +473,7 @@ function subscribeTransfers(){
       if (idx !== -1) stockTransfers[idx] = updated; else stockTransfers.unshift(updated);
       if (wasPending && updated.status === 'received') {
         playNotifSound();
-        toast(`✅ "${updated.product_name}" админ хүлээн авлаа`);
+        toast(`"${updated.product_name}" админ хүлээн авлаа`);
       }
       render();
     })
@@ -610,7 +610,7 @@ $('#add-commit').addEventListener('click', async () => {
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message); return; }
   addDraft = []; screen = 'stock'; await loadAll();
-  toast('✅ Агуулахын үлдэгдэлд нэмэгдлээ');
+  toast('Агуулахын үлдэгдэлд нэмэгдлээ');
 });
 
 $('#send-commit').addEventListener('click', async () => {
@@ -630,7 +630,7 @@ $('#send-commit').addEventListener('click', async () => {
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message); return; }
   sendDraft = []; screen = 'history'; await loadAll();
-  toast('✅ Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
+  toast('Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
 });
 
 /* ── РЕНДЕР ──────────────────────────────────────────────── */
