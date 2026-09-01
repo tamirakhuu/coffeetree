@@ -462,7 +462,10 @@ tr:hover td{background:rgba(255,255,255,.4)}
           <div class="card-title">Хүлээгдэж буй таталтууд</div>
           <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй бараанууд. Check-лэгдээгүй бараа агуулах руу автоматаар буцаагдана.</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="receivePendingBatch()">Хүлээн авах</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="printPendingList()">Хэвлэх</button>
+          <button class="btn btn-primary btn-sm" onclick="openReceiveConfirm()">Хүлээн авах</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table><thead><tr><th style="width:36px"></th><th>Огноо</th><th>Бараа</th><th>Брэнд</th><th>Чиглэл</th><th>Тоо</th><th>Илгээсэн</th></tr></thead><tbody id="pendingTransfersTable"></tbody></table>
@@ -1556,21 +1559,83 @@ function renderPendingTransfers() {
   }).join('');
 }
 
-async function receivePendingBatch() {
+// Check-лэгдсэн (хүлээн авах) болон check-лэгдээгүй (агуулах руу буцах)
+// pending мөрүүдийг бодит transfer объект хэлбэрээр буцаана — жагсаалт
+// харуулах (модал/хэвлэх) болон бодитоор RPC дуудах хоёуланд нь ашиглана
+function getPendingSelection() {
   const checks = [...document.querySelectorAll('#pendingTransfersTable .pending-check')];
-  if (!checks.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
-  const accepted = checks.filter(c => c.checked).map(c => +c.dataset.id);
-  const rejected = checks.filter(c => !c.checked).map(c => +c.dataset.id);
-  if (rejected.length && !confirm(`${rejected.length} бараа хүлээн авагдаагүй тул агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
+  const acceptedIds = checks.filter(c => c.checked).map(c => +c.dataset.id);
+  const rejectedIds = checks.filter(c => !c.checked).map(c => +c.dataset.id);
+  const pending = stockTransfers.filter(t => t.status === 'pending');
+  return {
+    accepted: pending.filter(t => acceptedIds.includes(t.id)),
+    rejected: pending.filter(t => rejectedIds.includes(t.id)),
+  };
+}
 
+// "Хүлээн авах" дархад шууд RPC дуудахын оронд эхлээд ирэх ёстой барааны
+// жагсаалтыг харуулж, админ ирсэн бараатай нүдээр тулгаад л баталгаажуулдаг болгоно
+function openReceiveConfirm() {
+  const { accepted, rejected } = getPendingSelection();
+  if (!accepted.length && !rejected.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
+  const rows = accepted.map(t => {
+    const p = products.find(x => x.id === t.product_id);
+    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+    return `<tr>
+      <td>${t.product_name}</td>
+      <td>${brandName}</td>
+      <td class="mono">${t.qty} ${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'}</td>
+      <td>${directionBadge(t.direction)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4" class="empty">Баталгаажуулах бараа алга</td></tr>`;
+  const rejectedNote = rejected.length
+    ? `<p style="font-size:12px;color:var(--red);margin-top:10px">⚠ ${rejected.length} бараа check хийгдээгүй тул агуулах руу буцна.</p>`
+    : '';
+  openModal('Барааг хүлээн авах баталгаажуулалт', `
+    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Ирсэн бараатай тулгаад доорх ${accepted.length} мөрийг баталгаажуулна уу.</p>
+    <div class="table-wrap"><table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Тоо</th><th>Чиглэл</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${rejectedNote}
+  `, `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="confirmReceivePending()">Хүлээн авахыг баталгаажуулах</button>`, true);
+}
+
+async function confirmReceivePending() {
+  const { accepted, rejected } = getPendingSelection();
+  closeModal();
   const results = await Promise.all([
-    ...accepted.map(id => sb.rpc('admin_receive_transfer', { p_transfer_id: id })),
-    ...rejected.map(id => sb.rpc('admin_reject_transfer', { p_transfer_id: id })),
+    ...accepted.map(t => sb.rpc('admin_receive_transfer', { p_transfer_id: t.id })),
+    ...rejected.map(t => sb.rpc('admin_reject_transfer', { p_transfer_id: t.id })),
   ]);
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
   else { toast(`✅ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
   await loadAll();
+}
+
+// Ирсэн барааг биечлэн тоолж тулгахад зориулж, хүлээгдэж буй бүх барааны
+// жагсаалтыг (checkbox-ийн төлөвөөс үл хамааран) хэвлэнэ — checklist хэлбэрээр
+function printPendingList() {
+  const pending = stockTransfers.filter(t => t.status === 'pending').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  if (!pending.length) { toast('Хүлээгдэж буй бараа алга байна', 'err'); return; }
+  const rows = pending.map(t => {
+    const p = products.find(x => x.id === t.product_id);
+    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+    return `<div class="receipt-item">
+      <div class="receipt-item-title"><span>☐ ${t.product_name}</span><span>${t.qty} ${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'}</span></div>
+      <div class="receipt-item-meta">${brandName}${t.store_name ? ' · ' + t.store_name : ''} · ${t.admin_email || '-'}</div>
+    </div>`;
+  }).join('');
+  const html = `
+    <div style="text-align:center;font-weight:700;font-size:16px;margin-bottom:4px">Хүлээн авах бараа</div>
+    <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
+    <div class="receipt-hr"></div>
+    ${rows}
+    <div class="receipt-hr"></div>
+    <div style="font-size:10.5px;text-align:center;margin-top:8px">Нийт ${pending.length} бараа</div>`;
+  document.getElementById('printReceipt').innerHTML = html;
+  document.body.classList.add('printing-receipt');
+  setPrintPageSize('auto', '10mm');
+  window.print();
+  setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
 }
 
 function renderTransferTotals() {

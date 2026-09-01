@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Podkova:wght@600;700;800&family=Rubik:wght@400;500;600;700&display=swap" />
 <style>
 :root{
-  --bg:#f5ead8; --surface:#ebddc5; --text:#201e1d;
+  --bg:#f5ead8; --surface:#ffffff; --text:#201e1d;
   --accent:#c67139; --accent-600:#b2622d; --accent-700:#8c491a; --accent-100:#fff2eb; --accent-200:#ffe1d0;
   --sage:#7a8a5e; --sage-100:#f0fae1; --sage-200:#e1eecc; --sage-800:#3d472b;
   --line:rgba(32,30,29,.16); --muted:rgba(32,30,29,.55);
@@ -37,12 +37,12 @@ a{color:var(--accent-700)}
 .brand img{width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box}
 #avatar,#login-brand{background:transparent}
 #avatar img,#login-brand img{padding:0}
-.who{min-width:0;line-height:1.2}
+.who{min-width:0;line-height:1.2;gap: 54px}
 .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who span{font-size:11.5px;color:var(--muted)}
 .spacer{margin-left:auto}
 main{padding:16px 0 112px}
-.screen{display:flex;flex-direction:column;gap:14px}
+.screen{display:flex;flex-direction:column;gap:14px; margin-top: 10px }
 .head h2{font-size:26px}
 .head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
 
@@ -57,7 +57,7 @@ main{padding:16px 0 112px}
 .btn-2:hover{filter:brightness(.94)}
 .btn-ghost{background:transparent;color:var(--accent-700);border:1px dashed rgba(32,30,29,.28);font-family:var(--font-b);font-weight:600;min-height:44px}
 .btn-ghost:hover{background:var(--accent-100)}
-.btn-line{background:transparent;color:rgba(32,30,29,.7);border:1px solid var(--line);font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
+.btn-line{background:transparent;color:rgba(32,30,29,.7);border: none;font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
 .btn-icon{width:48px;min-height:48px;padding:0;flex:none;background:var(--text);color:var(--bg);font-size:18px}
 .btn-danger{background:#a63a2c;color:#fff2eb}
 .btn-danger:hover{background:#8f2f22}
@@ -73,7 +73,7 @@ main{padding:16px 0 112px}
 .t-low{background:var(--accent-200);color:var(--accent-700)}
 .t-out{background:#f1d9d6;color:#96382c}
 .muted{color:var(--muted)}
-.empty{border:1px dashed rgba(32,30,29,.25);border-radius:var(--r);padding:22px;text-align:center;font-size:13.5px;color:var(--muted)}
+.empty{border:None;border-radius:var(--r);padding:22px;text-align:center;font-size:13.5px;color:var(--muted)}
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;min-height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:12.5px;white-space:nowrap}
@@ -379,6 +379,36 @@ function toast(msg){
   clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
 }
 
+/* ── ДУУТ МЭДЭГДЭЛ ───────────────────────────────────────── */
+// Тусдаа аудио файл шаардахгүйгээр Web Audio API-аар товч 2 өнгийн жингэнэх
+// дуу үүсгэнэ. Browser-ууд хэрэглэгчийн харилцан үйлдэлгүйгээр дуу тоглуулахыг
+// хориглодог (autoplay policy) тул AudioContext-ийг анхны click дээр л үүсгэж/
+// сэргээж, дараа нь realtime мэдэгдэл ирэхэд шууд ашиглана
+let audioCtx = null;
+function ensureAudioCtx(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+document.addEventListener('click', () => ensureAudioCtx(), { once: true });
+
+function playNotifSound(){
+  try {
+    const ctx = ensureAudioCtx();
+    const now = ctx.currentTime;
+    [880, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      const start = now + i * 0.12;
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + 0.4);
+    });
+  } catch (e) { console.error('Дуу тоглуулахад алдаа гарлаа:', e); }
+}
+
 /* ── НЭВТРЭХ ─────────────────────────────────────────────── */
 async function doLogin(){
   const email = $('#li-email').value.trim();
@@ -424,6 +454,30 @@ async function checkAuth(){
   $('#w-name').textContent = worker.email;
   $('#w-phone').textContent = 'Агуулахын ажилтан';
   await loadAll();
+  subscribeTransfers();
+}
+
+// Админ "Хүлээн авах" дарж stock_transfers мөрийг status='received' болгоход
+// (admin_receive_transfer RPC) энэ хуудас руу real-time мэдэгдэл ирж, дуут
+// дохио гаргана — агуулахын ажилтан дэлгэц дээр байнга хараад суух шаардлагагүй
+function subscribeTransfers(){
+  sb.channel('stock-transfers-notify')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stock_transfers' }, (payload) => {
+      const updated = payload.new;
+      const idx = stockTransfers.findIndex(t => t.id === updated.id);
+      // Realtime-ийн payload.old нь зөвхөн id агуулдаг (REPLICA IDENTITY full
+      // биш) тул хуучин status-ыг DB-ийн payload-с биш локал state-с авна —
+      // энэ хуудас өмнө нь loadAll()-оор тухайн мөрийг pending төлөвтэй нь
+      // аль хэдийн ачаалсан байх ёстой тул энэ харьцуулалт найдвартай
+      const wasPending = idx !== -1 && stockTransfers[idx].status === 'pending';
+      if (idx !== -1) stockTransfers[idx] = updated; else stockTransfers.unshift(updated);
+      if (wasPending && updated.status === 'received') {
+        playNotifSound();
+        toast(`✅ "${updated.product_name}" админ хүлээн авлаа`);
+      }
+      render();
+    })
+    .subscribe();
 }
 
 async function loadAll(){
