@@ -376,7 +376,9 @@ function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBra
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px" }}>
               {brands.map((b) => (
                 <button key={b.id} onClick={() => onGoBrand(b.id)} style={brandBtnStyle}>
-                  {b.logo && <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />}
+                  {b.logo
+                    ? <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />
+                    : <span style={{ width: 18, height: 18, borderRadius: 4, background: T.line, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: T.inkSoft }}>{(b.name || "?")[0].toUpperCase()}</span>}
                   {b.name}
                 </button>
               ))}

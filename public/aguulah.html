@@ -617,8 +617,6 @@ $('#send-commit').addEventListener('click', async () => {
   const rows = sendDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
   if (!rows.length) return toast('Бараа болон тоог оруулна уу');
   const btn = $('#send-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
-  // Нэг "Илгээх" дарахад үүссэн бүх мөрийг ижил batchId-аар холбож, admin
-  // талд тус тусдаа багц болгон харагдуулна (өмнөх/дараагийн илгээлттэй холилдохгүй)
   const batchId = (crypto.randomUUID ? crypto.randomUUID() : 'b' + Date.now() + Math.random().toString(36).slice(2));
   const calls = [];
   rows.forEach(r => {

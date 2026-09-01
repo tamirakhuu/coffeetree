@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/png" href="favicon.png" />
 <title>CuppA — ADMIN</title>
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --ink:#241C15;--ink-soft:#5C4E3E;--paper:#ffffff;--card:#FBF5E9;--line:#D9C9A8;
+  --ink:#241C15;--ink-soft:#5C4E3E;--paper:#FBF5E9;--card:#ffffff;--line:#646363;
   --cherry:#a86d51;--cherry-dark:#5C2222;--moss:#48583A;--gold:#B8862E;--cream:#F6EFE0;
   --red:#B3261E;--red-light:#FBE9E7;--green-light:#E7EEDF;
   --radius:12px;--sh:0 1px 3px rgba(36,28,20,.08),0 1px 2px rgba(36,28,20,.05);
 }
 html{overflow-x:hidden}
 body{font-family:'Ubuntu',sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;touch-action:manipulation}
-.mono{font-family:'Ubuntu',sans-serif}
+.mono{font-family:'Nunito Sans',sans-serif}
 .login-screen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:500}
 .login-card{background:var(--paper);border-radius:16px;padding:38px 34px;width:360px;max-width:90vw}
 .login-logo{font-family:'Ubuntu',sans-serif;font-weight:700;font-size:28px;color:var(--ink);margin-bottom:2px}
@@ -56,7 +56,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 @media(max-width:1000px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
 .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--sh)}
-.stat-val{font-family:'Ubuntu',sans-serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.stat-val{font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:2px}
 .stat-label{font-size:12px;color:var(--ink-soft)}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:.03em}
 .badge.pending{background:#FDF0D5;color:#92600A}
@@ -376,12 +376,12 @@ tr:hover td{background:rgba(255,255,255,.4)}
   </div>
 
   <div class="page" id="page-categories">
-    <div class="page-header"><div><h1>Ангилал</h1><p>Ангилал ба дэд ангилал удирдах</p></div><button class="btn btn-primary" onclick="openAddCategory()">➕ Ангилал нэмэх</button></div>
+    <div class="page-header"><div><h1>Ангилал</h1><p>Ангилал ба дэд ангилал удирдах</p></div><button class="btn btn-primary" onclick="openAddCategory()">+ Ангилал нэмэх</button></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Ангилал</th><th>Дэд ангилал</th><th>Бараа тоо</th><th>Үйлдэл</th></tr></thead><tbody id="categoryTable"></tbody></table></div></div>
   </div>
 
   <div class="page" id="page-brands">
-    <div class="page-header"><div><h1>Брэнд</h1><p>Брэндийн жагсаалт</p></div><button class="btn btn-primary" onclick="openAddBrand()">➕ Брэнд нэмэх</button></div>
+    <div class="page-header"><div><h1>Брэнд</h1><p>Брэндийн жагсаалт</p></div><button class="btn btn-primary" onclick="openAddBrand()">+ Брэнд нэмэх</button></div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Брэнд</th><th>Бараа тоо</th><th>Үйлдэл</th></tr></thead><tbody id="brandTable"></tbody></table></div></div>
   </div>
 
@@ -1559,83 +1559,21 @@ function renderPendingTransfers() {
   }).join('');
 }
 
-// Check-лэгдсэн (хүлээн авах) болон check-лэгдээгүй (агуулах руу буцах)
-// pending мөрүүдийг бодит transfer объект хэлбэрээр буцаана — жагсаалт
-// харуулах (модал/хэвлэх) болон бодитоор RPC дуудах хоёуланд нь ашиглана
-function getPendingSelection() {
+async function receivePendingBatch() {
   const checks = [...document.querySelectorAll('#pendingTransfersTable .pending-check')];
-  const acceptedIds = checks.filter(c => c.checked).map(c => +c.dataset.id);
-  const rejectedIds = checks.filter(c => !c.checked).map(c => +c.dataset.id);
-  const pending = stockTransfers.filter(t => t.status === 'pending');
-  return {
-    accepted: pending.filter(t => acceptedIds.includes(t.id)),
-    rejected: pending.filter(t => rejectedIds.includes(t.id)),
-  };
-}
+  if (!checks.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
+  const accepted = checks.filter(c => c.checked).map(c => +c.dataset.id);
+  const rejected = checks.filter(c => !c.checked).map(c => +c.dataset.id);
+  if (rejected.length && !confirm(`${rejected.length} бараа хүлээн авагдаагүй тул агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
 
-// "Хүлээн авах" дархад шууд RPC дуудахын оронд эхлээд ирэх ёстой барааны
-// жагсаалтыг харуулж, админ ирсэн бараатай нүдээр тулгаад л баталгаажуулдаг болгоно
-function openReceiveConfirm() {
-  const { accepted, rejected } = getPendingSelection();
-  if (!accepted.length && !rejected.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
-  const rows = accepted.map(t => {
-    const p = products.find(x => x.id === t.product_id);
-    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    return `<tr>
-      <td>${t.product_name}</td>
-      <td>${brandName}</td>
-      <td class="mono">${t.qty} ${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'}</td>
-      <td>${directionBadge(t.direction)}</td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="4" class="empty">Баталгаажуулах бараа алга</td></tr>`;
-  const rejectedNote = rejected.length
-    ? `<p style="font-size:12px;color:var(--red);margin-top:10px">⚠ ${rejected.length} бараа check хийгдээгүй тул агуулах руу буцна.</p>`
-    : '';
-  openModal('Барааг хүлээн авах баталгаажуулалт', `
-    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Ирсэн бараатай тулгаад доорх ${accepted.length} мөрийг баталгаажуулна уу.</p>
-    <div class="table-wrap"><table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Тоо</th><th>Чиглэл</th></tr></thead><tbody>${rows}</tbody></table></div>
-    ${rejectedNote}
-  `, `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="confirmReceivePending()">Хүлээн авахыг баталгаажуулах</button>`, true);
-}
-
-async function confirmReceivePending() {
-  const { accepted, rejected } = getPendingSelection();
-  closeModal();
   const results = await Promise.all([
-    ...accepted.map(t => sb.rpc('admin_receive_transfer', { p_transfer_id: t.id })),
-    ...rejected.map(t => sb.rpc('admin_reject_transfer', { p_transfer_id: t.id })),
+    ...accepted.map(id => sb.rpc('admin_receive_transfer', { p_transfer_id: id })),
+    ...rejected.map(id => sb.rpc('admin_reject_transfer', { p_transfer_id: id })),
   ]);
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
   else { toast(`✅ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
   await loadAll();
-}
-
-// Ирсэн барааг биечлэн тоолж тулгахад зориулж, хүлээгдэж буй бүх барааны
-// жагсаалтыг (checkbox-ийн төлөвөөс үл хамааран) хэвлэнэ — checklist хэлбэрээр
-function printPendingList() {
-  const pending = stockTransfers.filter(t => t.status === 'pending').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  if (!pending.length) { toast('Хүлээгдэж буй бараа алга байна', 'err'); return; }
-  const rows = pending.map(t => {
-    const p = products.find(x => x.id === t.product_id);
-    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    return `<div class="receipt-item">
-      <div class="receipt-item-title"><span>☐ ${t.product_name}</span><span>${t.qty} ${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'}</span></div>
-      <div class="receipt-item-meta">${brandName}${t.store_name ? ' · ' + t.store_name : ''} · ${t.admin_email || '-'}</div>
-    </div>`;
-  }).join('');
-  const html = `
-    <div style="text-align:center;font-weight:700;font-size:16px;margin-bottom:4px">Хүлээн авах бараа</div>
-    <div style="text-align:center;font-size:11px;margin-bottom:10px">${new Date().toLocaleString('mn-MN')}</div>
-    <div class="receipt-hr"></div>
-    ${rows}
-    <div class="receipt-hr"></div>
-    <div style="font-size:10.5px;text-align:center;margin-top:8px">Нийт ${pending.length} бараа</div>`;
-  document.getElementById('printReceipt').innerHTML = html;
-  document.body.classList.add('printing-receipt');
-  setPrintPageSize('auto', '10mm');
-  window.print();
-  setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
 }
 
 function renderTransferTotals() {
