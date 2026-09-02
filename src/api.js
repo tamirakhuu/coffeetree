@@ -151,6 +151,17 @@ export async function submitOrder({ form, cart, products }) {
   return orderNumber;
 }
 
+// Хэрэглэгч бүртгэлгүйгээр утасны дугаараараа захиалгаа хайж хянах —
+// lookup_orders_by_phone нь SECURITY DEFINER тул RLS-ийг тойрч, зөвхөн
+// идэвхтэй (хүлээлгэн өгсөн/хүргэгдсэн болоогүй) захиалгуудыг буцаадаг
+export async function lookupOrdersByPhone({ phone }) {
+  const { data, error } = await supabase.rpc("lookup_orders_by_phone", {
+    p_phone: phone.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
 // дотор, хэзээ ч browser-т ирдэггүй. QPay мерчант эрх (secrets) тохируулаагүй
 // үед Edge Function demo QR буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.

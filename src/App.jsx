@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
+import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
@@ -45,6 +45,7 @@ export function viewFromLocation(pathname, search) {
   if (pathname === "/new") return { name: "new" };
   if (pathname === "/training") return { name: "training" };
   if (pathname === "/discount") return { name: "discounts" };
+  if (pathname === "/order-status") return { name: "order-status" };
   if (pathname === "/checkout") return { name: "checkout" };
   if (pathname === "/wishlist") return { name: "wishlist" };
   if (pathname === "/about") return { name: "about" };
@@ -65,6 +66,7 @@ export function pathForView(view, brands = []) {
     case "new": return "/new";
     case "training": return "/training";
     case "discounts": return "/discount";
+    case "order-status": return "/order-status";
     case "checkout": return "/checkout";
     case "wishlist": return "/wishlist";
     case "about": return "/about";
@@ -1631,7 +1633,7 @@ function QpayPayment({ orderNumber, subtotal, invoice, onPaid, onCancel }) {
   );
 }
 
-function Confirmation({ orderNumber, onContinue }) {
+function Confirmation({ orderNumber, onContinue, onTrack }) {
   return (
     <div style={{ maxWidth: 520, margin: "0 auto", padding: "90px 20px", textAlign: "center" }}>
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.moss, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
@@ -1639,11 +1641,122 @@ function Confirmation({ orderNumber, onContinue }) {
       </div>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Төлбөр төлөлт амжилттай!</h1>
       <p style={{ fontFamily: "'Ubuntu', sans-serif", color: T.inkSoft, marginBottom: 6 }}>Захиалгын дугаар</p>
-      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.cherry, marginBottom: 30 }}>{orderNumber}</div>
-      <button onClick={onContinue} style={{
-        background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
-        fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
-      }}>Дэлгүүр рүү буцах</button>
+      <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.cherry, marginBottom: 10 }}>{orderNumber}</div>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 24 }}>Захиалгын төлөвөө дараа нь утасны дугаараараа хянах боломжтой.</p>
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+        <button onClick={onContinue} style={{
+          background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
+          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
+        }}>Дэлгүүр рүү буцах</button>
+        <button onClick={onTrack} style={{
+          background: "transparent", color: T.ink, border: `1px solid ${T.line}`, borderRadius: 999, padding: "12px 26px",
+          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
+        }}>Захиалгаа хянах</button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Захиалга хянах                                                      */
+/* ------------------------------------------------------------------ */
+const ORDER_STATUS_LABELS = {
+  pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",
+  processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн",
+};
+const ORDER_STATUS_COLORS = {
+  pending: { bg: "#F3E6C9", color: "#8A6A1E" },
+  prepared: { bg: "#DCE6F5", color: "#2E4E8A" },
+  handed_over: { bg: "#DFEED6", color: "#2E5C2E" },
+  cancelled: { bg: "#F5DCDC", color: "#8A2E2E" },
+  processing: { bg: "#DCE6F5", color: "#2E4E8A" },
+  shipped: { bg: "#E4DCF5", color: "#5B3E8A" },
+  done: { bg: "#DFEED6", color: "#2E5C2E" },
+};
+function OrderStatusBadge({ status }) {
+  const c = ORDER_STATUS_COLORS[status] || ORDER_STATUS_COLORS.pending;
+  return (
+    <span style={{
+      background: c.bg, color: c.color, fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
+      borderRadius: 999, fontFamily: "'Ubuntu', sans-serif", whiteSpace: "nowrap",
+    }}>{ORDER_STATUS_LABELS[status] || status}</span>
+  );
+}
+function OrderTrackingPage({ setView }) {
+  const [phone, setPhone] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | found | notfound | error
+  const [orders, setOrders] = useState([]);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setStatus("loading");
+    try {
+      const data = await lookupOrdersByPhone({ phone });
+      if (data && data.length) { setOrders(data); setStatus("found"); }
+      else { setOrders([]); setStatus("notfound"); }
+    } catch (err) {
+      setOrders([]); setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "50px 20px 90px" }}>
+      <BackButton onClick={() => setView({ name: "home" })} />
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Захиалгаа хянах</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, marginBottom: 22 }}>Захиалга хийхдээ ашигласан утасны дугаараа оруулж, төлөвөө шалгаарай.</p>
+      <form onSubmit={handleSearch} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 26 }}>
+        <input placeholder="Утасны дугаар" inputMode="numeric" value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />
+        <button type="submit" disabled={phone.length !== 8 || status === "loading"} style={{
+          background: phone.length === 8 ? T.cherry : T.line, color: "#fff", border: "none",
+          borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+          cursor: phone.length === 8 ? "pointer" : "not-allowed",
+        }}>{status === "loading" ? "Хайж байна..." : "Хайх"}</button>
+      </form>
+
+      {status === "notfound" && (
+        <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5 }}>Хүргэгдээгүй захиалга олдсонгүй. Утасны дугаараа шалгана уу.</div>
+      )}
+      {status === "error" && (
+        <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5 }}>Алдаа гарлаа. Дахин оролдоно уу.</div>
+      )}
+      {status === "found" && orders.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {orders.map((order) => (
+            <div key={order.orderNumber} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{order.orderNumber}</div>
+                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
+                    {new Date(order.createdAt).toLocaleDateString("mn-MN")}
+                    {order.receiptType === "company" && <> · Байгууллага ({order.registerNumber})</>}
+                    {" · "}{order.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
+                  </div>
+                </div>
+                <OrderStatusBadge status={order.status} />
+              </div>
+              <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                {order.items.map((it, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
+                    <span>{it.productName} ({it.optionLabel}) × {it.qty}</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(it.lineTotal)}</span>
+                  </div>
+                ))}
+                {order.deliveryFee > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
+                    <span>Хүргэлтийн хураамж</span>
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(order.deliveryFee)}</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>Нийт</span>
+                <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(order.subtotal + (order.deliveryFee || 0))}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1981,6 +2094,7 @@ export function Footer({ setView }) {
       }}>
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
+          <button onClick={() => setView({ name: "order-status" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Захиалга хянах</button>
           <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
           <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
         </div>
@@ -2221,7 +2335,7 @@ export default function App() {
   } else if (view.name === "payment") {
     body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} onCancel={handleCancelPayment} />;
   } else if (view.name === "confirmation") {
-    body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} />;
+    body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} onTrack={() => setView({ name: "order-status" })} />;
   } else if (view.name === "training") {
     body = <TrainingPage />;
   } else if (view.name === "about") {
@@ -2232,6 +2346,8 @@ export default function App() {
     body = <NewProductsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "discounts") {
     body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
+  } else if (view.name === "order-status") {
+    body = <OrderTrackingPage setView={setView} />;
   }
 
   return (
