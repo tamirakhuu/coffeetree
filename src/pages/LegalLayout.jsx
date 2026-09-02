@@ -21,13 +21,8 @@ export function LegalLayout({ children }) {
   const navigate = useNavigate();
   const toHome = () => navigate("/");
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
-  // Header-ийн навигацийн бүх линк (Ангилал, Брэнд, Бестселлэр гэх мэт)
-  // одоо бодит URL-той тул App.jsx-тай ижил pathForView-ыг ашиглаад
-  // шууд тэр хуудас руу нь шилжүүлнэ
   const goToView = (view) => navigate(pathForView(view, data.brands));
   useEffect(() => { window.scrollTo(0, 0); }, []);
-  // Header-ийн "Ангилал" цэс өгөгдөлгүйгээр хоосон харагддаг тул энд ч
-  // мөн App-тай адил bootstrap өгөгдлийг татаж DataContext-руу дамжуулна
   useEffect(() => { fetchBootstrap().then(setData).catch(() => {}); }, []);
   return (
     <DataContext.Provider value={data}>
