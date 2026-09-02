@@ -1550,7 +1550,7 @@ function Checkout({ cart, subtotal, onConfirm, onBack }) {
   );
 }
 
-function QpayPayment({ orderNumber, subtotal, invoice, onPaid, onCancel }) {
+function QpayPayment({ orderNumber, subtotal, invoice, onPaid }) {
   const [status, setStatus] = useState("pending"); // pending | paid | error
   const [error, setError] = useState("");
 
@@ -1622,11 +1622,6 @@ function QpayPayment({ orderNumber, subtotal, invoice, onPaid, onCancel }) {
             Төлбөр хийгдэхийг автоматаар шалгаж байна…
           </div>
           {error && <div style={{ color: T.cherry, fontSize: 12.5, marginBottom: 14, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-
-          <button onClick={onCancel} style={{
-            background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif",
-            fontSize: 13, cursor: "pointer", textDecoration: "underline",
-          }}>Дараа төлөх</button>
         </>
       )}
     </div>
@@ -1657,9 +1652,6 @@ function Confirmation({ orderNumber, onContinue, onTrack }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Захиалга хянах                                                      */
-/* ------------------------------------------------------------------ */
 const ORDER_STATUS_LABELS = {
   pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",
   processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн",
@@ -2267,11 +2259,6 @@ export default function App() {
     }
   };
   const handlePaid = () => setView({ name: "confirmation" });
-  const handleCancelPayment = () => {
-    setQpayInvoice(null);
-    flash(`Захиалга ${orderNumber} төлбөр хүлээгдэж байна`);
-    setView({ name: "home" });
-  };
 
   if (dataStatus === "loading") {
     return (
@@ -2334,7 +2321,7 @@ export default function App() {
   } else if (view.name === "checkout") {
     body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} />;
   } else if (view.name === "payment") {
-    body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} onCancel={handleCancelPayment} />;
+    body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} />;
   } else if (view.name === "confirmation") {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} onTrack={() => setView({ name: "order-status" })} />;
   } else if (view.name === "training") {
