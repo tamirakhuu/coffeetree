@@ -10,7 +10,7 @@ export const legal = {
   p: { fontFamily: "'Nunito Sans', sans-serif", fontSize: 15.5, lineHeight: 1.75, color: T.ink, margin: "0 0 16px" },
   ul: { fontFamily: "'Nunito Sans', sans-serif", fontSize: 15.5, lineHeight: 1.75, color: T.ink, margin: "0 0 16px", paddingLeft: 22 },
   li: { marginBottom: 6 },
-  box: { background: T.paper, border: none, borderRadius: 12, padding: "22px 24px", margin: "20px 0" },
+  box: { background: T.paper, border: "none", borderRadius: 12, padding: "22px 24px", margin: "20px 0" },
   boxLabel: { fontFamily: "'Nunito Sans', sans-serif", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.moss, marginBottom: 10, fontWeight: 700 },
   boxEmail: { fontFamily: "'Nunito Sans', sans-serif", fontSize: 17, fontWeight: 700, color: T.cherry },
   links: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 54, paddingTop: 24, borderTop: `1px solid ${T.line}`, fontFamily: "'Nunito Sans', sans-serif", fontSize: 13.5, color: T.inkSoft },
