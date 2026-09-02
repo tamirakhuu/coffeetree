@@ -2004,8 +2004,12 @@ export default function App() {
   const view = viewFromLocation(location.pathname, location.search);
   const setView = (v) => navigate(pathForView(v, data.brands));
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search]);
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
+  const [cart, setCart] = useState(() => {
+    try { const raw = localStorage.getItem("cuppa:cart:guest"); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+  });
+  const [wishlist, setWishlist] = useState(() => {
+    try { const raw = localStorage.getItem("cuppa:wishlist:guest"); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+  });
   const [cartOpen, setCartOpen] = useState(false);
   const [qpayInvoice, setQpayInvoice] = useState(null);
   const [orderTotal, setOrderTotal] = useState(0);
@@ -2014,7 +2018,6 @@ export default function App() {
   const [sortBy, setSortBy] = useState("default");
   const [toast, setToast] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
-  const loaded = useRef(false);
 
   // Лого animation
   const MIN_LOADING_MS = 1500;
@@ -2068,15 +2071,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem("cuppa:cart:guest"); setCart(raw ? JSON.parse(raw) : []); } catch (e) { setCart([]); }
-    try { const raw = localStorage.getItem("cuppa:wishlist:guest"); setWishlist(raw ? JSON.parse(raw) : []); } catch (e) { setWishlist([]); }
-    loaded.current = true;
-  }, []);
-  useEffect(() => {
-    if (loaded.current) localStorage.setItem("cuppa:cart:guest", JSON.stringify(cart));
+    localStorage.setItem("cuppa:cart:guest", JSON.stringify(cart));
   }, [cart]);
   useEffect(() => {
-    if (loaded.current) localStorage.setItem("cuppa:wishlist:guest", JSON.stringify(wishlist));
+    localStorage.setItem("cuppa:wishlist:guest", JSON.stringify(wishlist));
   }, [wishlist]);
   useEffect(() => {
     setBrandFilter(view.brandId ? [view.brandId] : []);
