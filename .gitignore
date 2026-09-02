@@ -3,3 +3,7 @@ server/node_modules
 dist
 server/cuppa.json
 .DS_Store
+supabase/.temp
+__pycache__/
+*.pyc
+.coverage
