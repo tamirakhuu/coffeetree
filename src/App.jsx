@@ -1731,6 +1731,7 @@ function OrderTrackingPage({ setView }) {
                     {new Date(order.createdAt).toLocaleDateString("mn-MN")}
                     {order.receiptType === "company" && <> · Байгууллага ({order.registerNumber})</>}
                     {" · "}{order.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
+                    {order.boxCount > 0 && <> · 📦 {order.boxCount} хайрцаг</>}
                   </div>
                 </div>
                 <OrderStatusBadge status={order.status} />
