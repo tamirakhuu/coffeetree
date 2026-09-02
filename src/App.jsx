@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ShoppingBag, Heart, Search, User, X, Plus, Minus, ChevronDown,
+  ShoppingBag, Heart, Search, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee,
-  Package, ArrowRight, ArrowUp, LogOut, Trash2, ShieldAlert, MapPin, Phone, Mail,
-  Facebook, Instagram, Eye, EyeOff, Menu
+  ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
+  Facebook, Instagram, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, fetchMyOrders, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
+import { fetchBootstrap, submitOrder, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { registerWithEmail, loginWithEmail, loginWithFacebook, logout, shapeAuthUser, updateProfile, deleteAccount, sendPasswordReset, updatePassword } from "./auth.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
 export const T = {
@@ -46,7 +45,6 @@ export function viewFromLocation(pathname, search) {
   if (pathname === "/new") return { name: "new" };
   if (pathname === "/training") return { name: "training" };
   if (pathname === "/discount") return { name: "discounts" };
-  if (pathname === "/profile") return { name: "profile", section: params.get("section") || "info" };
   if (pathname === "/checkout") return { name: "checkout" };
   if (pathname === "/wishlist") return { name: "wishlist" };
   if (pathname === "/about") return { name: "about" };
@@ -67,7 +65,6 @@ export function pathForView(view, brands = []) {
     case "new": return "/new";
     case "training": return "/training";
     case "discounts": return "/discount";
-    case "profile": return view.section && view.section !== "info" ? `/profile?section=${view.section}` : "/profile";
     case "checkout": return "/checkout";
     case "wishlist": return "/wishlist";
     case "about": return "/about";
@@ -393,7 +390,7 @@ function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBra
   );
 }
 
-export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpenAuth, onSearch }) {
+export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) {
   const { categories, brands, products } = useContext(DataContext);
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -478,15 +475,6 @@ export function Header({ setView, cartCount, wishCount, user, onOpenCart, onOpen
             <button onClick={onOpenCart} style={iconBtnStyle}>
               <ShoppingBag size={19} /> {cartCount > 0 && <Badge n={cartCount} />}
             </button>
-            {user ? (
-              <button onClick={() => setView({ name: "profile", section: "info" })} title="Профайл" style={{
-                width: 30, height: 30, borderRadius: "50%", background: T.grey, color: "#fff",
-                border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, fontWeight: 700, flexShrink: 0,
-              }}>{(user.name || "?").trim().charAt(0).toUpperCase()}</button>
-            ) : (
-              <button onClick={onOpenAuth} style={iconBtnStyle}><User size={19} /></button>
-            )}
           </div>
         </div>
       </div>
@@ -1157,258 +1145,7 @@ function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCh
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Auth Modal                                                         */
-/* ------------------------------------------------------------------ */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-const PASSWORD_RE = /^(?=.*[^A-Za-z0-9]).{8,}$/;
-
-function AuthModal({ open, onClose }) {
-  const [mode, setMode] = useState("login");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  if (!open) return null;
-
-  const handleFacebook = async () => {
-    setError(""); setNotice("");
-    try {
-      await loginWithFacebook();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const submitForgot = async (e) => {
-    e.preventDefault();
-    setError(""); setNotice("");
-    if (!EMAIL_RE.test(email)) { setError("Имэйл хаягийн формат буруу байна."); return; }
-    setLoading(true);
-    try {
-      await sendPasswordReset(email);
-      setNotice("Нууц үг сэргээх линкийг имэйлээр илгээлээ. Имэйлээ шалгана уу.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setError(""); setNotice("");
-    if (!email || !password) return;
-    if (!EMAIL_RE.test(email)) { setError("Имэйл хаягийн формат буруу байна."); return; }
-    if (mode === "register") {
-      if (!PASSWORD_RE.test(password)) {
-        setError("Нууц үг нь 8 үсэгтэй, дор хаяж 1 тусгай тэмдэгт (!@#$% гэх мэт) агуулсан байх ёстой.");
-        return;
-      }
-      if (password !== confirmPassword) { setError("Нууц үг таарахгүй байна."); return; }
-    }
-    setLoading(true);
-    try {
-      if (mode === "register") {
-        const data = await registerWithEmail(name, email, password);
-        if (!data.session) {
-          setNotice("Бүртгэл амжилттай! Имэйлээ баталгаажуулж нэвтрэх хэсгээр орно уу.");
-        }
-      } else {
-        await loginWithEmail(email, password);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: T.paper, borderRadius: 16, width: 380, maxWidth: "90vw", padding: 30, position: "relative" }}>
-        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={18} /></button>
-
-        {mode === "forgot" ? (
-          <>
-            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Нууц үг сэргээх</h2>
-            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
-              Бүртгэлтэй имэйл хаягаа оруулна уу. Бид танд нууц үг сэргээх линк илгээх болно.
-            </p>
-            <form onSubmit={submitForgot} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <input type="email" required placeholder="Имэйл хаяг" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
-              {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-              {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
-              <button type="submit" disabled={loading} style={{
-                marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
-                padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-              }}>{loading ? "Түр хүлээнэ үү…" : "Линк илгээх"}</button>
-              <button type="button" onClick={() => { setMode("login"); setError(""); setNotice(""); }} style={{
-                background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textDecoration: "underline", padding: 4,
-              }}>Нэвтрэх хэсэг рүү буцах</button>
-            </form>
-          </>
-        ) : (
-        <>
-        <div style={{ display: "flex", gap: 6, marginBottom: 22 }}>
-          {["login", "register"].map((m) => (
-            <button key={m} onClick={() => { setMode(m); setError(""); setNotice(""); }} style={{
-              flex: 1, padding: "9px 0", borderRadius: 999, border: "none", cursor: "pointer",
-              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
-              background: mode === m ? T.ink : "transparent", color: mode === m ? T.cream : T.inkSoft,
-            }}>{m === "login" ? "Нэвтрэх" : "Бүртгүүлэх"}</button>
-          ))}
-        </div>
-
-        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {mode === "register" && (
-            <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
-          )}
-          <input type="email" required placeholder="Имэйл хаяг" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
-          <div style={{ position: "relative" }}>
-            <input type={showPassword ? "text" : "password"} required minLength={8}
-              placeholder={mode === "register" ? "Нууц үг (8+ орон, 1 тусгай тэмдэгт)" : "Нууц үг"}
-              value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
-            <button type="button" onClick={() => setShowPassword((v) => !v)} title={showPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          {mode === "register" && (
-            <div style={{ position: "relative" }}>
-              <input type={showConfirmPassword ? "text" : "password"} required minLength={8} placeholder="Нууц үг давтах"
-                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
-              <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} title={showConfirmPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
-                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          )}
-          {mode === "login" && (
-            <button type="button" onClick={() => { setMode("forgot"); setError(""); setNotice(""); }} style={{
-              alignSelf: "flex-end", background: "none", border: "none", cursor: "pointer", color: T.cherry,
-              fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, padding: 0, marginTop: -2,
-            }}>Нууц үгээ мартсан уу?</button>
-          )}
-          {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-          {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
-          <button type="submit" disabled={loading} style={{
-            marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
-            padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-            cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-          }}>{loading ? "Түр хүлээнэ үү…" : (mode === "login" ? "Нэвтрэх" : "Бүртгүүлэх")}</button>
-        </form>
-        </>
-        )}
-
-        {mode !== "forgot" && (
-        <>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
-          <div style={{ flex: 1, height: 1, background: T.line }} />
-          <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft }}>эсвэл</span>
-          <div style={{ flex: 1, height: 1, background: T.line }} />
-        </div>
-
-        <button type="button" onClick={handleFacebook} style={{
-          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          background: "#1877F2", color: "#fff", border: "none", borderRadius: 10,
-          padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
-        }}>
-          <Facebook size={17} /> Facebook-ээр {mode === "login" ? "нэвтрэх" : "бүртгүүлэх"}
-        </button>
-        </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ResetPasswordModal({ open, onClose }) {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-  if (!open) return null;
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!PASSWORD_RE.test(password)) {
-      setError("Нууц үг нь 8 үсэгтэй, дор хаяж 1 тусгай тэмдэгт (!@#$% гэх мэт) агуулсан байх ёстой.");
-      return;
-    }
-    if (password !== confirmPassword) { setError("Нууц үг таарахгүй байна."); return; }
-    setLoading(true);
-    try {
-      await updatePassword(password);
-      setDone(true);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: T.paper, borderRadius: 16, width: 380, maxWidth: "90vw", padding: 30, position: "relative" }}>
-        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: T.ink }}><X size={18} /></button>
-        {done ? (
-          <>
-            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Амжилттай!</h2>
-            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
-              Таны нууц үг шинэчлэгдлээ.
-            </p>
-            <button onClick={onClose} style={{
-              width: "100%", background: T.ink, color: T.cream, border: "none", borderRadius: 10,
-              padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, cursor: "pointer",
-            }}>Үргэлжлүүлэх</button>
-          </>
-        ) : (
-          <>
-            <h2 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 18, fontWeight: 700, color: T.ink, margin: "0 0 6px" }}>Шинэ нууц үг үүсгэх</h2>
-            <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, margin: "0 0 18px", lineHeight: 1.5 }}>
-              Цаашид ашиглах шинэ нууц үгээ оруулна уу.
-            </p>
-            <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ position: "relative" }}>
-                <input type={showPassword ? "text" : "password"} required minLength={8}
-                  placeholder="Шинэ нууц үг (8+ орон, 1 тусгай тэмдэгт)"
-                  value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, width: "100%", paddingRight: 38 }} />
-                <button type="button" onClick={() => setShowPassword((v) => !v)} title={showPassword ? "Нууц үг нуух" : "Нууц үг харах"} style={eyeBtnStyle}>
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              <input type={showPassword ? "text" : "password"} required minLength={8} placeholder="Нууц үг давтах"
-                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} />
-              {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-              <button type="submit" disabled={loading} style={{
-                marginTop: 4, background: T.cherry, color: "#fff", border: "none", borderRadius: 10,
-                padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-                cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-              }}>{loading ? "Түр хүлээнэ үү…" : "Хадгалах"}</button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 const inputStyle = { padding: "11px 13px", borderRadius: 10, border: `1px solid ${T.line}`, fontFamily: "'Ubuntu', sans-serif", fontSize: 14, background: T.card, color: T.ink, outline: "none", boxSizing: "border-box" };
-const fieldLabelStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 12, fontWeight: 600, color: T.inkSoft, marginBottom: 5 };
-const profileInputStyle = { ...inputStyle, width: "100%", background: T.paper, border: `1.5px solid ${T.line}` };
-const eyeBtnStyle = {
-  position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
-  background: "none", border: "none", cursor: "pointer", color: T.inkSoft,
-  padding: 6, display: "flex", alignItems: "center", justifyContent: "center",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Home                                                                */
@@ -1669,33 +1406,50 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
 /* ------------------------------------------------------------------ */
 /*  Checkout & Confirmation                                             */
 /* ------------------------------------------------------------------ */
-function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
+function ReviewRow({ label, value }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5 }}>
+      <span style={{ color: T.inkSoft }}>{label}</span>
+      <span style={{ color: T.ink, fontWeight: 600, textAlign: "right" }}>{value}</span>
+    </div>
+  );
+}
+function Checkout({ cart, subtotal, onConfirm, onBack }) {
   const { products } = useContext(DataContext);
   const [form, setForm] = useState({
-    name: user?.name || "", phone: user?.phone || "", address: user?.address || "",
-    receiptType: "individual", registerNumber: "", deliveryMethod: "pickup",
+    name: "", phone: "", address: "",
+    receiptType: "", registerNumber: "", deliveryMethod: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const freeDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
   const deliveryFee = form.deliveryMethod === "delivery" && !freeDelivery ? DELIVERY_FEE : 0;
   const total = subtotal + deliveryFee;
-  const valid = form.name && form.phone && (form.deliveryMethod !== "delivery" || form.address)
+  const valid = form.name && form.phone.length === 8 && form.deliveryMethod && form.receiptType
+    && (form.deliveryMethod !== "delivery" || form.address)
     && (form.receiptType !== "company" || form.registerNumber) && !submitting;
-  const handleClick = async () => {
+  const deliveryLabel = form.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)";
+  const handleConfirmClick = () => { if (valid) setReviewing(true); };
+  const handlePayClick = async () => {
     setSubmitting(true);
     await onConfirm(form, total);
     setSubmitting(false);
   };
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "40px 20px 60px" }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
-        <ChevronLeft size={15} /> Сагс руу буцах
+      <button onClick={reviewing ? () => setReviewing(false) : onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, cursor: "pointer", marginBottom: 20 }}>
+        <ChevronLeft size={15} /> {reviewing ? "Буцаж засах" : "Сагс руу буцах"}
       </button>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 28, fontWeight: 700, color: T.ink, marginBottom: 26 }}>Хүргэлтийн мэдээлэл</h1>
       <div className="cuppa-checkout-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 34, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 260 }}>
           <input placeholder="Хүлээн авагчийн нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
-          <input placeholder="Утасны дугаар" inputMode="numeric" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
+          <div>
+            <input placeholder="Утасны дугаар" inputMode="numeric" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={{ ...inputStyle, width: "100%" }} />
+            {form.phone.length > 0 && form.phone.length < 8 && (
+              <div style={{ color: T.cherry, fontSize: 12, fontFamily: "'Ubuntu', sans-serif", marginTop: 5 }}>Утасны дугаар 8 оронтой байх ёстой.</div>
+            )}
+          </div>
 
           <div>
             <div style={sideLabel}>Хүргэлтийн хэлбэр</div>
@@ -1740,6 +1494,15 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
         </div>
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, alignSelf: "flex-start", minWidth: 240 }}>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 16, marginBottom: 14, color: T.ink }}>Захиалгын мэдээлэл</div>
+          {reviewing && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
+              <ReviewRow label="Хүлээн авагч" value={form.name} />
+              <ReviewRow label="Утас" value={form.phone} />
+              <ReviewRow label="Хүргэлтийн хэлбэр" value={deliveryLabel} />
+              {form.deliveryMethod === "delivery" && <ReviewRow label="Хаяг" value={form.address} />}
+              <ReviewRow label="И-баримт" value={form.receiptType === "company" ? `Байгууллага (${form.registerNumber})` : "Хувь хүн"} />
+            </div>
+          )}
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
@@ -1766,11 +1529,19 @@ function Checkout({ cart, subtotal, onConfirm, onBack, user }) {
               <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(total)}</span>
             </div>
           </div>
-          <button disabled={!valid} onClick={handleClick} style={{
-            width: "100%", marginTop: 16, background: valid ? T.cherry : T.line, color: "#fff", border: "none",
-            borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-            cursor: valid ? "pointer" : "not-allowed",
-          }}>{submitting ? "Түр хүлээнэ үү..." : "Төлбөр төлөх"}</button>
+          {!reviewing ? (
+            <button disabled={!valid} onClick={handleConfirmClick} style={{
+              width: "100%", marginTop: 16, background: valid ? T.cherry : T.line, color: "#fff", border: "none",
+              borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+              cursor: valid ? "pointer" : "not-allowed",
+            }}>Баталгаажуулах</button>
+          ) : (
+            <button disabled={submitting} onClick={handlePayClick} style={{
+              width: "100%", marginTop: 16, background: T.cherry, color: "#fff", border: "none",
+              borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+              cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1,
+            }}>{submitting ? "Түр хүлээнэ үү..." : "Төлбөр төлөх"}</button>
+          )}
         </div>
       </div>
     </div>
@@ -1893,271 +1664,6 @@ function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish, setView }) {
         <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
           {items.map((p) => (
             <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd} isWished onToggleWish={onToggleWish} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-/* ------------------------------------------------------------------ */
-/*  Миний захиалгууд                                                   */
-/* ------------------------------------------------------------------ */
-const ORDER_STATUS_LABELS = {
-  pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",
-  processing: "Бэлдэж байна", shipped: "Хүргэлтэнд гарсан", done: "Хүргэгдсэн",
-};
-const ORDER_STATUS_COLORS = {
-  pending: { bg: "#F3E6C9", color: "#8A6A1E" },
-  prepared: { bg: "#DCE6F5", color: "#2E4E8A" },
-  handed_over: { bg: "#DFEED6", color: "#2E5C2E" },
-  cancelled: { bg: "#F5DCDC", color: "#8A2E2E" },
-  processing: { bg: "#DCE6F5", color: "#2E4E8A" },
-  shipped: { bg: "#E4DCF5", color: "#5B3E8A" },
-  done: { bg: "#DFEED6", color: "#2E5C2E" },
-};
-function OrderStatusBadge({ status }) {
-  const c = ORDER_STATUS_COLORS[status] || ORDER_STATUS_COLORS.pending;
-  return (
-    <span style={{
-      background: c.bg, color: c.color, fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
-      borderRadius: 999, fontFamily: "'Ubuntu', sans-serif", whiteSpace: "nowrap",
-    }}>{ORDER_STATUS_LABELS[status] || status}</span>
-  );
-}
-/* ------------------------------------------------------------------ */
-/*  Профайл                                                             */
-/* ------------------------------------------------------------------ */
-const sectionTitleStyle = { fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 22 };
-const PROFILE_SECTIONS = [
-  { key: "info", label: "Миний мэдээлэл", Icon: User },
-  { key: "orders", label: "Миний захиалгууд", Icon: Package },
-  { key: "address", label: "Хаягийн мэдээлэл", Icon: MapPin },
-  { key: "delete", label: "Бүртгэл устгах", Icon: Trash2 },
-];
-
-function ProfilePage({ user, section, setSection, onLogout, onUserUpdate, setView }) {
-  return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 20px 90px", display: "flex", gap: 32, flexWrap: "wrap" }}>
-      <div style={{ width: "100%" }}><BackButton onClick={() => setView({ name: "home" })} /></div>
-      <aside style={{ width: 220, flexShrink: 0 }}>
-        {PROFILE_SECTIONS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setSection(key)} style={{
-            display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-            background: section === key ? T.ink : "transparent", color: section === key ? T.cream : T.ink,
-            border: "none", borderRadius: 10, padding: "11px 14px", marginBottom: 4,
-            fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-          }}>
-            <Icon size={16} /> {label}
-          </button>
-        ))}
-        <button onClick={onLogout} style={{
-          display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-          background: "transparent", color: T.cherry, border: "none", borderRadius: 10, padding: "11px 14px",
-          marginTop: 10, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-        }}>
-          <LogOut size={16} /> Гарах
-        </button>
-      </aside>
-      <div style={{ flex: 1, minWidth: 280 }}>
-        {section === "info" && <ProfileInfoSection user={user} onUserUpdate={onUserUpdate} />}
-        {section === "orders" && (
-          <div>
-            <h1 style={sectionTitleStyle}>Миний захиалгууд</h1>
-            <MyOrdersPage />
-          </div>
-        )}
-        {section === "address" && <ProfileAddressSection user={user} onUserUpdate={onUserUpdate} />}
-        {section === "delete" && <ProfileDeleteSection />}
-      </div>
-    </div>
-  );
-}
-
-function ProfileInfoSection({ user, onUserUpdate }) {
-  const [name, setName] = useState(user.name || "");
-  const [phone, setPhone] = useState(user.phone || "");
-  const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
-
-  const handleSave = async () => {
-    setSaving(true); setError(""); setNotice("");
-    try {
-      const updated = await updateProfile({ name: name.trim() || user.name, phone });
-      onUserUpdate(updated);
-      setNotice("Мэдээлэл хадгалагдлаа");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div>
-      <h1 style={sectionTitleStyle}>Миний мэдээлэл</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 360 }}>
-        <div>
-          <div style={fieldLabelStyle}>Нэр</div>
-          <input placeholder="Нэр" value={name} onChange={(e) => setName(e.target.value)} style={profileInputStyle} />
-        </div>
-        <div>
-          <div style={fieldLabelStyle}>Утасны дугаар</div>
-          <input placeholder="Утасны дугаар" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={profileInputStyle} />
-        </div>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>Имэйл: {user.email}</div>
-        {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-        {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
-        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
-          {saving ? "Хадгалж байна…" : "Хадгалах"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ProfileAddressSection({ user, onUserUpdate }) {
-  const [address, setAddress] = useState(user.address || "");
-  const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
-
-  const handleSave = async () => {
-    setSaving(true); setError(""); setNotice("");
-    try {
-      const updated = await updateProfile({ address: address.trim() });
-      onUserUpdate(updated);
-      setNotice("Хаяг хадгалагдлаа");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div>
-      <h1 style={sectionTitleStyle}>Хаягийн мэдээлэл</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 420 }}>
-        <div>
-          <div style={fieldLabelStyle}>Дэлгэрэнгүй хаяг</div>
-          <textarea placeholder="Дүүрэг, хороо, байр, орц г.м" value={address}
-            onChange={(e) => setAddress(e.target.value)} rows={4} maxLength={200} style={{ ...profileInputStyle, resize: "none" }} />
-        </div>
-
-        {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-        {notice && <div style={{ color: T.moss, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{notice}</div>}
-        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtn, alignSelf: "flex-start", opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}>
-          {saving ? "Хадгалж байна…" : "Хадгалах"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ProfileDeleteSection() {
-  const [confirming, setConfirming] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleDelete = async () => {
-    setLoading(true); setError("");
-    try {
-      await deleteAccount();
-      window.location.href = "/";
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <h1 style={sectionTitleStyle}>Бүртгэл устгах</h1>
-      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 18, maxWidth: 480 }}>
-        Бүртгэлээ устгавал таны хувийн мэдээлэл, захиалгын түүх рүү дахин хандах боломжгүй болно. Энэ үйлдлийг буцаах боломжгүй.
-      </p>
-      {!confirming ? (
-        <button onClick={() => setConfirming(true)} style={{
-          background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px",
-          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
-        }}>Бүртгэл устгах</button>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380 }}>
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.cherry, fontWeight: 600 }}>Та итгэлтэй байна уу?</div>
-          {error && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={handleDelete} disabled={loading} style={{
-              background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px",
-              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-            }}>{loading ? "Устгаж байна…" : "Тийм, устгах"}</button>
-            <button onClick={() => setConfirming(false)} style={{
-              background: "none", color: T.ink, border: `1px solid ${T.line}`, borderRadius: 999, padding: "11px 20px",
-              fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer",
-            }}>Болих</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MyOrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [status, setStatus] = useState("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchMyOrders()
-      .then((data) => { if (!cancelled) { setOrders(data); setStatus("ready"); } })
-      .catch(() => { if (!cancelled) setStatus("error"); });
-    return () => { cancelled = true; };
-  }, []);
-
-  return (
-    <div>
-      {status === "loading" && <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Түр хүлээнэ үү. . . </div>}
-      {status === "error" && <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif" }}>Захиалгуудыг татахад алдаа гарлаа.</div>}
-      {status === "ready" && orders.length === 0 && (
-        <div style={{ color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif" }}>Та одоогоор захиалга хийгээгүй байна.</div>
-      )}
-      {status === "ready" && orders.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {orders.map((o) => (
-            <div key={o.orderNumber} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{o.orderNumber}</div>
-                  <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
-                    {new Date(o.createdAt).toLocaleDateString("mn-MN")}
-                    {o.receiptType === "company" && <> · Байгууллага ({o.registerNumber})</>}
-                    {" · "}{o.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
-                    {o.boxCount > 0 && <> · 📦 {o.boxCount} хайрцаг</>}
-                  </div>
-                </div>
-                <OrderStatusBadge status={o.status} />
-              </div>
-              <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                {o.items.map((it, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
-                    <span>{it.productName} ({it.optionLabel}) × {it.qty}</span>
-                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(it.lineTotal)}</span>
-                  </div>
-                ))}
-                {o.deliveryFee > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
-                    <span>Хүргэлтийн хураамж</span>
-                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(o.deliveryFee)}</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>Нийт</span>
-                <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(o.subtotal + (o.deliveryFee || 0))}</span>
-              </div>
-            </div>
           ))}
         </div>
       )}
@@ -2500,21 +2006,15 @@ export default function App() {
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
-  const [user, setUser] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [qpayInvoice, setQpayInvoice] = useState(null);
   const [orderTotal, setOrderTotal] = useState(0);
-  const [resetOpen, setResetOpen] = useState(false);
   const [brandFilter, setBrandFilter] = useState([]);
   const [subFilter, setSubFilter] = useState(null);
   const [sortBy, setSortBy] = useState("default");
   const [toast, setToast] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const loaded = useRef(false);
-  const storageKey = useRef("guest");
-  const cartRef = useRef([]);
-  const wishlistRef = useRef([]);
 
   // Лого animation
   const MIN_LOADING_MS = 1500;
@@ -2567,72 +2067,17 @@ export default function App() {
     };
   }, []);
 
-  const loadCartWishlist = (key) => {
-    try { const raw = localStorage.getItem(`cuppa:cart:${key}`); setCart(raw ? JSON.parse(raw) : []); } catch (e) { setCart([]); }
-    try { const raw = localStorage.getItem(`cuppa:wishlist:${key}`); setWishlist(raw ? JSON.parse(raw) : []); } catch (e) { setWishlist([]); }
-  };
-
-  // Зочны сагс/хүслийн жагсаалтыг тухайн хэрэглэгчийн хадгалсантай нийлүүлэх —
-  // сагсанд бараа хийчихээд төлбөр төлөх үед нэвтэрсэн ч зочны сагс алдагдахгүй байх учиртай
-  const mergeCarts = (guestCart, userCart) => {
-    const merged = [...userCart];
-    guestCart.forEach((gi) => {
-      const idx = merged.findIndex((i) => i.productId === gi.productId && i.optionType === gi.optionType && (i.note || "") === (gi.note || ""));
-      if (idx >= 0) merged[idx] = { ...merged[idx], qty: merged[idx].qty + gi.qty };
-      else merged.push(gi);
-    });
-    return merged;
-  };
-  const mergeWishlists = (guestList, userList) => [...new Set([...userList, ...guestList])];
-
   useEffect(() => {
-    cartRef.current = cart;
-    if (loaded.current) localStorage.setItem(`cuppa:cart:${storageKey.current}`, JSON.stringify(cart));
+    try { const raw = localStorage.getItem("cuppa:cart:guest"); setCart(raw ? JSON.parse(raw) : []); } catch (e) { setCart([]); }
+    try { const raw = localStorage.getItem("cuppa:wishlist:guest"); setWishlist(raw ? JSON.parse(raw) : []); } catch (e) { setWishlist([]); }
+    loaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (loaded.current) localStorage.setItem("cuppa:cart:guest", JSON.stringify(cart));
   }, [cart]);
   useEffect(() => {
-    wishlistRef.current = wishlist;
-    if (loaded.current) localStorage.setItem(`cuppa:wishlist:${storageKey.current}`, JSON.stringify(wishlist));
+    if (loaded.current) localStorage.setItem("cuppa:wishlist:guest", JSON.stringify(wishlist));
   }, [wishlist]);
-
-  // hereglegciin newtrelt shalgah
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = shapeAuthUser(session?.user);
-      setUser(u);
-      storageKey.current = u?.id || "guest";
-      loadCartWishlist(storageKey.current);
-      loaded.current = true;
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = shapeAuthUser(session?.user);
-      setUser(u);
-      const nextKey = u?.id || "guest";
-      if (nextKey !== storageKey.current) {
-        const wasGuest = storageKey.current === "guest";
-        const guestCart = cartRef.current;
-        const guestWishlist = wishlistRef.current;
-        storageKey.current = nextKey;
-        if (wasGuest && (guestCart.length || guestWishlist.length)) {
-          let userCart = [], userWishlist = [];
-          try { const raw = localStorage.getItem(`cuppa:cart:${nextKey}`); userCart = raw ? JSON.parse(raw) : []; } catch (e) {}
-          try { const raw = localStorage.getItem(`cuppa:wishlist:${nextKey}`); userWishlist = raw ? JSON.parse(raw) : []; } catch (e) {}
-          setCart(mergeCarts(guestCart, userCart));
-          setWishlist(mergeWishlists(guestWishlist, userWishlist));
-          localStorage.removeItem(`cuppa:cart:guest`);
-          localStorage.removeItem(`cuppa:wishlist:guest`);
-        } else {
-          loadCartWishlist(nextKey);
-        }
-      }
-      if (_event === "PASSWORD_RECOVERY") {
-        setAuthOpen(false);
-        setResetOpen(true);
-      } else if (u) {
-        setAuthOpen(false); flash(`Тавтай морил, ${u.name}!`);
-      }
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
   useEffect(() => {
     setBrandFilter(view.brandId ? [view.brandId] : []);
     setSubFilter(null);
@@ -2671,16 +2116,13 @@ export default function App() {
     else navigate("/");
   };
   const handleSearch = (q) => setView({ name: "search", query: q });
-  const handleLogout = async () => { await logout(); flash("Гарлаа"); };
   const handleCheckout = () => {
     setCartOpen(false);
-    if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     setView({ name: "checkout" });
   };
   const handleConfirm = async (form, total) => {
-    if (!user) { setAuthOpen(true); flash("Захиалгаа баталгаажуулахын тулд эхлээд нэвтэрнэ үү"); return; }
     try {
-      const orderNumber = await submitOrder({ form, cart, products: data.products, userId: user.id });
+      const orderNumber = await submitOrder({ form, cart, products: data.products });
       setOrderNumber(orderNumber);
       // noots hasagdah
       setData((prev) => ({
@@ -2777,7 +2219,7 @@ export default function App() {
   } else if (view.name === "wishlist") {
     body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "checkout") {
-    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} user={user} />;
+    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} />;
   } else if (view.name === "payment") {
     body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} onCancel={handleCancelPayment} />;
   } else if (view.name === "confirmation") {
@@ -2792,23 +2234,17 @@ export default function App() {
     body = <NewProductsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "discounts") {
     body = <DiscountsPage onOpen={openProduct} onQuickAdd={quickAdd} wishlist={wishlist} onToggleWish={toggleWish} setView={setView} />;
-  } else if (view.name === "profile") {
-    body = user
-      ? <ProfilePage user={user} section={view.section || "info"} setSection={(s) => setView({ name: "profile", section: s })} onLogout={handleLogout} onUserUpdate={setUser} setView={setView} />
-      : <InfoPage title="Миний мэдээлэл" note="Өөрийн мэдээллээ харахын тулд эхлээд нэвтэрнэ үү." actionLabel="Нэвтрэх" onAction={() => setAuthOpen(true)} />;
   }
 
   return (
     <DataContext.Provider value={data}>
       <div style={{ background: T.paper, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Ubuntu', sans-serif" }}>
         <style>{FONT_IMPORT}</style>
-        <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length} user={user}
-          onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} onSearch={handleSearch} />
+        <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length}
+          onOpenCart={() => setCartOpen(true)} onSearch={handleSearch} />
         <main style={{ flex: 1 }}>{body}</main>
         <Footer setView={setView} />
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-        <ResetPasswordModal open={resetOpen} onClose={() => setResetOpen(false)} />
         <Toast message={toast} />
         <ScrollToTopButton />
       </div>

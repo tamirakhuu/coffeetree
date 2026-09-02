@@ -78,7 +78,7 @@ async function rollbackReserved(reserved) {
 
 // Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
 // "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
-export async function submitOrder({ form, cart, products, userId }) {
+export async function submitOrder({ form, cart, products }) {
   const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
   // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
@@ -114,7 +114,7 @@ export async function submitOrder({ form, cart, products, userId }) {
 
   const { error: orderErr } = await supabase.from("orders").insert({
     order_number: orderNumber,
-    user_id: userId || null,
+    user_id: null,
     customer_name: form.name,
     phone: form.phone,
     address: deliveryMethod === "delivery" ? form.address : null,
@@ -149,31 +149,6 @@ export async function submitOrder({ form, cart, products, userId }) {
   }
 
   return orderNumber;
-}
-
-// Нэвтэрсэн хэрэглэгчийн өөрийн захиалгуудыг татах (RLS-ээр автоматаар шүүгдэнэ)
-export async function fetchMyOrders() {
-  const [{ data: orders, error: oe }, { data: items, error: ie }] = await Promise.all([
-    supabase.from("orders").select("*").order("created_at", { ascending: false }),
-    supabase.from("order_items").select("*"),
-  ]);
-  const err = oe || ie;
-  if (err) throw new Error(err.message);
-  return orders.map((o) => ({
-    orderNumber: o.order_number,
-    status: o.status,
-    subtotal: o.subtotal,
-    receiptType: o.receipt_type,
-    registerNumber: o.register_number,
-    deliveryMethod: o.delivery_method,
-    deliveryFee: o.delivery_fee,
-    boxCount: o.box_count,
-    paymentStatus: o.payment_status,
-    createdAt: o.created_at,
-    items: items.filter((i) => i.order_number === o.order_number).map((i) => ({
-      productName: i.product_name, optionLabel: i.option_label, qty: i.qty, lineTotal: i.line_total,
-    })),
-  }));
 }
 
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
