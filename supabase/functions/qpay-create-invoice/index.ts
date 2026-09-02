@@ -45,15 +45,32 @@ async function getQpayToken(): Promise<string> {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { orderNumber, amount, description } = await req.json();
-    if (!orderNumber || !amount) {
-      return new Response(JSON.stringify({ error: "orderNumber, amount заавал шаардлагатай." }), {
+    const { orderNumber, description } = await req.json();
+    if (!orderNumber) {
+      return new Response(JSON.stringify({ error: "orderNumber заавал шаардлагатай." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+    // Төлбөрийн дүнг клиентээс биш, захиалгын бодит бичлэгээс сервер өөрөө
+    // уншина — эс тэгвэл client талын amount утгыг өөрчилж жинхэнэ үнээс
+    // бага дүнгээр нэхэмжлэл үүсгэх боломжтой болно
+    const { data: order, error: orderErr } = await admin
+      .from("orders")
+      .select("subtotal, delivery_fee")
+      .eq("order_number", orderNumber)
+      .single();
+    if (orderErr || !order) {
+      return new Response(JSON.stringify({ error: "Захиалга олдсонгүй." }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const amount = Number(order.subtotal || 0) + Number(order.delivery_fee || 0);
+
     let result: { invoiceId: string; qrText: string; qrImage: string; urls: unknown[]; demo: boolean };
 
     if (DEMO_MODE) {

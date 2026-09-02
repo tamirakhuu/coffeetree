@@ -2225,9 +2225,9 @@ export default function App() {
     setCartOpen(false);
     setView({ name: "checkout" });
   };
-  const handleConfirm = async (form, total) => {
+  const handleConfirm = async (form) => {
     try {
-      const orderNumber = await submitOrder({ form, cart, products: data.products });
+      const { orderNumber, subtotal, deliveryFee } = await submitOrder({ form, cart, products: data.products });
       setOrderNumber(orderNumber);
       // noots hasagdah
       setData((prev) => ({
@@ -2240,18 +2240,19 @@ export default function App() {
         }),
       }));
       setCart([]);
+      const serverTotal = (subtotal || 0) + (deliveryFee || 0);
       // Захиалга аль хэдийн бүртгэгдсэн тул QPay нэхэмжлэл үүсгэхэд алдаа гарсан ч
       // захиалгыг цуцлахгүй — зүгээр баталгаажуулах хуудас руу шууд оруулна
       // (дараа нь бэлнээр/шилжүүлгээр төлж болно)
       try {
         const invoice = await createQpayInvoice({
-          orderNumber, amount: total ?? 0, description: `CUPPA захиалга ${orderNumber}`,
+          orderNumber, description: `CUPPA захиалга ${orderNumber}`,
         });
         setQpayInvoice(invoice);
-        setOrderTotal(total ?? 0);
+        setOrderTotal(serverTotal);
         setView({ name: "payment" });
       } catch (qpayErr) {
-        flash("QPay нэхэмжлэл үүсгэхэд алдаа гарлаа, дараа төлнө үү: " + qpayErr.message);
+        flash("QPay нэхэмжлэл үүсгэхэд алдаа гарлаа, Түр хүлээгээд дахин оролдоно уу: " + qpayErr.message);
         setView({ name: "confirmation" });
       }
     } catch (err) {

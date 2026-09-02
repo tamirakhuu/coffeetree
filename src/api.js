@@ -68,87 +68,31 @@ export async function fetchBootstrap() {
   return { categories: cats, brands: sortedBrands, products: products.map(shapeProduct) };
 }
 
-// Аль хэдийн амжилттай хассан нөөцийг буцаах (захиалга цуцлагдах үед)
-async function rollbackReserved(reserved) {
-  await Promise.all(reserved.map(({ item, product }) =>
-    supabase.rpc("restore_stock", { p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty })
-      .then(({ error }) => { if (error) console.error("Нөөц буцаахад алдаа гарлаа:", error.message); })
-  ));
-}
-
-// Захиалга үүсгэх — нэвтэрсэн хэрэглэгчийн хийсэн захиалга л дараа нь
-// "Миний захиалгууд" хэсэгт харагдана (user_id-гаар холбоно)
+// Захиалга үүсгэх — үнэ, нөөцийн шалгалт, бичилт бүгд submit_order гэсэн
+// SECURITY DEFINER функц дотор серверийн талд л хийгддэг (нэг транзакц тул
+// аль нэг алхам алдвал бүгд автоматаар буцна). Клиент зөвхөн product_id/
+// option_type/qty дамжуулна, үнийг сервер өөрөө products хүснэгтээс уншиж
+// тооцдог тул захиалгын дүнг client талаас хуурамчаар өөрчлөх боломжгүй.
 export async function submitOrder({ form, cart, products }) {
-  const orderNumber = "CP" + Math.floor(100000 + Math.random() * 900000);
   // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
   if (!validItems.length) throw new Error("Сагс хоосон байна.");
 
-  // Захиалга үүсгэхээс ӨМНӨ нөөцийг атомикаар шалгаж хасна (decrement_stock
-  // нь SQL дотроо "UPDATE ... WHERE stock >= qty" хэлбэртэй, нэг мөрийг
-  // түгжиж хасдаг тул 2 хүн сүүлийн ширхэгийг зэрэг захиалахад зөвхөн нэг
-  // нь амжина). Аль нэг бараа дутвал өмнө нь амжилттай хассан зүйлээ буцаагаад
-  // захиалга огт үүсгэхгүй.
-  const reserved = [];
-  for (const entry of validItems) {
-    const { item, product } = entry;
-    const { data: ok, error } = await supabase.rpc("decrement_stock", {
-      p_product_id: product.id, p_option_type: item.optionType, p_qty: item.qty,
-    });
-    if (error) { await rollbackReserved(reserved); throw new Error(error.message); }
-    if (!ok) {
-      await rollbackReserved(reserved);
-      throw new Error(`"${product.name}" барааны нөөц дууссан байна. Сагсаа шинэчилж дахин оролдоно уу.`);
-    }
-    reserved.push(entry);
-  }
-
-  const lineTotalFor = (item, product) =>
-    computeLineTotal(product, item.optionType, item.qty);
-
-  const subtotal = validItems.reduce((sum, { item, product }) => sum + lineTotalFor(item, product), 0);
-  const deliveryMethod = form.deliveryMethod === "delivery" ? "delivery" : "pickup";
-  const deliveryFee = deliveryMethod === "delivery" && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
-
-  const { error: orderErr } = await supabase.from("orders").insert({
-    order_number: orderNumber,
-    user_id: null,
-    customer_name: form.name,
-    phone: form.phone,
-    address: deliveryMethod === "delivery" ? form.address : null,
-    subtotal,
-    status: "pending",
-    receipt_type: form.receiptType || "individual",
-    register_number: form.receiptType === "company" ? form.registerNumber : null,
-    delivery_method: deliveryMethod,
-    delivery_fee: deliveryFee,
+  const { data, error } = await supabase.rpc("submit_order", {
+    p_customer_name: form.name,
+    p_phone: form.phone,
+    p_address: form.deliveryMethod === "delivery" ? form.address : null,
+    p_receipt_type: form.receiptType || "individual",
+    p_register_number: form.receiptType === "company" ? form.registerNumber : null,
+    p_delivery_method: form.deliveryMethod === "delivery" ? "delivery" : "pickup",
+    p_items: validItems.map(({ item }) => ({
+      product_id: item.productId, option_type: item.optionType, qty: item.qty, note: item.note || null,
+    })),
   });
-  if (orderErr) { await rollbackReserved(reserved); throw new Error(orderErr.message); }
-
-  const itemRows = validItems.map(({ item, product }) => {
-    const option = product[item.optionType];
-    return {
-      order_number: orderNumber,
-      product_id: product.id,
-      product_name: product.name,
-      option_type: item.optionType,
-      option_label: item.note ? `${option.label} · ${item.note}` : option.label,
-      unit_price: option.price,
-      qty: item.qty,
-      line_total: lineTotalFor(item, product),
-    };
-  });
-  const { error: itemsErr } = await supabase.from("order_items").insert(itemRows);
-  if (itemsErr) {
-    // Захиалга аль хэдийн бүртгэгдсэн тул үүнийг бас цуцалж, нөөцөө буцаана
-    await supabase.from("orders").delete().eq("order_number", orderNumber);
-    await rollbackReserved(reserved);
-    throw new Error(itemsErr.message);
-  }
-
-  return orderNumber;
+  if (error) throw new Error(error.message);
+  return data; // { orderNumber, subtotal, deliveryFee }
 }
 
 // Хэрэглэгч бүртгэлгүйгээр утасны дугаараараа захиалгаа хайж хянах —
@@ -163,11 +107,14 @@ export async function lookupOrdersByPhone({ phone }) {
 }
 
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
-// дотор, хэзээ ч browser-т ирдэггүй. QPay мерчант эрх (secrets) тохируулаагүй
-// үед Edge Function demo QR буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.
-export async function createQpayInvoice({ orderNumber, amount, description }) {
+// дотор, хэзээ ч browser-т ирдэггүй. Төлбөрийн дүнг Edge Function өөрөө
+// orders хүснэгтээс уншдаг тул энд дүн дамжуулах шаардлагагүй (client талаас
+// хуурамч дүн илгээж бага мөнгөөр нэхэмжлэл үүсгэх боломжийг хаасан).
+// QPay мерчант эрх (secrets) тохируулаагүй үед Edge Function demo QR
+// буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.
+export async function createQpayInvoice({ orderNumber, description }) {
   const { data, error } = await supabase.functions.invoke("qpay-create-invoice", {
-    body: { orderNumber, amount, description },
+    body: { orderNumber, description },
   });
   if (error) throw new Error(error.message || "QPay нэхэмжлэл үүсгэхэд алдаа гарлаа");
   if (data?.error) throw new Error(data.error);

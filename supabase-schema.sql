@@ -135,6 +135,12 @@
   -- Нэг SQL UPDATE ... WHERE stock >= qty бүхэлдээ нэг мөрөнд түгжигддэг тул
   -- 2 хүн сүүлийн ширхэгийг зэрэг авах гэвэл зөвхөн нэг нь амжина. Хангалттай
   -- нөөцгүй бол false буцаана — дуудсан тал захиалгаа үүсгэхгүй.
+  -- Агуулахын нөөцийг (warehouse_unit_stock/warehouse_box_stock) шалгаж
+  -- хасдаг — вебсайт агуулахаас шууд захиалга биелүүлдэг тул дэлгүүрийн
+  -- shelf-ийн нөөц (unit_stock/box_stock)-той хамааралгүй.
+  -- ЭНЭ ФУНКЦИЙГ anon/authenticated РОЛЬД ШУУД ГРАНТ ХИЙХГҮЙ ШҮҮ — доорх
+  -- submit_order функц дотроос л дуудагдана, эс тэгвэл хэн ч захиалга
+  -- үүсгэлгүйгээр дурын барааны нөөцийг хий хоосон хасаж/нэмж чадна.
   create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns boolean as $$
   declare
@@ -145,34 +151,36 @@
     select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
       -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
-      -- ширхэгээр хадгалагддаг тул unit_stock-оос хасаад, box_stock-ыг
-      -- түүнээс нь дахин (floor) тооцно
+      -- ширхэгээр хадгалагддаг тул warehouse_unit_stock-оос хасаад,
+      -- warehouse_box_stock-ыг түүнээс нь дахин (floor) тооцно
       if p_option_type = 'box' then
-        update products set unit_stock = unit_stock - (p_qty * v_per_box)
-          where id = p_product_id and unit_stock >= p_qty * v_per_box
-          returning unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = warehouse_unit_stock - (p_qty * v_per_box)
+          where id = p_product_id and warehouse_unit_stock >= p_qty * v_per_box
+          returning warehouse_unit_stock into v_new_unit;
       else
-        update products set unit_stock = unit_stock - p_qty
-          where id = p_product_id and unit_stock >= p_qty
-          returning unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty
+          where id = p_product_id and warehouse_unit_stock >= p_qty
+          returning warehouse_unit_stock into v_new_unit;
       end if;
       if v_new_unit is null then return false; end if;
-      update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = p_product_id;
       return true;
     else
       if p_option_type = 'box' then
-        update products set box_stock = box_stock - p_qty where id = p_product_id and box_stock >= p_qty;
+        update products set warehouse_box_stock = warehouse_box_stock - p_qty where id = p_product_id and warehouse_box_stock >= p_qty;
       else
-        update products set unit_stock = unit_stock - p_qty where id = p_product_id and unit_stock >= p_qty;
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty where id = p_product_id and warehouse_unit_stock >= p_qty;
       end if;
       return found;
     end if;
   end;
   $$ language plpgsql security definer;
-  grant execute on function decrement_stock(bigint, text, int) to authenticated, anon;
+  revoke execute on function decrement_stock(bigint, text, int) from public, anon, authenticated;
 
   -- Захиалга үүсгэх (эсвэл дараагийн бараа хангалтгүй болж цуцлах) явцад
-  -- аль хэдийн амжилттай хассан нөөцөө буцаах rollback функц
+  -- аль хэдийн амжилттай хассан нөөцөө буцаах rollback функц. Мөн л
+  -- anon/authenticated-д шууд грант хийхгүй — submit_order доторх алдааны
+  -- үед автомат транзакцийн rollback хангалттай, гаднаас дуудах шаардлагагүй.
   create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
   declare
@@ -183,21 +191,115 @@
     select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
       if p_option_type = 'box' then
-        update products set unit_stock = unit_stock + (p_qty * v_per_box) where id = p_product_id returning unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = warehouse_unit_stock + (p_qty * v_per_box) where id = p_product_id returning warehouse_unit_stock into v_new_unit;
       else
-        update products set unit_stock = unit_stock + p_qty where id = p_product_id returning unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = warehouse_unit_stock + p_qty where id = p_product_id returning warehouse_unit_stock into v_new_unit;
       end if;
-      update products set box_stock = v_new_unit / v_per_box where id = p_product_id;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = p_product_id;
     else
       if p_option_type = 'box' then
-        update products set box_stock = box_stock + p_qty where id = p_product_id;
+        update products set warehouse_box_stock = warehouse_box_stock + p_qty where id = p_product_id;
       else
-        update products set unit_stock = unit_stock + p_qty where id = p_product_id;
+        update products set warehouse_unit_stock = warehouse_unit_stock + p_qty where id = p_product_id;
       end if;
     end if;
   end;
   $$ language plpgsql security definer;
-  grant execute on function restore_stock(bigint, text, int) to authenticated, anon;
+  revoke execute on function restore_stock(bigint, text, int) from public, anon, authenticated;
+
+  -- Захиалга үүсгэх цорын ганц зам — үнэ, нөөцийн шалгалт, бичилт бүгд
+  -- эндээс, серверийн талд, нэг транзакцад хийгддэг (алдаа гарвал бүгд
+  -- автоматаар буцна). Клиент зөвхөн product_id/option_type/qty дамжуулна,
+  -- үнийг сервер өөрөө products хүснэгтээс уншиж тооцдог тул захиалгын
+  -- дүнг client талаас хуурамчаар өөрчлөх боломжгүй.
+  create or replace function submit_order(
+    p_customer_name text, p_phone text, p_address text, p_receipt_type text,
+    p_register_number text, p_delivery_method text, p_items jsonb
+  ) returns jsonb
+  language plpgsql security definer as $function$
+  declare
+    v_order_number text;
+    v_item jsonb;
+    v_product products%rowtype;
+    v_qty int;
+    v_option_type text;
+    v_note text;
+    v_current_price numeric;
+    v_box_price numeric;
+    v_line_total numeric;
+    v_subtotal numeric := 0;
+    v_delivery_method text;
+    v_delivery_fee numeric := 0;
+    v_ok boolean;
+    v_discount_expired boolean;
+    v_label text;
+    v_item_rows jsonb := '[]'::jsonb;
+  begin
+    if p_items is null or jsonb_array_length(p_items) = 0 then
+      raise exception 'Сагс хоосон байна.';
+    end if;
+    if p_phone is null or length(trim(p_phone)) = 0 then
+      raise exception 'Утасны дугаар оруулна уу.';
+    end if;
+
+    v_delivery_method := case when p_delivery_method = 'delivery' then 'delivery' else 'pickup' end;
+    v_order_number := 'CP' || floor(100000 + random() * 900000)::int::text;
+
+    for v_item in select * from jsonb_array_elements(p_items) loop
+      v_option_type := v_item->>'option_type';
+      v_qty := (v_item->>'qty')::int;
+      v_note := v_item->>'note';
+      if v_option_type not in ('unit','box') or v_qty is null or v_qty <= 0 or v_qty > 1000 then
+        raise exception 'Буруу барааны мэдээлэл.';
+      end if;
+
+      select * into v_product from products where id = (v_item->>'product_id')::bigint;
+      if not found then
+        raise exception 'Бараа олдсонгүй.';
+      end if;
+
+      v_discount_expired := v_product.tag = 'хямдралтай' and v_product.discount_ends_at is not null and v_product.discount_ends_at <= now();
+      v_box_price := case when v_discount_expired then coalesce(v_product.box_original_price, v_product.box_price) else v_product.box_price end;
+
+      if v_option_type = 'unit' then
+        v_current_price := case when v_discount_expired then coalesce(v_product.unit_original_price, v_product.unit_price) else v_product.unit_price end;
+      else
+        v_current_price := v_box_price;
+      end if;
+
+      if v_option_type = 'unit' and v_product.bulk_qty is not null and coalesce(v_box_price, 0) > 0 and coalesce(v_product.box_per_box, 0) > 0 and v_qty >= v_product.bulk_qty then
+        v_line_total := round((v_box_price / v_product.box_per_box) * v_qty);
+      else
+        v_line_total := v_current_price * v_qty;
+      end if;
+
+      v_ok := decrement_stock(v_product.id, v_option_type, v_qty);
+      if not v_ok then
+        raise exception '"%" барааны нөөц дууссан байна. Сагсаа шинэчилж дахин оролдоно уу.', v_product.name;
+      end if;
+
+      v_subtotal := v_subtotal + v_line_total;
+      v_label := case when v_option_type = 'unit' then v_product.unit_label else v_product.box_label end;
+      if v_note is not null and length(v_note) > 0 then
+        v_label := v_label || ' · ' || v_note;
+      end if;
+
+      v_item_rows := v_item_rows || jsonb_build_object('product_id', v_product.id, 'product_name', v_product.name, 'option_type', v_option_type, 'option_label', v_label, 'unit_price', v_current_price, 'qty', v_qty, 'line_total', v_line_total);
+    end loop;
+
+    v_delivery_fee := case when v_delivery_method = 'delivery' and v_subtotal < 500000 then 15000 else 0 end;
+
+    insert into orders (order_number, user_id, customer_name, phone, address, subtotal, status, receipt_type, register_number, delivery_method, delivery_fee)
+    values (v_order_number, null, p_customer_name, p_phone, case when v_delivery_method = 'delivery' then p_address else null end, v_subtotal, 'pending', coalesce(p_receipt_type, 'individual'), case when p_receipt_type = 'company' then p_register_number else null end, v_delivery_method, v_delivery_fee);
+
+    insert into order_items (order_number, product_id, product_name, option_type, option_label, unit_price, qty, line_total)
+    select v_order_number, (r->>'product_id')::bigint, r->>'product_name', r->>'option_type', r->>'option_label', (r->>'unit_price')::numeric, (r->>'qty')::int, (r->>'line_total')::numeric
+    from jsonb_array_elements(v_item_rows) r;
+
+    return jsonb_build_object('orderNumber', v_order_number, 'subtotal', v_subtotal, 'deliveryFee', v_delivery_fee);
+  end;
+  $function$;
+  grant execute on function submit_order(text, text, text, text, text, text, jsonb) to anon, authenticated;
 
   create policy "public read categories" on categories for select using (true);
   create policy "public read subcategories" on subcategories for select using (true);
@@ -218,13 +320,15 @@
   create policy "admin update products" on products for update using (is_admin());
   create policy "admin delete products" on products for delete using (is_admin());
 
-  create policy "public create orders" on orders for insert with check (true);
+  -- orders/order_items хүснэгтэд шууд INSERT хийх policy зориудаар байхгүй —
+  -- захиалга зөвхөн submit_order() (SECURITY DEFINER, RLS-ийг тойрдог)
+  -- функцээр л үүснэ, ингэснээр client талаас хуурамч үнэ/дүн бүхий
+  -- захиалга шидэх боломжгүй болно.
   create policy "admin read orders" on orders for select using (is_admin());
   create policy "user read own orders" on orders for select using (user_id = auth.uid());
   create policy "admin update orders" on orders for update using (is_admin());
   create policy "admin delete orders" on orders for delete using (is_admin());
 
-  create policy "public create order_items" on order_items for insert with check (true);
   create policy "admin read order_items" on order_items for select using (is_admin());
   create policy "user read own order_items" on order_items for select using (
     exists (select 1 from orders o where o.order_number = order_items.order_number and o.user_id = auth.uid())
