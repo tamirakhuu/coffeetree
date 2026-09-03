@@ -458,19 +458,12 @@ async function checkAuth(){
   subscribeTransfers();
 }
 
-// Админ "Хүлээн авах" дарж stock_transfers мөрийг status='received' эсвэл
-// status='rejected' (буцаах) болгоход (admin_receive_transfer/admin_reject_transfer
-// RPC) энэ хуудас руу real-time мэдэгдэл ирж, дуут дохио гаргана — агуулахын
-// ажилтан дэлгэц дээр байнга хараад суух шаардлагагүй
+
 function subscribeTransfers(){
   sb.channel('stock-transfers-notify')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stock_transfers' }, (payload) => {
       const updated = payload.new;
       const idx = stockTransfers.findIndex(t => t.id === updated.id);
-      // Realtime-ийн payload.old нь зөвхөн id агуулдаг (REPLICA IDENTITY full
-      // биш) тул хуучин status-ыг DB-ийн payload-с биш локал state-с авна —
-      // энэ хуудас өмнө нь loadAll()-оор тухайн мөрийг pending төлөвтэй нь
-      // аль хэдийн ачаалсан байх ёстой тул энэ харьцуулалт найдвартай
       const wasPending = idx !== -1 && stockTransfers[idx].status === 'pending';
       if (idx !== -1) stockTransfers[idx] = updated; else stockTransfers.unshift(updated);
       if (wasPending && (updated.status === 'received' || updated.status === 'rejected')) {
@@ -718,11 +711,14 @@ function render(){
   /* Үлдэгдэл */
   renderStockFilters();
   const q = $('#stock-q').value.trim().toLowerCase();
-  $('#stock-list').innerHTML = products
+  const stockRows = products
     .filter(p => !q || (p.name + ' ' + brandName(p)).toLowerCase().includes(q))
     .filter(p => stockBrandFilter === 'all' || p.brand_id === stockBrandFilter)
     .filter(p => !stockLowOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) < LOW))
-    .filter(p => !stockOutOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) === 0))
+    .filter(p => !stockOutOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) === 0));
+  // Хайлт хийгээгүй үед хамгийн их үлдэгдэлтэй бараа түрүүлж харагдана
+  if (!q) stockRows.sort((a, b) => (b.warehouse_unit_stock||0) - (a.warehouse_unit_stock||0));
+  $('#stock-list').innerHTML = stockRows
     .map(p => { const n = p.warehouse_unit_stock || 0, out = hasUnit(p) && n === 0, low = !out && hasUnit(p) && n < LOW;
       return `<div class="line">
         ${productThumb(p)}
