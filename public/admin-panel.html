@@ -1470,6 +1470,22 @@ function renderSalesReport() {
   }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
+// Таталт/Буцаалтын түүхийг он-сараар нь хаалттай (accordion) байдлаар
+// харуулна — аль сар дээр дархад тухайн сарын илгээлтүүд batch_id-гаараа
+// бүлэглэгдэж (нэг "Илгээх" дархад үүссэн бараанууд нэг дор) дэлгэрэнгүй
+// нээгдэнэ
+const expandedReportMonths = new Set();
+function toggleReportMonth(key) {
+  if (expandedReportMonths.has(key)) expandedReportMonths.delete(key); else expandedReportMonths.add(key);
+  renderReport();
+}
+const MN_MONTHS = ['1-р сар','2-р сар','3-р сар','4-р сар','5-р сар','6-р сар','7-р сар','8-р сар','9-р сар','10-р сар','11-р сар','12-р сар'];
+function reportStatusBadge(status) {
+  if (status === 'pending') return `<span class="badge pending">Хүлээгдэж байна</span>`;
+  if (status === 'rejected') return `<span class="badge cancelled">Буцаагдсан</span>`;
+  return `<span class="badge done">Хүлээн авсан</span>`;
+}
+
 function renderReport() {
   const query = (document.getElementById('reportSearch')?.value || '').trim().toLowerCase();
   const direction = document.getElementById('reportDirection')?.value || '';
@@ -1496,21 +1512,61 @@ function renderReport() {
   renderTransferTotals();
 
   const tb = document.getElementById('reportTable');
-  tb.innerHTML = filtered.map(t => {
-    const dirBadge = directionBadge(t.direction);
-    const statusBadgeHtml = t.status === 'pending'
-      ? `<span class="badge pending">Хүлээгдэж байна</span>`
-      : `<span class="badge done">Хүлээн авсан</span>`;
-    return `<tr>
-      <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
-      <td data-th="Бараа">${t.product_name}</td>
-      <td data-th="Төрөл">${t.option_type === 'box' ? 'Хайрцаг' : 'Ширхэг'}</td>
-      <td data-th="Чиглэл">${dirBadge}</td>
-      <td class="mono" data-th="Тоо">${t.qty}</td>
-      <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
-      <td data-th="Төлөв">${statusBadgeHtml}</td>
+
+  // Он-сараар бүлэглэнэ (шинэ нь эхэндээ)
+  const byMonth = new Map();
+  filtered.forEach(t => {
+    const d = new Date(t.created_at);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth.has(key)) byMonth.set(key, { year: d.getFullYear(), month: d.getMonth(), items: [] });
+    byMonth.get(key).items.push(t);
+  });
+  const monthKeys = [...byMonth.keys()].sort().reverse();
+
+  if (!monthKeys.length) {
+    tb.innerHTML = `<tr><td colspan="7" class="empty">Таталт/Буцаалтын түүх алга байна</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = monthKeys.map(key => {
+    const m = byMonth.get(key);
+    const open = expandedReportMonths.has(key);
+    const monthHeader = `<tr class="pt-batch-header" onclick="toggleReportMonth('${key}')" style="cursor:pointer">
+      <td colspan="7" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
+        ${open ? '▾' : '▸'} ${m.year} оны ${MN_MONTHS[m.month]} · ${m.items.length} бараа
+      </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="7" class="empty">Таталт/Буцаалтын түүх алга байна</td></tr>`;
+    if (!open) return monthHeader;
+
+    const byBatch = new Map();
+    const batchOrder = [];
+    m.items.forEach(t => {
+      const bKey = t.batch_id || ('__single_' + t.id);
+      if (!byBatch.has(bKey)) { byBatch.set(bKey, []); batchOrder.push(bKey); }
+      byBatch.get(bKey).push(t);
+    });
+    const batchRows = batchOrder.map(bKey => {
+      const items = byBatch.get(bKey);
+      const first = items[0];
+      const batchHeader = items.length > 1
+        ? `<tr><td colspan="7" style="background:var(--card);font-size:11px;color:var(--ink-soft);padding:6px 12px 2px;font-weight:600">
+            📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${items.length} бараа нэг илгээлтэд
+          </td></tr>`
+        : '';
+      const itemRows = items.map(t => `<tr>
+        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+        <td data-th="Бараа">${t.product_name}</td>
+        <td data-th="Төрөл">${t.option_type === 'box' ? 'Хайрцаг' : 'Ширхэг'}</td>
+        <td data-th="Чиглэл">${directionBadge(t.direction)}</td>
+        <td class="mono" data-th="Тоо">${t.qty}</td>
+        <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
+        <td data-th="Төлөв">${reportStatusBadge(t.status)}</td>
+      </tr>`).join('');
+      return batchHeader + itemRows;
+    }).join('');
+
+    return monthHeader + batchRows;
+  }).join('');
 }
 
 function directionBadge(direction) {
@@ -1525,9 +1581,6 @@ function renderPendingTransfers() {
   if (!tb) return;
   if (!pending.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">Хүлээгдэж буй бараа алга байна</td></tr>`; return; }
 
-  // Нэг "Илгээх" дархад агуулахаас үүссэн мөрүүд ижил batch_id-тай тул
-  // тэднийг нэг багц болгож бүлэглэнэ; batch_id-гүй (хуучин) мөр бүр
-  // өөрийн ганц багц болж, өөр багцтай холилдохгүй
   const groups = [];
   const byBatch = new Map();
   pending.forEach(t => {
@@ -1693,8 +1746,6 @@ function printOrderReceipt(orderNumber) {
   setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
 }
 
-// Хэвлэх бүрт хуудасны хэмжээ өөр байдаг тул (баримт: 80mm тасалбар,
-// тайлан: энгийн A4) @page дүрмийг тухайн бүрд нь динамикаар оруулж/арилгана
 function setPrintPageSize(size, margin) {
   let style = document.getElementById('dynamicPageStyle');
   if (!style) { style = document.createElement('style'); style.id = 'dynamicPageStyle'; document.head.appendChild(style); }
