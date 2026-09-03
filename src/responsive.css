@@ -138,6 +138,19 @@ html {
   .cuppa-hero-title { font-size: 24px !important; }
 }
 
+/* Босоо, өндөр дэлгэцтэй (kiosk-той адил) том дэлгэц дээр барааны
+   дэлгэрэнгүй хэсгийн зургийг дэлгэцийн голд харагдуулна — учир нь
+   энгийн desktop/mobile-ийн бодлого хэрэглэвэл контент дэлгэцийн
+   дээд хэсэгт наалдаж, доор нь ашиглагдаагүй хоосон зай их үлддэг */
+@media (min-width: 900px) and (orientation: portrait) {
+  .cuppa-detail-hero {
+    min-height: calc(100vh - 220px);
+    display: flex;
+    align-items: center;
+  }
+  .cuppa-detail-hero .cuppa-detail-grid { width: 100%; }
+}
+
 .cuppa-category-tile:hover,
 .cuppa-product-card:hover {
   transform: translateY(-3px);

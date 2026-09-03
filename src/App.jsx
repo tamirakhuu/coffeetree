@@ -849,6 +849,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
       <BackButton onClick={onBack} />
+      <div className="cuppa-detail-hero">
       <div className="cuppa-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           {images ? (
@@ -1060,6 +1061,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {similarProducts.length > 0 && (
