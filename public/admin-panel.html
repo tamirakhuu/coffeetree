@@ -1470,16 +1470,15 @@ function renderSalesReport() {
   }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
-// Таталт/Буцаалтын түүхийг он-сараар нь хаалттай (accordion) байдлаар
-// харуулна — аль сар дээр дархад тухайн сарын илгээлтүүд batch_id-гаараа
+// Таталт/Буцаалтын түүхийг өдрөөр нь хаалттай (accordion) байдлаар
+// харуулна — аль өдөр дээр дархад тухайн өдрийн илгээлтүүд batch_id-гаараа
 // бүлэглэгдэж (нэг "Илгээх" дархад үүссэн бараанууд нэг дор) дэлгэрэнгүй
 // нээгдэнэ
-const expandedReportMonths = new Set();
-function toggleReportMonth(key) {
-  if (expandedReportMonths.has(key)) expandedReportMonths.delete(key); else expandedReportMonths.add(key);
+const expandedReportDays = new Set();
+function toggleReportDay(key) {
+  if (expandedReportDays.has(key)) expandedReportDays.delete(key); else expandedReportDays.add(key);
   renderReport();
 }
-const MN_MONTHS = ['1-р сар','2-р сар','3-р сар','4-р сар','5-р сар','6-р сар','7-р сар','8-р сар','9-р сар','10-р сар','11-р сар','12-р сар'];
 function reportStatusBadge(status) {
   if (status === 'pending') return `<span class="badge pending">Хүлээгдэж байна</span>`;
   if (status === 'rejected') return `<span class="badge cancelled">Буцаагдсан</span>`;
@@ -1513,30 +1512,30 @@ function renderReport() {
 
   const tb = document.getElementById('reportTable');
 
-  // Он-сараар бүлэглэнэ (шинэ нь эхэндээ)
-  const byMonth = new Map();
+  // Өдрөөр бүлэглэнэ (шинэ нь эхэндээ)
+  const byDay = new Map();
   filtered.forEach(t => {
     const d = new Date(t.created_at);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (!byMonth.has(key)) byMonth.set(key, { year: d.getFullYear(), month: d.getMonth(), items: [] });
-    byMonth.get(key).items.push(t);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!byDay.has(key)) byDay.set(key, { year: d.getFullYear(), month: d.getMonth(), day: d.getDate(), items: [] });
+    byDay.get(key).items.push(t);
   });
-  const monthKeys = [...byMonth.keys()].sort().reverse();
+  const dayKeys = [...byDay.keys()].sort().reverse();
 
-  if (!monthKeys.length) {
+  if (!dayKeys.length) {
     tb.innerHTML = `<tr><td colspan="7" class="empty">Таталт/Буцаалтын түүх алга байна</td></tr>`;
     return;
   }
 
-  tb.innerHTML = monthKeys.map(key => {
-    const m = byMonth.get(key);
-    const open = expandedReportMonths.has(key);
-    const monthHeader = `<tr class="pt-batch-header" onclick="toggleReportMonth('${key}')" style="cursor:pointer">
+  tb.innerHTML = dayKeys.map(key => {
+    const m = byDay.get(key);
+    const open = expandedReportDays.has(key);
+    const dayHeader = `<tr class="pt-batch-header" onclick="toggleReportDay('${key}')" style="cursor:pointer">
       <td colspan="7" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
-        ${open ? '▾' : '▸'} ${m.year} оны ${MN_MONTHS[m.month]} · ${m.items.length} бараа
+        ${open ? '▾' : '▸'} ${m.year} оны ${m.month + 1}-р сарын ${m.day} · ${m.items.length} бараа
       </td>
     </tr>`;
-    if (!open) return monthHeader;
+    if (!open) return dayHeader;
 
     const byBatch = new Map();
     const batchOrder = [];
@@ -1565,7 +1564,7 @@ function renderReport() {
       return batchHeader + itemRows;
     }).join('');
 
-    return monthHeader + batchRows;
+    return dayHeader + batchRows;
   }).join('');
 }
 
