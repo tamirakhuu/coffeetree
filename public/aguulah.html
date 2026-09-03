@@ -458,9 +458,10 @@ async function checkAuth(){
   subscribeTransfers();
 }
 
-// Админ "Хүлээн авах" дарж stock_transfers мөрийг status='received' болгоход
-// (admin_receive_transfer RPC) энэ хуудас руу real-time мэдэгдэл ирж, дуут
-// дохио гаргана — агуулахын ажилтан дэлгэц дээр байнга хараад суух шаардлагагүй
+// Админ "Хүлээн авах" дарж stock_transfers мөрийг status='received' эсвэл
+// status='rejected' (буцаах) болгоход (admin_receive_transfer/admin_reject_transfer
+// RPC) энэ хуудас руу real-time мэдэгдэл ирж, дуут дохио гаргана — агуулахын
+// ажилтан дэлгэц дээр байнга хараад суух шаардлагагүй
 function subscribeTransfers(){
   sb.channel('stock-transfers-notify')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stock_transfers' }, (payload) => {
@@ -472,9 +473,11 @@ function subscribeTransfers(){
       // аль хэдийн ачаалсан байх ёстой тул энэ харьцуулалт найдвартай
       const wasPending = idx !== -1 && stockTransfers[idx].status === 'pending';
       if (idx !== -1) stockTransfers[idx] = updated; else stockTransfers.unshift(updated);
-      if (wasPending && updated.status === 'received') {
+      if (wasPending && (updated.status === 'received' || updated.status === 'rejected')) {
         playNotifSound();
-        toast(`"${updated.product_name}" админ хүлээн авлаа`);
+        toast(updated.status === 'received'
+          ? `"${updated.product_name}" админ хүлээн авлаа`
+          : `"${updated.product_name}" админ буцаалаа`);
       }
       render();
     })
