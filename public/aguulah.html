@@ -41,7 +41,7 @@ a{color:var(--accent-700)}
 .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who span{font-size:11.5px;color:var(--muted)}
 .spacer{margin-left:auto}
-main{padding:16px 0 112px}
+main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .screen{display:flex;flex-direction:column;gap:14px; margin-top: 10px }
 .head h2{font-size:26px}
 .head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
@@ -183,7 +183,7 @@ main{padding:16px 0 112px}
 /* desktop */
 @media (min-width:760px){
   body{font-size:16px}
-  main{padding:24px 0 40px}
+  main.wrap{padding:24px 0 40px}
   .head h2{font-size:34px}
   .stats{grid-template-columns:repeat(4,1fr)}
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
