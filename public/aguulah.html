@@ -140,6 +140,11 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .tabbar{position:fixed;left:0;right:0;bottom:var(--kb-offset,0px);z-index:30;background:var(--surface);border-top:1px solid rgba(32,36,43,.08);
   padding-bottom:env(safe-area-inset-bottom);transition:bottom .15s ease}
 .tabbar .in{max-width:960px;margin:0 auto;display:flex;gap:2px;padding:8px 10px}
+/* Гар утасны гар (keyboard) нээлттэй үед tabbar болон browser-ийн өөрийн
+   form-navigation toolbar хоёр давхцаж "замбараагүй" харагддаг тул tabbar-ыг
+   бүрэн нууж, action bar-ыг шууд гарын дээр байрлуулна */
+html.kb-open .tabbar{display:none}
+html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .tab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 6px;
   border:none;border-radius:20px;background:transparent;color:var(--muted);font-size:11px}
 .tab svg{width:19px;height:19px;flex:none}
@@ -357,6 +362,9 @@ if (window.visualViewport) {
   const syncKeyboardOffset = () => {
     const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
     document.documentElement.style.setProperty('--kb-offset', offset + 'px');
+    // Жижиг хэлбэлзлээс (жишээ нь browser toolbar намирах/гарах) болж
+    // худал нээгдсэн гэж бүү тоолуулахын тулд босго утга ашиглана
+    document.documentElement.classList.toggle('kb-open', offset > 60);
   };
   vv.addEventListener('resize', syncKeyboardOffset);
   vv.addEventListener('scroll', syncKeyboardOffset);
