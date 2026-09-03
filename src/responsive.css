@@ -138,6 +138,16 @@ html {
   .cuppa-hero-title { font-size: 24px !important; }
 }
 
+/* Таблет (жишээ нь iPad Mini 768px, iPad Air 820px) хэмжээнд mobile-ийн
+   breakpoint (720px) хараахан хүрээгүй тул hero carousel цэвэр desktop-ийн
+   utga-аар (320px өндөр, 14px gap, талын slide 16%) зурагдаж, гол зурагтай
+   хажуугийн slide-ын хооронд их хоосон зай гарч замбараагүй харагддаг байв —
+   энэ хэсэгт mobile болон desktop хоёрын хоорондох дунд зэргийн утгаар тохируулна */
+@media (min-width: 721px) and (max-width: 1024px) {
+  .cuppa-hero-carousel { height: 260px !important; gap: 10px !important; }
+  .cuppa-hero-side-slide { width: 20% !important; height: 84% !important; opacity: 0.55 !important; }
+}
+
 /* Босоо, өндөр дэлгэцтэй (kiosk-той адил) том дэлгэц дээр барааны
    дэлгэрэнгүй хэсгийн зургийг дэлгэцийн голд харагдуулна — учир нь
    энгийн desktop/mobile-ийн бодлого хэрэглэвэл контент дэлгэцийн
