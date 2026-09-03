@@ -1214,7 +1214,6 @@ function HeroSlideshow({ products, onOpen, index, setIndex }) {
   const sideSlideStyle = {
     position: "relative", flexShrink: 0, width: "16%", height: "78%", borderRadius: 14, overflow: "hidden", cursor: "pointer",
     opacity: 0.45, background: T.card, transition: "opacity .3s ease", border: "none", padding: 0,
-    boxShadow: "0 1px 4px rgba(36,28,20,.12)",
   };
   return (
     <div className="cuppa-hero-carousel" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, height: 320 }}>
@@ -1231,7 +1230,6 @@ function HeroSlideshow({ products, onOpen, index, setIndex }) {
       <div className="cuppa-hero-main-slide" onClick={handleMainClick}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} style={{
         position: "relative", flex: 1, maxWidth: 640, height: "100%", borderRadius: 16, overflow: "hidden", cursor: "pointer", background: T.card,
-        boxShadow: "0 1px 4px rgba(36,28,20,.12)",
       }}>
         {slides.map((p, i) => (
           <img key={p.id} src={p.images[0]} alt={p.name} style={{
