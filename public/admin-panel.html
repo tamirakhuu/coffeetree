@@ -1639,7 +1639,7 @@ function openOrderDetail(orderNumber) {
 
     <div class="order-detail-section-title">Хүргэлт</div>
     <div class="order-detail-grid${isDelivery ? '' : ' full'}">
-      <div class="order-detail-item"><label>Арга</label><span>${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</span></div>
+      <div class="order-detail-item"><label></label><span>${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</span></div>
       ${isDelivery ? `<div class="order-detail-item"><label>Хаяг</label><span>${o.address || '-'}</span></div>` : ''}
     </div>
 
