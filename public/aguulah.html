@@ -347,10 +347,12 @@ const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
 const hasUnit = (p) => !!(p.unit_price || p.warehouse_unit_stock);
 const hasBox = (p) => !!(p.box_price || p.warehouse_box_stock);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
-// unit_label/box_label нь "1 ширхэг", "1 хайрцаг" гэх мэт худалдан авах нэгжийн
-// бүтэн тайлбар тул, өмнө нь бодит тоо (12, 2 гэх мэт) нэмэхэд "12 1 ширхэг"
-// болж хос тоо гардаг — тэргүүн "1 "-г хасаад цэвэр нэрийг л үлдээнэ
-const unitWord = (label, fallback) => String(label || '').replace(/^1\s+/, '').trim() || fallback;
+// unit_label/box_label нь "1 ширхэг", "1 хайрцаг", зарим бараанд "100 ширхэг",
+// "500 ширхэг" гэх мэт (боодлоор зарагддаг бараа) худалдан авах нэгжийн бүтэн
+// тайлбар тул, өмнө нь бодит нөөцийн тоо (3000, 12 гэх мэт) нэмэхэд
+// "3000 100 ширхэг" мэт хос тоо гарч замбараагүй харагддаг — эхний тоог (ямар ч
+// байсан, зөвхөн "1" биш) хасаад цэвэр нэрийг л үлдээнэ
+const unitWord = (label, fallback) => String(label || '').replace(/^\d+\s+/, '').trim() || fallback;
 const productThumb = (p, size=40) => p.images && p.images[0]
   ? `<img src="${p.images[0]}" style="width:${size}px;height:${size}px;border-radius:10px;object-fit:cover;flex-shrink:0">`
   : `<div style="width:${size}px;height:${size}px;border-radius:10px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))"></div>`;
