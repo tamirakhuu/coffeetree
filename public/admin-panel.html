@@ -317,7 +317,11 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/bell.svg');mask-image:url('/admin-icons/bell.svg')"></span> Мэдэгдэл <span class="notif-badge" id="notifBadge">0</span>
     </button>
     <div class="notif-panel" id="notifPanel">
-      <div class="notif-panel-head">Мэдэгдэл</div>
+      <div class="notif-panel-head" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Мэдэгдэл</span>
+        <button type="button" onclick="event.stopPropagation();playNotifySound()" title="Дуут дохио сонсох"
+          style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;color:var(--ink-soft)">🔊 Сонсох</button>
+      </div>
       <div id="notifList"></div>
     </div>
   </div>
@@ -675,17 +679,20 @@ async function openOrderDetailFresh(orderNumber) {
   if (orders.some(o => o.order_number === orderNumber)) openOrderDetail(orderNumber);
 }
 
-// Эхний хэрэглэгчийн click дээр л AudioContext-оо нээнэ (autoplay policy)
+// Эхний хэрэглэгчийн click/товчлуур дархад л AudioContext-оо нээнэ (autoplay
+// policy) — хоёуланг нь "once" болгож сонсоно, аль нь эхлээд тохиолдсоноор нь нээгдэнэ
 let notifAudioCtx;
-document.addEventListener('click', function unlockNotifAudio() {
+['click', 'keydown'].forEach((evt) => document.addEventListener(evt, function unlockNotifAudio() {
   if (!notifAudioCtx) { try { notifAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
-  document.removeEventListener('click', unlockNotifAudio);
-}, { once: true });
+}, { once: true }));
 
-function playNotifySound() {
+async function playNotifySound() {
   try {
     if (!notifAudioCtx) notifAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (notifAudioCtx.state === 'suspended') notifAudioCtx.resume();
+    // realtime мэдэгдэл click гараагүй байхад ирвэл context "suspended" хэвээр
+    // байж болзошгүй тул сэргээгдэхийг хүлээгээд, дараа нь л дуугаа тоглуулна —
+    // эс тэгвэл resume() дуусахаас өмнө scheduled дуу чимээгүй алга болдог
+    if (notifAudioCtx.state === 'suspended') await notifAudioCtx.resume();
     const now = notifAudioCtx.currentTime;
     [[880, 0], [1318.5, .11]].forEach(([freq, delay]) => {
       const osc = notifAudioCtx.createOscillator();
