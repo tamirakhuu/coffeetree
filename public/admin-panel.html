@@ -593,7 +593,8 @@ async function checkAuth() {
 }
 
 /* ══════════ МЭДЭГДЭЛ (realtime) ══════════
-   Шинэ захиалга (orders INSERT) болон агуулахаас илгээсэн/буцаасан бараа
+   Шинэ захиалга (orders INSERT), сургалтын шинэ бүртгэл
+   (training_registrations INSERT) болон агуулахаас илгээсэн/буцаасан бараа
    (stock_transfers INSERT, status='pending') орж ирэх бүрт Supabase Realtime-
    ээр дуудагдаж, дуут дохио + bell-ийн жагсаалтад нэмнэ. aguulah.html дээрх
    "Илгээх" товч дархад л энд мэдэгдэл ирнэ (restock — нийлүүлэгчээс нэмэх
@@ -651,6 +652,8 @@ function handleNotifClick(id) {
   } else if (n.type === 'transfer') {
     navTo('transfers');
     setTimeout(() => document.getElementById('pendingTransfersCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  } else if (n.type === 'training') {
+    navTo('training');
   }
 }
 
@@ -711,6 +714,19 @@ function subscribeRealtimeNotifications() {
       pushNotification({ type: 'order', title: '🛎️ Шинэ захиалга', sub: `${o.order_number} · ${fmt(o.subtotal)}`, orderNumber: o.order_number });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification('CUPPA — Шинэ захиалга', { body: `${o.order_number} · ${fmt(o.subtotal)}` });
+      }
+      loadAll();
+    })
+    .subscribe();
+
+  sb.channel('admin-training')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'training_registrations' }, (payload) => {
+      const r = payload.new;
+      const dateLabel = new Date(r.training_date + 'T00:00:00').toLocaleDateString('mn-MN', { month: 'long', day: 'numeric' });
+      toast(`📝 Сургалтад шинэ бүртгэл: ${r.name}`, 'success', 8000);
+      pushNotification({ type: 'training', title: '📝 Сургалтын шинэ бүртгэл', sub: `${escapeHtml(r.name)} · ${dateLabel} (Бямба)` });
+      if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        new Notification('CUPPA — Сургалтын шинэ бүртгэл', { body: `${r.name} · ${dateLabel}` });
       }
       loadAll();
     })
