@@ -121,25 +121,35 @@ export async function registerTraining({ name, phone, trainingDate }) {
 
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
 // дотор, хэзээ ч browser-т ирдэггүй. Төлбөрийн дүнг Edge Function өөрөө
-// orders хүснэгтээс уншдаг тул энд дүн дамжуулах шаардлагагүй (client талаас
-// хуурамч дүн илгээж бага мөнгөөр нэхэмжлэл үүсгэх боломжийг хаасан).
+// orders (эсвэл kind:"training" бол training_registrations) хүснэгтээс
+// уншдаг тул энд дүн дамжуулах шаардлагагүй (client талаас хуурамч дүн
+// илгээж бага мөнгөөр нэхэмжлэл үүсгэх боломжийг хаасан).
 // QPay мерчант эрх (secrets) тохируулаагүй үед Edge Function demo QR
 // буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.
-export async function createQpayInvoice({ orderNumber, description }) {
+export async function createQpayInvoice({ orderNumber, registrationId, description, kind }) {
   const { data, error } = await supabase.functions.invoke("qpay-create-invoice", {
-    body: { orderNumber, description },
+    body: { orderNumber, registrationId, description, kind },
   });
   if (error) throw new Error(error.message || "QPay нэхэмжлэл үүсгэхэд алдаа гарлаа");
   if (data?.error) throw new Error(data.error);
   return data; // { invoiceId, qrText, qrImage, urls, demo }
 }
 
-// Хэрэглэгч QR-аа төлсөн эсэхийг шалгах (checkout дэлгэц 3 секунд тутам polling хийнэ)
-export async function checkQpayPayment({ invoiceId, orderNumber }) {
+// Хэрэглэгч QR-аа төлсөн эсэхийг шалгах (checkout болон сургалтын бүртгэлийн
+// дэлгэц 3 секунд тутам polling хийнэ)
+export async function checkQpayPayment({ invoiceId, orderNumber, registrationId, kind }) {
   const { data, error } = await supabase.functions.invoke("qpay-check-payment", {
-    body: { invoiceId, orderNumber },
+    body: { invoiceId, orderNumber, registrationId, kind },
   });
   if (error) throw new Error(error.message || "Төлбөр шалгахад алдаа гарлаа");
   if (data?.error) throw new Error(data.error);
   return data; // { paid, paidAmount, demo }
+}
+
+// Ирээдүйн Бямба гараг тус бүрт хэдэн хүн (аль хэдийн) бүртгүүлснийг харна —
+// хувийн мэдээлэл (нэр/утас) ороогүй, зөвхөн тоо тул нийтэд ил дуудагдана.
+export async function getTrainingSlots(dates) {
+  const { data, error } = await supabase.rpc("training_slots", { p_dates: dates });
+  if (error) throw new Error(error.message);
+  return data || []; // [{ training_date, taken }]
 }

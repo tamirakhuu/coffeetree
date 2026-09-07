@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining } from "./api.js";
+import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
@@ -1812,15 +1812,35 @@ function nextSaturdays(count) {
   return dates;
 }
 
+const TRAINING_FEE = 50000;
+const TRAINING_CAPACITY = 18;
+
 function TrainingPage() {
   const saturdays = useMemo(() => nextSaturdays(6), []);
   const [form, setForm] = useState({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
   const [status, setStatus] = useState({ state: "idle", message: "" });
+  const [slots, setSlots] = useState({}); // { 'YYYY-MM-DD': takenCount }
+  const [phase, setPhase] = useState("form"); // form | payment | done
+  const [payment, setPayment] = useState(null); // { registrationId, invoice }
+  const [payError, setPayError] = useState("");
+
+  const dateKeys = useMemo(() => saturdays.map(toDateInputValue), [saturdays]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getTrainingSlots(dateKeys).then((rows) => {
+      if (cancelled) return;
+      const map = {};
+      rows.forEach((r) => { map[r.training_date] = Number(r.taken) || 0; });
+      setSlots(map);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [dateKeys]);
 
   const infoCards = [
     { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт" },
-    { label: "Төлбөр", value: "50,000₮ / хүн" },
-    { label: "Багтаамж", value: "Өдөрт дээд тал нь 18 хүн" },
+    { label: "Төлбөр", value: "50,000₮ / 1 хүн" },
+    { label: "Багтаамж", value: "Нэг өдрийн сургалтын багтаамж нь 18 хүн" },
   ];
 
   const handleSubmit = async (e) => {
@@ -1831,13 +1851,85 @@ function TrainingPage() {
     }
     setStatus({ state: "submitting", message: "" });
     try {
-      await registerTraining({ name: form.name, phone: form.phone, trainingDate: form.date });
-      setStatus({ state: "success", message: "Бүртгэл амжилттай хийгдлээ! Бид тантай холбогдох болно." });
-      setForm({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
+      const registrationId = await registerTraining({ name: form.name, phone: form.phone, trainingDate: form.date });
+      const invoice = await createQpayInvoice({
+        registrationId, kind: "training",
+        description: `CUPPA сургалт бүртгэл #${registrationId}`,
+      });
+      setPayment({ registrationId, invoice });
+      setPhase("payment");
     } catch (err) {
       setStatus({ state: "error", message: err.message || "Бүртгэхэд алдаа гарлаа." });
     }
   };
+
+  useEffect(() => {
+    if (phase !== "payment" || !payment?.invoice?.invoiceId) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await checkQpayPayment({ invoiceId: payment.invoice.invoiceId, registrationId: payment.registrationId, kind: "training" });
+        if (cancelled) return;
+        if (res.paid) setPhase("done");
+      } catch (err) {
+        if (!cancelled) setPayError(err.message);
+      }
+    };
+    const interval = setInterval(poll, 3000);
+    poll();
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [phase, payment]);
+
+  if (phase === "payment") {
+    const invoice = payment.invoice;
+    return (
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>QPay-ээр төлөх</h1>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 26 }}>
+          Сургалтын бүртгэл #{payment.registrationId} — {money(TRAINING_FEE)}
+        </div>
+        {invoice.demo && (
+          <div style={{
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, background: T.cream,
+            border: `1px solid ${T.line}`, borderRadius: 10, padding: "8px 14px", marginBottom: 20,
+          }}>Demo горим — QPay мерчант эрх тохируулаагүй тул {"15 секундийн дараа автоматаар \"төлөгдсөн\" гэж үзнэ."}</div>
+        )}
+        {invoice.qrImage && (
+          <img src={`data:image/png;base64,${invoice.qrImage}`} alt="QPay QR"
+            style={{ width: 220, height: 220, borderRadius: 14, border: `1px solid ${T.line}`, background: "#fff", padding: 10 }} />
+        )}
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, margin: "18px 0 20px" }}>
+          Банкны аппаараа энэ QR кодыг уншуулж төлнө үү.
+        </div>
+        {invoice.urls?.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 22 }}>
+            {invoice.urls.map((u) => (
+              <a key={u.name} href={u.link} style={{
+                fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, color: T.ink,
+                border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", textDecoration: "none", background: T.card,
+              }}>{u.name}</a>
+            ))}
+          </div>
+        )}
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: 20 }}>
+          Төлбөр хийгдэхийг автоматаар шалгаж байна…
+        </div>
+        {payError && <div style={{ color: T.cherry, fontSize: 12.5, fontFamily: "'Ubuntu', sans-serif" }}>{payError}</div>}
+      </div>
+    );
+  }
+
+  if (phase === "done") {
+    return (
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "90px 20px", textAlign: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.moss, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+          <Check size={30} color="#fff" />
+        </div>
+        <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Бүртгэл, төлбөр амжилттай!</h1>
+        <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft }}>Бид тантай сонгосон өдрөөс өмнө холбогдож баталгаажуулна.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
@@ -1863,18 +1955,22 @@ function TrainingPage() {
         <input required placeholder="Утасны дугаар" inputMode="numeric" value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
         <select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle}>
-          {saturdays.map((d) => (
-            <option key={toDateInputValue(d)} value={toDateInputValue(d)}>
-              {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба)
-            </option>
-          ))}
+          {saturdays.map((d) => {
+            const key = toDateInputValue(d);
+            const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
+            return (
+              <option key={key} value={key} disabled={remaining === 0}>
+                {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
+              </option>
+            );
+          })}
         </select>
         <button type="submit" disabled={status.state === "submitting"} style={{
           background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
           fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
           cursor: status.state === "submitting" ? "default" : "pointer", opacity: status.state === "submitting" ? 0.7 : 1,
         }}>
-          {status.state === "submitting" ? "Илгээж байна..." : "Бүртгүүлэх"}
+          {status.state === "submitting" ? "Илгээж байна..." : "Бүртгүүлж, төлбөр төлөх"}
         </button>
         {status.message && (
           <div style={{

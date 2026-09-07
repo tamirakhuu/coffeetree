@@ -42,41 +42,73 @@ async function getQpayToken(): Promise<string> {
   return json.access_token;
 }
 
+// Сургалтын төлбөр тогтмол дүнтэй (өдөрт 50,000₮/хүн) тул захиалгын нэгэн
+// адил бодит бичлэгээс уншихаас илүү энд шууд тогтооно — client талаас
+// өөрчлөх боломжгүй тогтмол тоо.
+const TRAINING_FEE = 50000;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { orderNumber, description } = await req.json();
-    if (!orderNumber) {
-      return new Response(JSON.stringify({ error: "orderNumber заавал шаардлагатай." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const { orderNumber, registrationId, description, kind } = await req.json();
+    const isTraining = kind === "training";
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Төлбөрийн дүнг клиентээс биш, захиалгын бодит бичлэгээс сервер өөрөө
-    // уншина — эс тэгвэл client талын amount утгыг өөрчилж жинхэнэ үнээс
-    // бага дүнгээр нэхэмжлэл үүсгэх боломжтой болно
-    const { data: order, error: orderErr } = await admin
-      .from("orders")
-      .select("subtotal, delivery_fee")
-      .eq("order_number", orderNumber)
-      .single();
-    if (orderErr || !order) {
-      return new Response(JSON.stringify({ error: "Захиалга олдсонгүй." }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let amount: number;
+    let senderInvoiceNo: string;
+
+    if (isTraining) {
+      if (!registrationId) {
+        return new Response(JSON.stringify({ error: "registrationId заавал шаардлагатай." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: reg, error: regErr } = await admin
+        .from("training_registrations")
+        .select("id")
+        .eq("id", registrationId)
+        .single();
+      if (regErr || !reg) {
+        return new Response(JSON.stringify({ error: "Бүртгэл олдсонгүй." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      amount = TRAINING_FEE;
+      senderInvoiceNo = `training-${registrationId}`;
+    } else {
+      if (!orderNumber) {
+        return new Response(JSON.stringify({ error: "orderNumber заавал шаардлагатай." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Төлбөрийн дүнг клиентээс биш, захиалгын бодит бичлэгээс сервер өөрөө
+      // уншина — эс тэгвэл client талын amount утгыг өөрчилж жинхэнэ үнээс
+      // бага дүнгээр нэхэмжлэл үүсгэх боломжтой болно
+      const { data: order, error: orderErr } = await admin
+        .from("orders")
+        .select("subtotal, delivery_fee")
+        .eq("order_number", orderNumber)
+        .single();
+      if (orderErr || !order) {
+        return new Response(JSON.stringify({ error: "Захиалга олдсонгүй." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      amount = Number(order.subtotal || 0) + Number(order.delivery_fee || 0);
+      senderInvoiceNo = orderNumber;
     }
-    const amount = Number(order.subtotal || 0) + Number(order.delivery_fee || 0);
 
     let result: { invoiceId: string; qrText: string; qrImage: string; urls: unknown[]; demo: boolean };
 
     if (DEMO_MODE) {
       result = {
         invoiceId: `DEMO-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        qrText: `DEMO-QPAY-${orderNumber}`,
+        qrText: `DEMO-QPAY-${senderInvoiceNo}`,
         qrImage: DEMO_QR_PNG_BASE64,
         urls: [],
         demo: true,
@@ -88,9 +120,9 @@ serve(async (req) => {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           invoice_code: QPAY_INVOICE_CODE,
-          sender_invoice_no: orderNumber,
+          sender_invoice_no: senderInvoiceNo,
           invoice_receiver_code: "terminal",
-          invoice_description: description || `CUPPA захиалга ${orderNumber}`,
+          invoice_description: description || (isTraining ? `CUPPA сургалт ${senderInvoiceNo}` : `CUPPA захиалга ${senderInvoiceNo}`),
           amount,
           callback_url: `${SUPABASE_URL}/functions/v1/qpay-check-payment`,
         }),
@@ -106,10 +138,14 @@ serve(async (req) => {
       };
     }
 
-    // Захиалгын мөрөнд invoice_id-г хадгалж, дараа нь payment_status шалгах/
+    // Тухайн мөрөнд invoice_id-г хадгалж, дараа нь payment_status шалгах/
     // холбоход ашиглана (client талд qpay_invoice_id-г шууд бичих эрхгүй тул
     // энд service_role-оор бичнэ)
-    await admin.from("orders").update({ qpay_invoice_id: result.invoiceId }).eq("order_number", orderNumber);
+    if (isTraining) {
+      await admin.from("training_registrations").update({ qpay_invoice_id: result.invoiceId }).eq("id", registrationId);
+    } else {
+      await admin.from("orders").update({ qpay_invoice_id: result.invoiceId }).eq("order_number", orderNumber);
+    }
 
     return new Response(JSON.stringify(result), {
       status: 200,
