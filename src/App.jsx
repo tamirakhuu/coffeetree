@@ -1840,7 +1840,7 @@ function TrainingPage({ setView }) {
   }, [dateKeys]);
 
   const infoCards = [
-    { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт" },
+    { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт, 10:00 цагт эхэлнэ" },
     { label: "Төлбөр", value: "50,000₮ / 1 хүн" },
     { label: "Багтаамж", value: "Нэг өдрийн сургалтын багтаамж нь 18 хүн" },
   ];
@@ -1928,7 +1928,7 @@ function TrainingPage({ setView }) {
           <Check size={30} color="#fff" />
         </div>
         <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Бүртгэл, төлбөр амжилттай!</h1>
-        <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft }}>Баярлалаа. Та бусдыгаа хүндэтгэн сонгосон өдрөө цагаа баримтлан ирээрэй. Танд амжилт хүсье! <li>Хаяг: СБД-7р хороо Улсын их дэлгүүрийн чанх хойно 8-р байр Монголын баристагийн холбоо.</li></p>
+        <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft }}>Баярлалаа. Та бусдыгаа хүндэтгэн сонгосон өдрөө цагаа баримтлан ирээрэй. Танд амжилт хүсье! <li>Сургалт болох хаяг: СБД-7р хороо Улсын их дэлгүүрийн чанх хойно 8-р байр Монголын баристагийн холбоо.</li></p>
       </div>
     );
   }
@@ -1966,7 +1966,7 @@ function TrainingPage({ setView }) {
             const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
             return (
               <option key={key} value={key} disabled={remaining === 0}>
-                {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
+                {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба, 10:00) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
               </option>
             );
           })}
