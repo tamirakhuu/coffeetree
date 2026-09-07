@@ -119,6 +119,16 @@ export async function registerTraining({ name, phone, trainingDate }) {
   return data; // шинэ бүртгэлийн id
 }
 
+// Хэрэглэгч бүртгэлгүйгээр утасны дугаараараа сургалтын бүртгэл/төлбөрийн
+// төлвөө шалгах — lookupOrdersByPhone-той ижил зарчим.
+export async function lookupTrainingByPhone({ phone }) {
+  const { data, error } = await supabase.rpc("lookup_training_by_phone", {
+    p_phone: phone.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
 // дотор, хэзээ ч browser-т ирдэггүй. Төлбөрийн дүнг Edge Function өөрөө
 // orders (эсвэл kind:"training" бол training_registrations) хүснэгтээс

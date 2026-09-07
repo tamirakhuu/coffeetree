@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots } from "./api.js";
+import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots, lookupTrainingByPhone } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
@@ -46,6 +46,7 @@ export function viewFromLocation(pathname, search) {
   if (pathname === "/training") return { name: "training" };
   if (pathname === "/discount") return { name: "discounts" };
   if (pathname === "/order-status") return { name: "order-status" };
+  if (pathname === "/training-status") return { name: "training-status" };
   if (pathname === "/checkout") return { name: "checkout" };
   if (pathname === "/wishlist") return { name: "wishlist" };
   if (pathname === "/about") return { name: "about" };
@@ -67,6 +68,7 @@ export function pathForView(view, brands = []) {
     case "training": return "/training";
     case "discounts": return "/discount";
     case "order-status": return "/order-status";
+    case "training-status": return "/training-status";
     case "checkout": return "/checkout";
     case "wishlist": return "/wishlist";
     case "about": return "/about";
@@ -1815,7 +1817,7 @@ function nextSaturdays(count) {
 const TRAINING_FEE = 50000;
 const TRAINING_CAPACITY = 18;
 
-function TrainingPage() {
+function TrainingPage({ setView }) {
   const saturdays = useMemo(() => nextSaturdays(6), []);
   const [form, setForm] = useState({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
   const [status, setStatus] = useState({ state: "idle", message: "" });
@@ -1934,9 +1936,13 @@ function TrainingPage() {
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
-      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 30 }}>
-        Улирал, трендийг дагасан меню гаргах сургалт тогтмол явагддаг.
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 8 }}>
+        Нэг өдрийн BASIC меню сургалт
       </p>
+      <button onClick={() => setView({ name: "training-status" })} style={{
+        background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 30,
+        fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, textDecoration: "underline",
+      }}>Аль хэдийн бүртгүүлсэн үү? Бүртгэлээ шалгах</button>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginBottom: 36 }}>
         {infoCards.map((c) => (
           <div key={c.label} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "18px 22px", minWidth: 180, flex: "1 1 180px" }}>
@@ -1988,6 +1994,77 @@ function TrainingPage() {
         }}>
         <Facebook size={14} /> Дэлгэрэнгүй мэдээлэл
       </a>
+    </div>
+  );
+}
+
+const TRAINING_PAYMENT_LABELS = { paid: "Төлсөн", pending: "Хүлээгдэж байна" };
+const TRAINING_PAYMENT_COLORS = {
+  paid: { bg: "#DFEED6", color: "#2E5C2E" },
+  pending: { bg: "#F3E6C9", color: "#8A6A1E" },
+};
+function TrainingPaymentBadge({ status }) {
+  const c = TRAINING_PAYMENT_COLORS[status] || TRAINING_PAYMENT_COLORS.pending;
+  return (
+    <span style={{
+      background: c.bg, color: c.color, fontSize: 11.5, fontWeight: 600, padding: "4px 10px",
+      borderRadius: 999, fontFamily: "'Ubuntu', sans-serif", whiteSpace: "nowrap",
+    }}>{TRAINING_PAYMENT_LABELS[status] || status}</span>
+  );
+}
+function TrainingStatusPage({ setView }) {
+  const [phone, setPhone] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | found | notfound | error
+  const [regs, setRegs] = useState([]);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setStatus("loading");
+    try {
+      const data = await lookupTrainingByPhone({ phone });
+      if (data && data.length) { setRegs(data); setStatus("found"); }
+      else { setRegs([]); setStatus("notfound"); }
+    } catch (err) {
+      setRegs([]); setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "50px 20px 90px" }}>
+      <BackButton onClick={() => setView({ name: "training" })} />
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Сургалтын бүртгэлээ шалгах</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, marginBottom: 22 }}>Бүртгүүлэхдээ ашигласан утасны дугаараа оруулж, төлбөрийн төлөвөө шалгаарай.</p>
+      <form onSubmit={handleSearch} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 26 }}>
+        <input placeholder="Утасны дугаар" inputMode="numeric" value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />
+        <button type="submit" disabled={phone.length !== 8 || status === "loading"} style={{
+          background: phone.length === 8 ? T.cherry : T.line, color: "#fff", border: "none",
+          borderRadius: 999, padding: "12px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+          cursor: phone.length === 8 ? "pointer" : "not-allowed",
+        }}>{status === "loading" ? "Хайж байна..." : "Хайх"}</button>
+      </form>
+
+      {status === "notfound" && (
+        <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5 }}>Энэ дугаараар бүртгэл олдсонгүй. Утасны дугаараа шалгана уу.</div>
+      )}
+      {status === "error" && (
+        <div style={{ color: T.cherry, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5 }}>Алдаа гарлаа. Дахин оролдоно уу.</div>
+      )}
+      {status === "found" && regs.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {regs.map((r) => (
+            <div key={r.id} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div>
+                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>
+                  {new Date(r.trainingDate + "T00:00:00").toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })}
+                </div>
+                <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{r.name}</div>
+              </div>
+              <TrainingPaymentBadge status={r.paymentStatus} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2523,7 +2600,9 @@ export default function App() {
   } else if (view.name === "confirmation") {
     body = <Confirmation orderNumber={orderNumber} onContinue={() => setView({ name: "home" })} onTrack={() => setView({ name: "order-status" })} />;
   } else if (view.name === "training") {
-    body = <TrainingPage />;
+    body = <TrainingPage setView={setView} />;
+  } else if (view.name === "training-status") {
+    body = <TrainingStatusPage setView={setView} />;
   } else if (view.name === "about") {
     body = <AboutPage />;
   } else if (view.name === "bestseller") {
