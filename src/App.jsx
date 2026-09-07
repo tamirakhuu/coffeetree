@@ -1801,6 +1801,12 @@ function toDateInputValue(d) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+// toLocaleDateString("mn-MN", { month: "long" }) нь зарим browser/OS дээр
+// (жишээ нь бүрэн ICU локал өгөгдөлгүй Chrome) чимээгүйхэн англи сар руу
+// (жишээ нь "September") унадаг тул монгол сарын нэрийг өөрөө тогтоож бичнэ
+function formatMnDate(d) {
+  return `${d.getFullYear()} оны ${d.getMonth() + 1}-р сарын ${d.getDate()}`;
+}
 function nextSaturdays(count) {
   const dates = [];
   const d = new Date();
@@ -1966,7 +1972,7 @@ function TrainingPage({ setView }) {
             const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
             return (
               <option key={key} value={key} disabled={remaining === 0}>
-                {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба, 10:00) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
+                {formatMnDate(d)} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
               </option>
             );
           })}
@@ -2056,7 +2062,7 @@ function TrainingStatusPage({ setView }) {
             <div key={r.id} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div>
                 <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>
-                  {new Date(r.trainingDate + "T00:00:00").toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })}
+                  {formatMnDate(new Date(r.trainingDate + "T00:00:00"))}
                 </div>
                 <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{r.name}</div>
               </div>

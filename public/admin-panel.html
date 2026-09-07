@@ -543,6 +543,13 @@ function escapeHtml(str) {
   }[c]));
 }
 
+// toLocaleDateString('mn-MN', { month: 'long' }) нь зарим browser/OS дээр
+// (бүрэн ICU локал өгөгдөлгүй Chrome) чимээгүйхэн англи сар руу унадаг тул
+// монгол сарын нэрийг өөрөө тогтоож бичнэ
+function formatMnDate(d, withYear = true) {
+  return withYear ? `${d.getFullYear()} оны ${d.getMonth() + 1}-р сарын ${d.getDate()}` : `${d.getMonth() + 1}-р сарын ${d.getDate()}`;
+}
+
 // number talbar dээр focus-той үед mouse wheel эргүүлэхэд утга нь санамсаргүй
 // нэмэгдэж/хасагддаг browser-ийн стандарт зан төлөвийг унтраана — scroll хийх
 // гэж байгаад санаандгүй тоог өөрчилчихгүйн тулд focus-ийг шууд авчихна
@@ -729,7 +736,7 @@ function subscribeRealtimeNotifications() {
   sb.channel('admin-training')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'training_registrations' }, (payload) => {
       const r = payload.new;
-      const dateLabel = new Date(r.training_date + 'T00:00:00').toLocaleDateString('mn-MN', { month: 'long', day: 'numeric' });
+      const dateLabel = formatMnDate(new Date(r.training_date + 'T00:00:00'), false);
       toast(`📝 Сургалтад шинэ бүртгэл: ${r.name}`, 'success', 8000);
       pushNotification({ type: 'training', title: '📝 Сургалтын шинэ бүртгэл', sub: `${escapeHtml(r.name)} · ${dateLabel} (Бямба)` });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
@@ -1652,7 +1659,7 @@ function renderTraining() {
       const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       const d = new Date(date + 'T00:00:00');
       const dateHeader = `<tr><td colspan="6" style="background:var(--card);font-size:11px;color:var(--ink-soft);padding:6px 12px 2px;font-weight:600">
-        ${d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' })} (Бямба) · ${items.length}/18
+        ${formatMnDate(d)} (Бямба) · ${items.length}/18
       </td></tr>`;
       const rows = items.map(r => `<tr>
         <td data-th="Огноо"></td>
