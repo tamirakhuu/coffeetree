@@ -234,6 +234,7 @@
     v_discount_expired boolean;
     v_label text;
     v_item_rows jsonb := '[]'::jsonb;
+    v_attempts int := 0;
   begin
     if p_items is null or jsonb_array_length(p_items) = 0 then
       raise exception 'Сагс хоосон байна.';
@@ -243,7 +244,6 @@
     end if;
 
     v_delivery_method := case when p_delivery_method = 'delivery' then 'delivery' else 'pickup' end;
-    v_order_number := 'CP' || floor(100000 + random() * 900000)::int::text;
 
     for v_item in select * from jsonb_array_elements(p_items) loop
       v_option_type := v_item->>'option_type';
@@ -289,8 +289,22 @@
 
     v_delivery_fee := case when v_delivery_method = 'delivery' and v_subtotal < 500000 then 15000 else 0 end;
 
-    insert into orders (order_number, user_id, customer_name, phone, address, subtotal, status, receipt_type, register_number, delivery_method, delivery_fee)
-    values (v_order_number, null, p_customer_name, p_phone, case when v_delivery_method = 'delivery' then p_address else null end, v_subtotal, 'pending', coalesce(p_receipt_type, 'individual'), case when p_receipt_type = 'company' then p_register_number else null end, v_delivery_method, v_delivery_fee);
+    -- Захиалгын дугаар (санамсаргүй 6 оронтой тоо, 900,000 хослол) мөргөлдвөл
+    -- шинэ дугаараар дахин оролдоно — захиалгын тоо олширох тусам мөргөлдөх
+    -- магадлал өсдөг тул урьдчилан хамгаална.
+    loop
+      v_order_number := 'CP' || floor(100000 + random() * 900000)::int::text;
+      begin
+        insert into orders (order_number, user_id, customer_name, phone, address, subtotal, status, receipt_type, register_number, delivery_method, delivery_fee)
+        values (v_order_number, null, p_customer_name, p_phone, case when v_delivery_method = 'delivery' then p_address else null end, v_subtotal, 'pending', coalesce(p_receipt_type, 'individual'), case when p_receipt_type = 'company' then p_register_number else null end, v_delivery_method, v_delivery_fee);
+        exit;
+      exception when unique_violation then
+        v_attempts := v_attempts + 1;
+        if v_attempts >= 5 then
+          raise exception 'Захиалгын дугаар үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.';
+        end if;
+      end;
+    end loop;
 
     insert into order_items (order_number, product_id, product_name, option_type, option_label, unit_price, qty, line_total)
     select v_order_number, (r->>'product_id')::bigint, r->>'product_name', r->>'option_type', r->>'option_label', (r->>'unit_price')::numeric, (r->>'qty')::int, (r->>'line_total')::numeric
