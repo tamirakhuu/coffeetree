@@ -934,7 +934,7 @@ function productFormHtml(p) {
     const pct = (1 - impliedUnit / p.unit_price) * 100;
     if (pct > 0) boxDiscount = Math.round(pct * 10) / 10;
   }
-  const hasBox = !!(p.box_price || p.box_per_box);
+  const hasBox = !!p.box_price;
   const hasUnit = !p.id || !!p.unit_price;
   return `
     <div class="form-grid form-grid-2">
@@ -1094,7 +1094,7 @@ async function saveProduct(id) {
       box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
       box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
       box_original_price: boxEnabled ? (Number(document.getElementById('pf-box-original-price').value) || null) : null,
-      box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : 1,
+      box_per_box: boxEnabled ? (parseInt(document.getElementById('pf-box-per').value, 10) || 1) : null,
       unified_stock: boxEnabled ? document.getElementById('pf-unified-enable').checked : false,
     };
     const { data: savedRows, error } = id
@@ -1611,7 +1611,6 @@ function renderTraining() {
     return;
   }
 
-  // Он-сараар нуудаг (accordion) байдлаар бүлэглэнэ — хамгийн ойрын сар эхэндээ
   const byMonth = new Map();
   filtered.forEach(r => {
     const d = new Date(r.training_date + 'T00:00:00');
@@ -1630,8 +1629,6 @@ function renderTraining() {
       </td>
     </tr>`;
     if (!open) return monthHeader;
-
-    // Тухайн сар дотор Бямба гараг тус бүрээр бүлэглэнэ
     const byDate = new Map();
     m.items.forEach(r => {
       if (!byDate.has(r.training_date)) byDate.set(r.training_date, []);
