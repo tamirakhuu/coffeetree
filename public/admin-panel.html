@@ -1593,6 +1593,12 @@ function renderReport() {
   }).join('');
 }
 
+const expandedTrainingMonths = new Set();
+function toggleTrainingMonth(key) {
+  if (expandedTrainingMonths.has(key)) expandedTrainingMonths.delete(key); else expandedTrainingMonths.add(key);
+  renderTraining();
+}
+
 function renderTraining() {
   const query = (document.getElementById('trainingSearch')?.value || '').trim().toLowerCase();
   const filtered = trainingRegistrations.filter(r =>
@@ -1605,29 +1611,50 @@ function renderTraining() {
     return;
   }
 
-  // Хамгийн ойрын Бямба гараг эхэндээ ирэх өдрөөр бүлэглэнэ
-  const byDate = new Map();
+  // Он-сараар нуудаг (accordion) байдлаар бүлэглэнэ — хамгийн ойрын сар эхэндээ
+  const byMonth = new Map();
   filtered.forEach(r => {
-    if (!byDate.has(r.training_date)) byDate.set(r.training_date, []);
-    byDate.get(r.training_date).push(r);
+    const d = new Date(r.training_date + 'T00:00:00');
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth.has(key)) byMonth.set(key, { year: d.getFullYear(), month: d.getMonth(), items: [] });
+    byMonth.get(key).items.push(r);
   });
-  const dateKeys = [...byDate.keys()].sort();
+  const monthKeys = [...byMonth.keys()].sort();
 
-  tb.innerHTML = dateKeys.map(date => {
-    const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    const d = new Date(date + 'T00:00:00');
-    const dateHeader = `<tr><td colspan="6" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
-      ${d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' })} (Бямба) · ${items.length}/18
-    </td></tr>`;
-    const rows = items.map(r => `<tr>
-      <td data-th="Огноо"></td>
-      <td data-th="Нэр">${escapeHtml(r.name)}</td>
-      <td class="mono" data-th="Утас">${escapeHtml(r.phone)}</td>
-      <td data-th="Төлбөр">${trainingPaymentBadge(r.payment_status)}</td>
-      <td style="font-size:12px" data-th="Бүртгүүлсэн">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="deleteTrainingRegistration(${r.id})">Устгах</button></td>
-    </tr>`).join('');
-    return dateHeader + rows;
+  tb.innerHTML = monthKeys.map(key => {
+    const m = byMonth.get(key);
+    const open = expandedTrainingMonths.has(key);
+    const monthHeader = `<tr class="pt-batch-header" onclick="toggleTrainingMonth('${key}')" style="cursor:pointer">
+      <td colspan="6" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
+        ${open ? '▾' : '▸'} ${m.year} оны ${m.month + 1}-р сар · ${m.items.length} бүртгэл
+      </td>
+    </tr>`;
+    if (!open) return monthHeader;
+
+    // Тухайн сар дотор Бямба гараг тус бүрээр бүлэглэнэ
+    const byDate = new Map();
+    m.items.forEach(r => {
+      if (!byDate.has(r.training_date)) byDate.set(r.training_date, []);
+      byDate.get(r.training_date).push(r);
+    });
+    const dateKeys = [...byDate.keys()].sort();
+    const dateBlocks = dateKeys.map(date => {
+      const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const d = new Date(date + 'T00:00:00');
+      const dateHeader = `<tr><td colspan="6" style="background:var(--card);font-size:11px;color:var(--ink-soft);padding:6px 12px 2px;font-weight:600">
+        ${d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' })} (Бямба) · ${items.length}/18
+      </td></tr>`;
+      const rows = items.map(r => `<tr>
+        <td data-th="Огноо"></td>
+        <td data-th="Нэр">${escapeHtml(r.name)}</td>
+        <td class="mono" data-th="Утас">${escapeHtml(r.phone)}</td>
+        <td data-th="Төлбөр">${trainingPaymentBadge(r.payment_status)}</td>
+        <td style="font-size:12px" data-th="Бүртгүүлсэн">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="deleteTrainingRegistration(${r.id})">Устгах</button></td>
+      </tr>`).join('');
+      return dateHeader + rows;
+    }).join('');
+    return monthHeader + dateBlocks;
   }).join('');
 }
 
