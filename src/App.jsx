@@ -1956,7 +1956,7 @@ function TrainingPage({ setView }) {
         background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, padding: 26,
         display: "flex", flexDirection: "column", gap: 14, textAlign: "left", maxWidth: 440, margin: "0 auto",
       }}>
-        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Бүртгүүлэх</div>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Сургалтанд бүртгүүлэх</div>
         <input required placeholder="Нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
         <input required placeholder="Утасны дугаар" inputMode="numeric" value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
