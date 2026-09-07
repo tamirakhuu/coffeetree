@@ -6,6 +6,9 @@
 // захиалгаа/бүртгэлээ "төлөгдсөн" гэж хуурамчаар тэмдэглэх боломжтой болно.
 //
 // Deploy: npx supabase functions deploy qpay-check-payment --project-ref vbgqgwfcklkfecvocsyt
+// QPAY_BASE_URL-ийг ЗААВАЛ production хаягаар тохируулна — өгөхгүй бол
+// sandbox руу чимээгүйхэн унаж, жинхэнэ credential-ууд sandbox-т таарахгүй
+// байх тул доор тодорхой алдаа шидэж зогсооно (see CONFIG_ERROR).
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -16,6 +19,9 @@ const QPAY_BASE_URL = Deno.env.get("QPAY_BASE_URL") || "https://merchant-sandbox
 const QPAY_CLIENT_ID = Deno.env.get("QPAY_CLIENT_ID") || "";
 const QPAY_CLIENT_SECRET = Deno.env.get("QPAY_CLIENT_SECRET") || "";
 const DEMO_MODE = !QPAY_CLIENT_ID || !QPAY_CLIENT_SECRET;
+const CONFIG_ERROR = !DEMO_MODE && !Deno.env.get("QPAY_BASE_URL")
+  ? "QPAY_CLIENT_ID/SECRET тохируулсан ч QPAY_BASE_URL тохируулаагүй байна. Sandbox руу чимээгүй унахаас сэргийлж энд зогсоов — жинхэнэ мерчант хаягаа (QPAY_BASE_URL) тодорхой тохируулна уу."
+  : "";
 // Demo горимд бодит төлбөр хийх боломжгүй тул QR-ийг харуулаад ийм хугацааны
 // дараа "төлөгдсөн" гэж дүрд тоглуулна — зөвхөн урсгалыг харуулах зорилготой
 const DEMO_AUTO_PAY_MS = 15000;
@@ -26,7 +32,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// checkQpayPayment нь 3 секунд тутам polling хийгддэг тул access_token-ийг
+// warm isolate дотор кэшилж, дуусахаас нь 60 секундийн өмнө л дахин авна —
+// эс тэгвэл шалгалт бүрд шинэ token авах гэж QPay руу нэмэлт хүсэлт
+// (мөн rate-limit эрсдэл) үүсгэнэ.
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
 async function getQpayToken(): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
   const basic = btoa(`${QPAY_CLIENT_ID}:${QPAY_CLIENT_SECRET}`);
   const res = await fetch(`${QPAY_BASE_URL}/v2/auth/token`, {
     method: "POST",
@@ -34,7 +47,9 @@ async function getQpayToken(): Promise<string> {
   });
   if (!res.ok) throw new Error(`QPay auth амжилтгүй (${res.status}): ${await res.text()}`);
   const json = await res.json();
-  return json.access_token;
+  const expiresInSec = Number(json.expires_in) || 3600;
+  cachedToken = { token: json.access_token, expiresAt: Date.now() + (expiresInSec - 60) * 1000 };
+  return cachedToken.token;
 }
 
 async function markPaid(admin: ReturnType<typeof createClient>, isTraining: boolean, orderNumber: string, registrationId: number) {
@@ -47,6 +62,12 @@ async function markPaid(admin: ReturnType<typeof createClient>, isTraining: bool
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (CONFIG_ERROR) {
+    return new Response(JSON.stringify({ error: CONFIG_ERROR }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   try {
     const { invoiceId, orderNumber, registrationId, kind } = await req.json();
     const isTraining = kind === "training";

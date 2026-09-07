@@ -7,8 +7,11 @@
 //
 // Deploy: npx supabase functions deploy qpay-create-invoice --project-ref vbgqgwfcklkfecvocsyt
 // Secrets (жинхэнэ горимд шилжихэд):
-//   npx supabase secrets set QPAY_CLIENT_ID=... QPAY_CLIENT_SECRET=... QPAY_INVOICE_CODE=...
-//   QPAY_BASE_URL нь заавал биш, өгөөгүй бол sandbox хаяг ашиглана.
+//   npx supabase secrets set QPAY_CLIENT_ID=... QPAY_CLIENT_SECRET=... QPAY_INVOICE_CODE=... QPAY_BASE_URL=...
+//   QPAY_BASE_URL-ийг ЗААВАЛ production (жинхэнэ мерчант) хаягаар тохируулна —
+//   өгөхгүй бол QPAY_BASE_URL sandbox руу чимээгүйхэн унаж, жинхэнэ credential-
+//   уудаараа sandbox-т нэвтрэх гэж оролдоод ойлгомжгүй алдаа өгдөг тул доор
+//   3 secret тохируулсан ч QPAY_BASE_URL мартагдвал энд тодорхой алдаа шиднэ.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -20,6 +23,9 @@ const QPAY_CLIENT_ID = Deno.env.get("QPAY_CLIENT_ID") || "";
 const QPAY_CLIENT_SECRET = Deno.env.get("QPAY_CLIENT_SECRET") || "";
 const QPAY_INVOICE_CODE = Deno.env.get("QPAY_INVOICE_CODE") || "";
 const DEMO_MODE = !QPAY_CLIENT_ID || !QPAY_CLIENT_SECRET || !QPAY_INVOICE_CODE;
+const CONFIG_ERROR = !DEMO_MODE && !Deno.env.get("QPAY_BASE_URL")
+  ? "QPAY_CLIENT_ID/SECRET/INVOICE_CODE тохируулсан ч QPAY_BASE_URL тохируулаагүй байна. Sandbox руу чимээгүй унахаас сэргийлж энд зогсоов — жинхэнэ мерчант хаягаа (QPAY_BASE_URL) тодорхой тохируулна уу."
+  : "";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +37,13 @@ const corsHeaders = {
 const DEMO_QR_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
+// QPay-ийн access_token-ийг warm isolate дотор кэшилж, дуусах цагаас нь 60
+// секундийн өмнө л дахин авна — эс тэгвэл нэхэмжлэл бүрд шинэ token авах гэж
+// QPay руу нэмэлт хүсэлт (мөн rate-limit эрсдэл) үүсгэнэ.
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
 async function getQpayToken(): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
   const basic = btoa(`${QPAY_CLIENT_ID}:${QPAY_CLIENT_SECRET}`);
   const res = await fetch(`${QPAY_BASE_URL}/v2/auth/token`, {
     method: "POST",
@@ -39,7 +51,9 @@ async function getQpayToken(): Promise<string> {
   });
   if (!res.ok) throw new Error(`QPay auth амжилтгүй (${res.status}): ${await res.text()}`);
   const json = await res.json();
-  return json.access_token;
+  const expiresInSec = Number(json.expires_in) || 3600;
+  cachedToken = { token: json.access_token, expiresAt: Date.now() + (expiresInSec - 60) * 1000 };
+  return cachedToken.token;
 }
 
 // Сургалтын төлбөр тогтмол дүнтэй (өдөрт 50,000₮/хүн) тул захиалгын нэгэн
@@ -49,6 +63,12 @@ const TRAINING_FEE = 50000;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (CONFIG_ERROR) {
+    return new Response(JSON.stringify({ error: CONFIG_ERROR }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   try {
     const { orderNumber, registrationId, description, kind } = await req.json();
     const isTraining = kind === "training";
