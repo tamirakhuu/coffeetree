@@ -1635,18 +1635,19 @@ function renderTraining() {
   tb.innerHTML = monthKeys.map(key => {
     const m = byMonth.get(key);
     const open = expandedTrainingMonths.has(key);
-    const monthHeader = `<tr class="pt-batch-header" onclick="toggleTrainingMonth('${key}')" style="cursor:pointer">
-      <td colspan="6" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
-        ${open ? '▾' : '▸'} ${m.year} оны ${m.month + 1}-р сар · ${m.items.length} бүртгэл
-      </td>
-    </tr>`;
-    if (!open) return monthHeader;
     const byDate = new Map();
     m.items.forEach(r => {
       if (!byDate.has(r.training_date)) byDate.set(r.training_date, []);
       byDate.get(r.training_date).push(r);
     });
     const dateKeys = [...byDate.keys()].sort();
+    const dayNumbers = dateKeys.map(date => new Date(date + 'T00:00:00').getDate()).join(', ');
+    const monthHeader = `<tr class="pt-batch-header" onclick="toggleTrainingMonth('${key}')" style="cursor:pointer">
+      <td colspan="6" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
+        ${open ? '▾' : '▸'} ${m.year} оны ${m.month + 1}-р сар (${dayNumbers}-ны өдөр) · ${m.items.length} бүртгэл
+      </td>
+    </tr>`;
+    if (!open) return monthHeader;
     const dateBlocks = dateKeys.map(date => {
       const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       const d = new Date(date + 'T00:00:00');
