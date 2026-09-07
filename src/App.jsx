@@ -1794,7 +1794,35 @@ function InfoPage({ title, note, actionLabel, onAction }) {
   );
 }
 function TrainingPage() {
-  return <InfoPage title="Сургалт" note="Меню сургалт удахгүй" />;
+  const infoCards = [
+    { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт" },
+    { label: "Төлбөр", value: "50,000₮ / хүн" },
+    { label: "Багтаамж", value: "Өдөрт дээд тал нь 18 хүн" },
+  ];
+  return (
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
+      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 30 }}>
+        Улирал, трендийг дагасан меню гаргах сургалт тогтмол явагддаг.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginBottom: 32 }}>
+        {infoCards.map((c) => (
+          <div key={c.label} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "18px 22px", minWidth: 180, flex: "1 1 180px" }}>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 6 }}>{c.label}</div>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink }}>{c.value}</div>
+          </div>
+        ))}
+      </div>
+      <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0Xdv78nz4p5kUvyc9ppTsxPiFwG1FUs1uPEhVkGiytkYKd9RRmA24kZmrYZHFUWG9l&id=100053215639953"
+        target="_blank" rel="noopener noreferrer"
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 8, background: T.ink, color: T.cream, border: "none", borderRadius: 999,
+          padding: "12px 26px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: "none",
+        }}>
+        <Facebook size={16} /> Дэлгэрэнгүй мэдээлэл, бүртгүүлэх
+      </a>
+    </div>
+  );
 }
 
 function AboutPage() {
