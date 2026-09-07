@@ -1928,7 +1928,7 @@ function TrainingPage({ setView }) {
           <Check size={30} color="#fff" />
         </div>
         <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Бүртгэл, төлбөр амжилттай!</h1>
-        <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft }}>Баярлалаа. Та сонгосон өдрөө цагаа баримтлан ирээрэй. Хаяг: СБД-7р хороо Улсын их дэлгүүрийн чанх хойн 8-р байр Монголын баристагийн холбоо.</p>
+        <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft }}>Баярлалаа. Та бусдыгаа хүндэтгэн сонгосон өдрөө цагаа баримтлан ирээрэй. Танд амжилт хүсье! <li>Хаяг: СБД-7р хороо Улсын их дэлгүүрийн чанх хойно 8-р байр Монголын баристагийн холбоо.</li></p>
       </div>
     );
   }
