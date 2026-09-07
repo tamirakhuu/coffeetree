@@ -106,6 +106,19 @@ export async function lookupOrdersByPhone({ phone }) {
   return data || [];
 }
 
+// Сургалтад бүртгүүлэх — register_training нь SECURITY DEFINER тул
+// нэг өдөрт 18 хүний хязгаарыг серверийн талд атомикаар шалгадаг
+// (хоёр хэрэглэгч сүүлийн байрыг зэрэг авахыг зөвшөөрөхгүй).
+export async function registerTraining({ name, phone, trainingDate }) {
+  const { data, error } = await supabase.rpc("register_training", {
+    p_name: name.trim(),
+    p_phone: phone.trim(),
+    p_training_date: trainingDate,
+  });
+  if (error) throw new Error(error.message);
+  return data; // шинэ бүртгэлийн id
+}
+
 // QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
 // дотор, хэзээ ч browser-т ирдэггүй. Төлбөрийн дүнг Edge Function өөрөө
 // orders хүснэгтээс уншдаг тул энд дүн дамжуулах шаардлагагүй (client талаас

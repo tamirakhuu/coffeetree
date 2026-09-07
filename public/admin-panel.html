@@ -329,6 +329,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <button class="nav-item" data-page="orders" onclick="navTo('orders')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/orders.svg');mask-image:url('/admin-icons/orders.svg')"></span> Захиалга <span class="badge" id="nb-orders">0</span></button>
     <button class="nav-item" data-page="transfers" onclick="navTo('transfers')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/swap.svg');mask-image:url('/admin-icons/swap.svg')"></span> Бараа татан авалт <span class="badge" id="nb-transfers">0</span></button>
     <button class="nav-item" data-page="report" onclick="navTo('report')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/report.svg');mask-image:url('/admin-icons/report.svg')"></span> Тайлан</button>
+    <button class="nav-item" data-page="training" onclick="navTo('training')"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/categories.svg');mask-image:url('/admin-icons/categories.svg')"></span> Сургалтын бүртгэл <span class="badge" id="nb-training">0</span></button>
   </div>
   <div class="sidebar-foot">
     <button class="nav-item" onclick="doLogout()"><span class="nav-icon" style="-webkit-mask-image:url('/admin-icons/doLogout.svg');mask-image:url('/admin-icons/doLogout.svg')"></span> Гарах</button>
@@ -507,6 +508,15 @@ tr:hover td{background:rgba(255,255,255,.4)}
     </div>
   </div>
 
+  <div class="page" id="page-training">
+    <div class="page-header">
+      <div><h1>Сургалтын бүртгэл</h1><p>Вебсайтаас "Сургалт" хуудсаар бүртгүүлсэн хүмүүс</p></div>
+      <input id="trainingSearch" oninput="renderTraining()" placeholder="Нэр эсвэл утасны дугаараар хайх..."
+        style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:240px">
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Огноо (Бямба)</th><th>Нэр</th><th>Утас</th><th>Бүртгүүлсэн</th><th></th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
+  </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -527,7 +537,7 @@ document.addEventListener('wheel', () => {
 const ICON_EMOJI = { CoffeeBean:'☕', TeaLeaf:'🍃', Syrup:'💧', Sauce:'🍯', Powder:'❄️', Smoothie:'🥤', Wrench:'🔧' };
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
-let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [];
+let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [], trainingRegistrations = [];
 
 const IMAGE_BUCKET = 'product-images';
 const MAX_PRODUCT_IMAGES = 3;
@@ -727,7 +737,7 @@ async function doLogout() {
 }
 
 async function loadAll() {
-  const [c, s, b, p, o, oi, st] = await Promise.all([
+  const [c, s, b, p, o, oi, st, tr] = await Promise.all([
     sb.from('categories').select('*').order('id'),
     sb.from('subcategories').select('*'),
     sb.from('brands').select('*').order('id'),
@@ -735,12 +745,13 @@ async function loadAll() {
     sb.from('orders').select('*').order('created_at', { ascending: false }),
     sb.from('order_items').select('*'),
     sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
+    sb.from('training_registrations').select('*').order('training_date', { ascending: false }),
   ]);
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
-  stockTransfers = st.data || [];
+  stockTransfers = st.data || []; trainingRegistrations = tr.data || [];
   populateProductFilters();
-  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport(); renderSalesReport();
+  renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport(); renderSalesReport(); renderTraining();
 }
 
 function navTo(page) {
@@ -1566,6 +1577,52 @@ function renderReport() {
 
     return dayHeader + batchRows;
   }).join('');
+}
+
+function renderTraining() {
+  const query = (document.getElementById('trainingSearch')?.value || '').trim().toLowerCase();
+  const filtered = trainingRegistrations.filter(r =>
+    !query || (r.name || '').toLowerCase().includes(query) || (r.phone || '').includes(query)
+  );
+  document.getElementById('nb-training').textContent = trainingRegistrations.length;
+  const tb = document.getElementById('trainingTable');
+  if (!filtered.length) {
+    tb.innerHTML = `<tr><td colspan="5" class="empty">Бүртгэл алга байна</td></tr>`;
+    return;
+  }
+
+  // Хамгийн ойрын Бямба гараг эхэндээ ирэх өдрөөр бүлэглэнэ
+  const byDate = new Map();
+  filtered.forEach(r => {
+    if (!byDate.has(r.training_date)) byDate.set(r.training_date, []);
+    byDate.get(r.training_date).push(r);
+  });
+  const dateKeys = [...byDate.keys()].sort();
+
+  tb.innerHTML = dateKeys.map(date => {
+    const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const d = new Date(date + 'T00:00:00');
+    const dateHeader = `<tr><td colspan="5" style="background:var(--paper);font-size:12.5px;color:var(--ink);padding:10px 12px;font-weight:700">
+      ${d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric' })} (Бямба) · ${items.length}/18
+    </td></tr>`;
+    const rows = items.map(r => `<tr>
+      <td data-th="Огноо"></td>
+      <td data-th="Нэр">${r.name}</td>
+      <td class="mono" data-th="Утас">${r.phone}</td>
+      <td style="font-size:12px" data-th="Бүртгүүлсэн">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="deleteTrainingRegistration(${r.id})">Устгах</button></td>
+    </tr>`).join('');
+    return dateHeader + rows;
+  }).join('');
+}
+
+async function deleteTrainingRegistration(id) {
+  if (!confirm('Энэ бүртгэлийг устгах уу?')) return;
+  const { error } = await sb.from('training_registrations').delete().eq('id', id);
+  if (error) { toast(error.message, 'error'); return; }
+  trainingRegistrations = trainingRegistrations.filter(r => r.id !== id);
+  renderTraining();
+  toast('Устгагдлаа', 'success');
 }
 
 function directionBadge(direction) {

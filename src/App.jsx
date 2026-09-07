@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
   Facebook, Instagram, Menu
 } from "lucide-react";
-import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment } from "./api.js";
+import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { CoffeeBeanIcon, TeaLeafIcon, SyrupIcon, SauceIcon, PowderIcon, SmoothieIcon, TamperIcon, PaperCupIcon } from "./categoryIcons.jsx";
 /*  Design tokens */
@@ -1793,19 +1793,59 @@ function InfoPage({ title, note, actionLabel, onAction }) {
     </div>
   );
 }
+function toDateInputValue(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function nextSaturdays(count) {
+  const dates = [];
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const daysUntilSaturday = (6 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilSaturday);
+  for (let i = 0; i < count; i++) {
+    dates.push(new Date(d));
+    d.setDate(d.getDate() + 7);
+  }
+  return dates;
+}
+
 function TrainingPage() {
+  const saturdays = useMemo(() => nextSaturdays(6), []);
+  const [form, setForm] = useState({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
+  const [status, setStatus] = useState({ state: "idle", message: "" });
+
   const infoCards = [
     { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт" },
     { label: "Төлбөр", value: "50,000₮ / хүн" },
     { label: "Багтаамж", value: "Өдөрт дээд тал нь 18 хүн" },
   ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || form.phone.trim().length < 6 || !form.date) {
+      setStatus({ state: "error", message: "Нэр, утасны дугаараа зөв бөглөнө үү." });
+      return;
+    }
+    setStatus({ state: "submitting", message: "" });
+    try {
+      await registerTraining({ name: form.name, phone: form.phone, trainingDate: form.date });
+      setStatus({ state: "success", message: "Бүртгэл амжилттай хийгдлээ! Бид тантай холбогдох болно." });
+      setForm({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
+    } catch (err) {
+      setStatus({ state: "error", message: err.message || "Бүртгэхэд алдаа гарлаа." });
+    }
+  };
+
   return (
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
       <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 30 }}>
         Улирал, трендийг дагасан меню гаргах сургалт тогтмол явагддаг.
       </p>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginBottom: 32 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginBottom: 36 }}>
         {infoCards.map((c) => (
           <div key={c.label} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "18px 22px", minWidth: 180, flex: "1 1 180px" }}>
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 6 }}>{c.label}</div>
@@ -1813,13 +1853,44 @@ function TrainingPage() {
           </div>
         ))}
       </div>
+
+      <form onSubmit={handleSubmit} style={{
+        background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, padding: 26,
+        display: "flex", flexDirection: "column", gap: 14, textAlign: "left", maxWidth: 440, margin: "0 auto",
+      }}>
+        <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Бүртгүүлэх</div>
+        <input required placeholder="Нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
+        <input required placeholder="Утасны дугаар" inputMode="numeric" value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
+        <select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle}>
+          {saturdays.map((d) => (
+            <option key={toDateInputValue(d)} value={toDateInputValue(d)}>
+              {d.toLocaleDateString("mn-MN", { year: "numeric", month: "long", day: "numeric" })} (Бямба)
+            </option>
+          ))}
+        </select>
+        <button type="submit" disabled={status.state === "submitting"} style={{
+          background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
+          fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
+          cursor: status.state === "submitting" ? "default" : "pointer", opacity: status.state === "submitting" ? 0.7 : 1,
+        }}>
+          {status.state === "submitting" ? "Илгээж байна..." : "Бүртгүүлэх"}
+        </button>
+        {status.message && (
+          <div style={{
+            fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textAlign: "center",
+            color: status.state === "error" ? T.cherry : T.green,
+          }}>{status.message}</div>
+        )}
+      </form>
+
       <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0Xdv78nz4p5kUvyc9ppTsxPiFwG1FUs1uPEhVkGiytkYKd9RRmA24kZmrYZHFUWG9l&id=100053215639953"
         target="_blank" rel="noopener noreferrer"
         style={{
-          display: "inline-flex", alignItems: "center", gap: 8, background: T.ink, color: T.cream, border: "none", borderRadius: 999,
-          padding: "12px 26px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: "none",
+          display: "inline-flex", alignItems: "center", gap: 6, marginTop: 20,
+          color: T.inkSoft, fontFamily: "'Ubuntu', sans-serif", fontSize: 13, textDecoration: "none",
         }}>
-        <Facebook size={16} /> Дэлгэрэнгүй мэдээлэл, бүртгүүлэх
+        <Facebook size={14} /> Дэлгэрэнгүй мэдээлэл
       </a>
     </div>
   );
