@@ -390,11 +390,6 @@ function toast(msg){
   clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600);
 }
 
-/* ── ДУУТ МЭДЭГДЭЛ ───────────────────────────────────────── */
-// Тусдаа аудио файл шаардахгүйгээр Web Audio API-аар товч 2 өнгийн жингэнэх
-// дуу үүсгэнэ. Browser-ууд хэрэглэгчийн харилцан үйлдэлгүйгээр дуу тоглуулахыг
-// хориглодог (autoplay policy) тул AudioContext-ийг анхны click дээр л үүсгэж/
-// сэргээж, дараа нь realtime мэдэгдэл ирэхэд шууд ашиглана
 let audioCtx = null;
 function ensureAudioCtx(){
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
