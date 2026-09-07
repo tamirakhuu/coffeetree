@@ -926,8 +926,6 @@ function removeProductImage(i) {
 function productFormHtml(p) {
   p = p || {};
   productImages = (p.images || []).map(url => ({ url }));
-  // Одоо байгаа бараа засах үед box_price/unit_price/box_per_box-оос хямдралын
-  // хувийг буцаан тооцож, талбарт урьдчилан харуулна
   let boxDiscount = '';
   if (p.unit_price && p.box_per_box && p.box_price) {
     const impliedUnit = p.box_price / p.box_per_box;
@@ -1009,8 +1007,6 @@ function applyBoxPrice(discountedUnit, perBox) {
   document.getElementById('pf-box-preview').textContent =
     `Ширхэгийн үнэ хайрцагт: ${Math.round(discountedUnit).toLocaleString('mn-MN')}₮ × ${perBox} = ${boxPrice.toLocaleString('mn-MN')}₮`;
 }
-// "Бөөний хямдрал (%)" эсвэл ширхэг/хайрцаг тоо өөрчлөгдөхөд хувиас нь ширхэгийн
-// үнэ болон нийт үнийг тооцно (хямдралын хувь нь "эх сурвалж")
 function recalcFromDiscount() {
   const unitPrice = parseFloat(document.getElementById('pf-unit-price').value) || 0;
   const perBox = parseFloat(document.getElementById('pf-box-per').value) || 0;
@@ -1020,8 +1016,7 @@ function recalcFromDiscount() {
   document.getElementById('pf-box-unit-price').value = Math.round(discountedUnit);
   applyBoxPrice(discountedUnit, perBox);
 }
-// Хэрэв админ хайрцаг доторх ширхэгийн үнийг шууд бичвэл, тэндээс хямдралын
-// хувийг буцаан тооцож "Бөөний хямдрал (%)" талбарыг шинэчилнэ
+
 function recalcFromUnitPrice() {
   const unitPrice = parseFloat(document.getElementById('pf-unit-price').value) || 0;
   const perBox = parseFloat(document.getElementById('pf-box-per').value) || 0;
@@ -1101,25 +1096,19 @@ async function saveProduct(id) {
       ? await sb.from('products').update(row).eq('id', id).select()
       : await sb.from('products').insert(row).select();
     if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
-    // update() нь тохирох мөр олдоогүй/эрх хүрэлцээгүй тохиолдолд ч алдаа буцаадаггүй
-    // (0 мөр өөрчлөгдсөн ч гэсэн `error` хоосон байдаг) — тиймээс бодитоор
-    // өөрчлөгдсөн мөр буцсан эсэхийг шалгаж, эс бол хуурамч "амжилттай" мессеж өгөхгүй
+
     if (!savedRows || savedRows.length === 0) {
       toast('Хадгалагдсангүй — өөрчлөлт хэрэгжсэн эсэхийг шалгана уу (эрхийн асуудал байж магадгүй)', 'err');
       return;
     }
     closeModal();
-    toast(id ? '✅ Бараа шинэчлэгдлээ' : '✅ Бараа нэмэгдлээ');
+    toast(id ? '✓ Бараа шинэчлэгдлээ' : '✓ Бараа нэмэгдлээ');
     await loadAll();
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
   }
 }
 
-// Шилжүүлэх (агуулах ⇄ дэлгүүр) үйлдлийг агуулахын ажилтны тусдаа
-// хуудаснаас (aguulah.html) л эхлүүлдэг болсон тул энд байхгүй.
-// Admin панель зөвхөн "Хүлээгдэж буй шилжилтүүд"-ийг хүлээн авна
-// (доор renderPendingTransfers/receiveTransfer-ыг үзнэ үү).
 
 function confirmDeleteProduct(id) {
   const p = products.find(x => x.id === id);
@@ -1271,7 +1260,7 @@ async function saveCategory(id) {
       await sb.from('subcategories').insert(rows);
     }
     closeModal();
-    toast(id ? '✅ Ангилал шинэчлэгдлээ' : '✅ Ангилал нэмэгдлээ');
+    toast(id ? '✓ Ангилал шинэчлэгдлээ' : '✓ Ангилал нэмэгдлээ');
     await loadAll();
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
@@ -1324,7 +1313,7 @@ async function saveBrand(id) {
     const { error } = id ? await sb.from('brands').update(row).eq('id', id) : await sb.from('brands').insert(row);
     if (error) { toast('Алдаа: ' + error.message, 'err'); return; }
     closeModal();
-    toast(id ? '✅ Брэнд шинэчлэгдлээ' : '✅ Брэнд нэмэгдлээ');
+    toast(id ? '✓ Брэнд шинэчлэгдлээ' : '✓ Брэнд нэмэгдлээ');
     await loadAll();
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = id ? 'Хадгалах' : 'Нэмэх'; }
@@ -1736,7 +1725,7 @@ async function receivePendingBatch() {
   ]);
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
-  else { toast(`✅ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
+  else { toast(`✓ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
   await loadAll();
 }
 
@@ -1772,7 +1761,7 @@ async function updateOrderBoxCount(orderNumber, value) {
   if (error) { toast('Хайрцгийн тоо хадгалахад алдаа гарлаа', 'err'); return; }
   const o = orders.find(x => x.order_number === orderNumber);
   if (o) o.box_count = box_count;
-  toast('✅ Хайрцгийн тоо шинэчлэгдлээ');
+  toast('✓ Хайрцгийн тоо шинэчлэгдлээ');
 }
 
 function openOrderDetail(orderNumber) {
