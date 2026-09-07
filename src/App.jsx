@@ -819,7 +819,7 @@ function ProductDetail({ product, onBack, onAddToCart, onQuickAdd, isWished, onT
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
-  const isCoffee = productCategory?.name === "Кофе";
+  const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
   const isColdCup = product.sub === "Хүйтний аяга";
   const bulkBoxQty = product.box?.price > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
