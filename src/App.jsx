@@ -1846,9 +1846,10 @@ function TrainingPage({ setView }) {
   }, [dateKeys]);
 
   const infoCards = [
-    { label: "Хугацаа", value: "Долоо хоног бүрийн Бямба гарагт, 10:00 цагт явагдана" },
+    { label: "Хугацаа", value: "Бямба гарагт, 10:00-13:00 цагийн хооронд явагдана" },
     { label: "Сургалтын төлбөр", value: "50,000₮ / 1 хүн" },
     { label: "Багтаамж", value: "Нэг өдрийн сургалтын багтаамж нь 18 хүн" },
+    { label: "Лавлах утасны дугаар", value: "91997525"},
   ];
 
   const handleSubmit = async (e) => {
@@ -1940,7 +1941,12 @@ function TrainingPage({ setView }) {
   }
 
   return (
-    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
+    <div>
+      <div style={{
+        height: "100vh", backgroundImage: "url(/training-poster.png)", backgroundSize: "cover",
+        backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat",
+      }} />
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative", background: T.paper }}>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
       <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 8 }}>
         Нэг өдрийн BASIC меню сургалт
@@ -2003,6 +2009,7 @@ function TrainingPage({ setView }) {
         }}>
         <Facebook size={14} /> Дэлгэрэнгүй мэдээлэл
       </a>
+    </div>
     </div>
   );
 }
