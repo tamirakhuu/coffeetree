@@ -1189,12 +1189,14 @@ function iconMaskHtml(url, size, color) {
   return `<span style="display:inline-block;width:${size}px;height:${size}px;background-color:${color};-webkit-mask-image:url('${url}');mask-image:url('${url}');-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain"></span>`;
 }
 let categoryIconFile = null;
+let categoryIconKeyChanged = false;
 function categoryIconPreviewHtml(icon) {
   if (isIconUrl(icon)) return iconMaskHtml(icon, 32, 'var(--cherry)');
   return `<span style="font-size:22px">${ICON_EMOJI[icon] || '☕'}</span>`;
 }
 function openCategoryModal(c) {
   categoryIconFile = null;
+  categoryIconKeyChanged = false;
   categoryTileImageFile = null;
   categoryTileImageRemoved = false;
   const subsValue = c ? subcategories.filter(s => s.category_id === c.id).map(s => s.name).join(', ') : '';
@@ -1210,7 +1212,7 @@ function openCategoryModal(c) {
             <input type="file" id="cf-icon-file" accept="image/svg+xml,image/png,image/jpeg" style="display:none" onchange="onCategoryIconFileSelected(this.files[0])">
           </div>
         </div>
-        <select id="cf-icon">${ICON_KEYS.map(k=>`<option value="${k}" ${c?.icon===k?'selected':''}>${ICON_EMOJI[k]} ${k}</option>`).join('')}</select>
+        <select id="cf-icon" onchange="categoryIconKeyChanged=true">${ICON_KEYS.map(k=>`<option value="${k}" ${c?.icon===k?'selected':''}>${ICON_EMOJI[k]} ${k}</option>`).join('')}</select>
         <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Өөрийн зураг оруулбал доорх жагсаалтаас сонгосон тэмдгийг орлоно.</div>
       </div>
       <div class="fg full">
@@ -1255,7 +1257,15 @@ function removeCategoryTileImage() {
 async function saveCategory(id) {
   const name = document.getElementById('cf-name').value.trim();
   if (!name) { toast('Ангиллын нэр оруулна уу', 'err'); return; }
-  let icon = document.getElementById('cf-icon').value;
+  // cf-icon select нь зөвхөн урьдчилан тодорхойлсон (built-in) icon-уудын
+  // жагсаалт агуулдаг тул тухайн ангилал өөрийн (upload хийсэн URL) icon-той
+  // байвал select нь тохирох сонголтгүй болж, эхний утга руу (CoffeeBean)
+  // чимээгүйхэн буцдаг. Админ select-ийг өөрөө шинээр сонгоогүй бол
+  // (categoryIconKeyChanged) одоо байгаа URL icon-ыг хэвээр нь үлдээнэ.
+  const existingCategory = id ? categories.find(c => c.id === id) : null;
+  let icon = (!categoryIconFile && !categoryIconKeyChanged && existingCategory && isIconUrl(existingCategory.icon))
+    ? existingCategory.icon
+    : document.getElementById('cf-icon').value;
   const subs = document.getElementById('cf-sub').value.split(',').map(s => s.trim()).filter(Boolean);
   const saveBtn = document.querySelector('#modalFoot .btn-primary');
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Хадгалж байна…'; }
