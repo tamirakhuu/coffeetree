@@ -1943,7 +1943,7 @@ function TrainingPage({ setView }) {
   return (
     <div>
       <div style={{
-        position: "fixed", inset: 0, backgroundImage: "url(/training-poster.png)",
+        position: "fixed", inset: 0, backgroundImage: "url(/surgalt.png)",
         backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
       }} />
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative" }}>
@@ -2003,7 +2003,7 @@ function TrainingPage({ setView }) {
       }}>Аль хэдийн бүртгүүлсэн үү? Бүртгэлээ шалгах</button>
       <br />
 
-      <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0Xdv78nz4p5kUvyc9ppTsxPiFwG1FUs1uPEhVkGiytkYKd9RRmA24kZmrYZHFUWG9l&id=100053215639953"
+      <a href="https://www.facebook.com/story.php?story_fbid=1718737009910137&id=100053215639953&mibextid=wwXIfr&rdid=bRHS4Vps7cW2axeE#"
         target="_blank" rel="noopener noreferrer"
         style={{
           display: "inline-flex", alignItems: "center", gap: 6, marginTop: 20,
