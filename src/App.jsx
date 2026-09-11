@@ -2337,9 +2337,9 @@ export const BRANCHES = [
 
 const primaryBtn = { background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "11px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
 
-export function Footer({ setView }) {
+export function Footer({ setView, transparent }) {
   return (
-    <footer style={{ position: "relative", background: T.paper, color: T.ink, padding: "26px 20px 16px" }}>
+    <footer style={{ position: "relative", background: transparent ? "transparent" : T.paper, color: T.ink, padding: "26px 20px 16px" }}>
       <div style={{
         maxWidth: 1180, margin: "0 auto 16px", display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
@@ -2640,7 +2640,7 @@ export default function App() {
         <Header setView={setView} cartCount={cartCount} wishCount={wishlist.length}
           onOpenCart={() => setCartOpen(true)} onSearch={handleSearch} />
         <main style={{ flex: 1 }}>{body}</main>
-        <Footer setView={setView} />
+        <Footer setView={setView} transparent={view.name === "training"} />
         <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} cart={cart} updateQty={updateQty} removeItem={removeItem} subtotal={subtotal} onCheckout={handleCheckout} onQuickAdd={quickAdd} />
         <Toast message={toast} />
         <ScrollToTopButton />
