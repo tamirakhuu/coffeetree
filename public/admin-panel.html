@@ -165,17 +165,21 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .sidebar-backdrop{display:none}
 
 #printReceipt{display:none}
-.receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px}
+.receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-bottom:3px;font-weight:400}
+.receipt-row span:first-child{flex-shrink:0;white-space:nowrap}
+.receipt-row span:last-child{min-width:0;overflow-wrap:break-word;text-align:right}
 .receipt-hr{border-top:1px dashed #000;margin:6px 0}
 .receipt-item{margin-bottom:6px}
-.receipt-item-title{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700}
-.receipt-item-meta{font-size:10px;color:#555;margin-top:1px}
+.receipt-item-title{display:flex;justify-content:space-between;gap:8px;font-size:10px;font-weight:400}
+.receipt-item-title span:first-child{min-width:0;overflow-wrap:break-word}
+.receipt-item-title span:last-child{text-align:right;flex-shrink:0;white-space:nowrap}
+.receipt-item-meta{font-size:9px;color:#555;margin-top:1px}
 @media print{
   body.printing-receipt > *{visibility:hidden}
   body.printing-receipt #printReceipt,
   body.printing-receipt #printReceipt *{visibility:visible}
   body.printing-receipt #printReceipt{
-    display:block;position:fixed;top:0;left:0;width:100%;padding:6px;
+    display:block;position:fixed;top:0;left:0;width:100%;padding:6px;box-sizing:border-box;
     font-family:'Ubuntu',monospace;color:#000;
   }
 }
@@ -1257,11 +1261,6 @@ function removeCategoryTileImage() {
 async function saveCategory(id) {
   const name = document.getElementById('cf-name').value.trim();
   if (!name) { toast('Ангиллын нэр оруулна уу', 'err'); return; }
-  // cf-icon select нь зөвхөн урьдчилан тодорхойлсон (built-in) icon-уудын
-  // жагсаалт агуулдаг тул тухайн ангилал өөрийн (upload хийсэн URL) icon-той
-  // байвал select нь тохирох сонголтгүй болж, эхний утга руу (CoffeeBean)
-  // чимээгүйхэн буцдаг. Админ select-ийг өөрөө шинээр сонгоогүй бол
-  // (categoryIconKeyChanged) одоо байгаа URL icon-ыг хэвээр нь үлдээнэ.
   const existingCategory = id ? categories.find(c => c.id === id) : null;
   let icon = (!categoryIconFile && !categoryIconKeyChanged && existingCategory && isIconUrl(existingCategory.icon))
     ? existingCategory.icon
@@ -1871,21 +1870,21 @@ function printOrderReceipt(orderNumber) {
     </div>`;
   }).join('');
   const html = `
-    <div style="text-align:center;font-weight:700;font-size:14px;margin-bottom:4px">CUPPA</div>
-    <div style="text-align:center;font-size:10px;margin-bottom:8px">Захиалга: ${o.order_number}</div>
+    <div style="text-align:center;font-size:12px;margin-bottom:4px">CUPPA</div>
+    <div style="text-align:center;font-size:9px;margin-bottom:8px">Захиалга: ${o.order_number}</div>
     <div class="receipt-hr"></div>
     <div class="receipt-row"><span>Хэрэглэгч</span><span>${escapeHtml(o.customer_name || '-')}</span></div>
     <div class="receipt-row"><span>Утас</span><span>${escapeHtml(o.phone || '-')}</span></div>
     <div class="receipt-row"><span>Хүргэлт</span><span>${isDelivery ? 'Хүргүүлэх' : 'Очиж авах'}</span></div>
-    ${isDelivery ? `<div style="font-size:10.5px;margin:4px 0">Хаяг: ${escapeHtml(o.address || '-')}</div>` : ''}
+    ${isDelivery ? `<div style="font-size:9.5px;margin:4px 0;overflow-wrap:break-word">Хаяг: ${escapeHtml(o.address || '-')}</div>` : ''}
     <div class="receipt-hr"></div>
     ${itemsLines}
     <div class="receipt-hr"></div>
     <div class="receipt-row"><span>Барааны дүн</span><span>${fmt(o.subtotal)}</span></div>
     ${isDelivery ? `<div class="receipt-row"><span>Хүргэлт</span><span>${fmt(o.delivery_fee || 0)}</span></div>` : ''}
-    <div class="receipt-row" style="font-weight:700"><span>НИЙТ</span><span>${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
+    <div class="receipt-row"><span>НИЙТ</span><span>${fmt(o.subtotal + (o.delivery_fee || 0))}</span></div>
     <div class="receipt-hr"></div>
-    <div style="text-align:center;font-size:10px;margin-top:6px">${new Date(o.created_at).toLocaleString('mn-MN')}</div>`;
+    <div style="text-align:center;font-size:9px;margin-top:6px">${new Date(o.created_at).toLocaleString('mn-MN')}</div>`;
   document.getElementById('printReceipt').innerHTML = html;
   document.body.classList.add('printing-receipt');
   setPrintPageSize('80mm auto', '2mm');
