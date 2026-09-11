@@ -1949,11 +1949,14 @@ function TrainingPage({ setView }) {
         background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 30,
         fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, textDecoration: "underline",
       }}>Аль хэдийн бүртгүүлсэн үү? Бүртгэлээ шалгах</button>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14, marginBottom: 36 }}>
-        {infoCards.map((c) => (
-          <div key={c.label} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "18px 22px", minWidth: 180, flex: "1 1 180px" }}>
-            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: 6 }}>{c.label}</div>
-            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink }}>{c.value}</div>
+      <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "6px 22px", maxWidth: 440, margin: "0 auto 36px", textAlign: "left" }}>
+        {infoCards.map((c, i) => (
+          <div key={c.label} style={{
+            display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 14, padding: "13px 0",
+            borderTop: i > 0 ? `1px solid ${T.line}` : "none",
+          }}>
+            <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, flexShrink: 0 }}>{c.label}</span>
+            <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14.5, fontWeight: 700, color: T.ink, textAlign: "right" }}>{c.value}</span>
           </div>
         ))}
       </div>
