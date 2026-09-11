@@ -1946,15 +1946,11 @@ function TrainingPage({ setView }) {
         position: "fixed", inset: 0, backgroundImage: "url(/training-poster.png)",
         backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
       }} />
-    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative", background: T.paper }}>
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative" }}>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
-      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 8 }}>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 30 }}>
         Нэг өдрийн BASIC меню сургалт
       </p>
-      <button onClick={() => setView({ name: "training-status" })} style={{
-        background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 30,
-        fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, textDecoration: "underline",
-      }}>Аль хэдийн бүртгүүлсэн үү? Бүртгэлээ шалгах</button>
       <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "6px 22px", maxWidth: 440, margin: "0 auto 36px", textAlign: "left" }}>
         {infoCards.map((c, i) => (
           <div key={c.label} style={{
@@ -2000,6 +1996,12 @@ function TrainingPage({ setView }) {
           }}>{status.message}</div>
         )}
       </form>
+
+      <button onClick={() => setView({ name: "training-status" })} style={{
+        background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 20,
+        fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, textDecoration: "underline",
+      }}>Аль хэдийн бүртгүүлсэн үү? Бүртгэлээ шалгах</button>
+      <br />
 
       <a href="https://www.facebook.com/permalink.php?story_fbid=pfbid0Xdv78nz4p5kUvyc9ppTsxPiFwG1FUs1uPEhVkGiytkYKd9RRmA24kZmrYZHFUWG9l&id=100053215639953"
         target="_blank" rel="noopener noreferrer"
@@ -2337,7 +2339,7 @@ const primaryBtn = { background: T.cherry, color: "#fff", border: "none", border
 
 export function Footer({ setView }) {
   return (
-    <footer style={{ background: T.paper, color: T.ink, padding: "26px 20px 16px" }}>
+    <footer style={{ position: "relative", background: T.paper, color: T.ink, padding: "26px 20px 16px" }}>
       <div style={{
         maxWidth: 1180, margin: "0 auto 16px", display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
