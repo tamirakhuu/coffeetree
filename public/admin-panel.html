@@ -319,8 +319,8 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="notif-panel" id="notifPanel">
       <div class="notif-panel-head" style="display:flex;align-items:center;justify-content:space-between">
         <span>Мэдэгдэл</span>
-        <button type="button" onclick="event.stopPropagation();playNotifySound()" title="Дуут дохио сонсох"
-          style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;color:var(--ink-soft)">🔊 Сонсох</button>
+        <button type="button" onclick="event.stopPropagation();markAllNotificationsRead()" title="Бүгдийг уншсан гэж тэмдэглэх"
+          style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;color:var(--ink-soft)">Бүгдийг уншсан</button>
       </div>
       <div id="notifList"></div>
     </div>
@@ -641,6 +641,12 @@ function renderNotifBell() {
         <div class="ni-time">${new Date(n.time).toLocaleString('mn-MN')}</div>
       </span>
     </button>`).join('') : `<div class="notif-empty">Мэдэгдэл алга байна</div>`;
+}
+
+function markAllNotificationsRead() {
+  notifications.forEach(n => { n.read = true; });
+  saveNotifications();
+  renderNotifBell();
 }
 
 function toggleNotifPanel(e) {
