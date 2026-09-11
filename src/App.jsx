@@ -1946,11 +1946,38 @@ function TrainingPage({ setView }) {
         position: "fixed", inset: 0, backgroundImage: "url(/surgalt.png)",
         backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
       }} />
-    <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative" }}>
-      <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
-      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6, marginBottom: 30 }}>
-        Нэг өдрийн BASIC меню сургалт
-      </p>
+    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px", position: "relative" }}>
+      <div className="cuppa-training-hero" style={{
+        display: "grid", gridTemplateColumns: "1fr 1.3fr 1fr", gap: 30, alignItems: "center",
+        minHeight: "78vh", paddingTop: 50, paddingBottom: 30,
+      }}>
+        <div>
+          <img src="/training-hero-latte.jpg" alt="Латте арт" className="cuppa-training-hero-media" style={{
+            width: "100%", aspectRatio: "3 / 4", objectFit: "cover", borderRadius: 20,
+            boxShadow: "0 14px 34px rgba(36,28,20,.2)", display: "block",
+          }} />
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
+            Мэргэжлийн баристагаас латте арт хийх урлагийг гараар дамжуулан сурна.
+          </p>
+        </div>
+        <div className="cuppa-training-hero-title" style={{ textAlign: "center" }}>
+          <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 34, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.inkSoft, lineHeight: 1.6 }}>
+            Нэг өдрийн BASIC меню сургалт
+          </p>
+        </div>
+        <div>
+          <img src="/training-hero-class.jpg" alt="Дадлага сургалт" className="cuppa-training-hero-media" style={{
+            width: "100%", aspectRatio: "3 / 4", objectFit: "cover", borderRadius: 20,
+            boxShadow: "0 14px 34px rgba(36,28,20,.2)", display: "block",
+          }} />
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
+            Бодит кофе шоп орчинд багштайгаа хамт бодит машин дээр гараараа дадлага хийж сурна.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 440, margin: "0 auto", textAlign: "center", padding: "0 0 100px" }}>
       <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "6px 22px", maxWidth: 440, margin: "0 auto 36px", textAlign: "left" }}>
         {infoCards.map((c, i) => (
           <div key={c.label} style={{
@@ -2011,6 +2038,7 @@ function TrainingPage({ setView }) {
         }}>
         <Facebook size={14} /> Дэлгэрэнгүй мэдээлэл
       </a>
+      </div>
     </div>
     </div>
   );

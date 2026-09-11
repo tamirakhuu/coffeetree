@@ -132,6 +132,16 @@ html {
   }
 
   .cuppa-footer-logo { justify-content: center !important; }
+
+  .cuppa-training-hero {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    gap: 22px !important;
+    padding-top: 30px !important;
+    padding-bottom: 10px !important;
+  }
+  .cuppa-training-hero-title { order: -1; }
+  .cuppa-training-hero-media { aspect-ratio: 16 / 9 !important; }
 }
 
 @media (max-width: 480px) {
