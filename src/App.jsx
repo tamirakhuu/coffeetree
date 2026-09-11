@@ -1982,7 +1982,7 @@ function TrainingPage({ setView }) {
           fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
           cursor: status.state === "submitting" ? "default" : "pointer", opacity: status.state === "submitting" ? 0.7 : 1,
         }}>
-          {status.state === "submitting" ? "Илгээж байна..." : "Бүртгүүлж, төлбөр төлөх"}
+          {status.state === "submitting" ? "Илгээж байна..." : "Төлбөр төлөх"}
         </button>
         {status.message && (
           <div style={{
