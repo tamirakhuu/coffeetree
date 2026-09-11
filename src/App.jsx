@@ -1943,8 +1943,8 @@ function TrainingPage({ setView }) {
   return (
     <div>
       <div style={{
-        height: "100vh", backgroundImage: "url(/training-poster.png)", backgroundSize: "cover",
-        backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat",
+        position: "fixed", inset: 0, backgroundImage: "url(/training-poster.png)",
+        backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
       }} />
     <div style={{ maxWidth: 780, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center", position: "relative", background: T.paper }}>
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 30, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Сургалт</h1>
