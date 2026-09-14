@@ -141,7 +141,7 @@ html {
     padding-bottom: 10px !important;
   }
   .cuppa-training-hero-title { order: -1; }
-  .cuppa-training-hero-media { aspect-ratio: 16 / 9 !important; }
+  .cuppa-training-hero-media { aspect-ratio: 1 / 1 !important; }
 }
 
 @media (max-width: 480px) {

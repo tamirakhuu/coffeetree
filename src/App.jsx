@@ -1952,12 +1952,12 @@ function TrainingPage({ setView }) {
         minHeight: "78vh", paddingTop: 50, paddingBottom: 30,
       }}>
         <div>
-          <img src="/training-hero-latte.jpg" alt="Латте арт" className="cuppa-training-hero-media" style={{
-            width: "100%", aspectRatio: "3 / 4", objectFit: "cover", borderRadius: 20,
+          <img src="/training-hero-latte.jpg" alt="Цэсний сургалтын өдөр" className="cuppa-training-hero-media" style={{
+            width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 20,
             boxShadow: "0 14px 34px rgba(36,28,20,.2)", display: "block",
           }} />
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
-            Мэргэжлийн баристагаас латте арт хийх урлагийг гараар дамжуулан сурна.
+            CUPPA-гийн цэсний жор, орц найрлагыг гараар дадлагажуулан сурна.
           </p>
         </div>
         <div className="cuppa-training-hero-title" style={{ textAlign: "center" }}>
@@ -1967,12 +1967,12 @@ function TrainingPage({ setView }) {
           </p>
         </div>
         <div>
-          <img src="/training-hero-class.jpg" alt="Дадлага сургалт" className="cuppa-training-hero-media" style={{
-            width: "100%", aspectRatio: "3 / 4", objectFit: "cover", borderRadius: 20,
+          <img src="/training-hero-class.jpg" alt="Ундааны дадлага сургалт" className="cuppa-training-hero-media" style={{
+            width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 20,
             boxShadow: "0 14px 34px rgba(36,28,20,.2)", display: "block",
           }} />
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
-            Бодит кофе шоп орчинд багштайгаа хамт бодит машин дээр гараараа дадлага хийж сурна.
+            Өнгө өнгийн ундаа, смүүзийг мэргэжлийн орцоор хэрхэн хийхийг сурна.
           </p>
         </div>
       </div>
