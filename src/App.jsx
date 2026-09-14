@@ -1807,15 +1807,15 @@ function toDateInputValue(d) {
 function formatMnDate(d) {
   return `${d.getFullYear()} оны ${d.getMonth() + 1}-р сарын ${d.getDate()}`;
 }
-function nextSaturdays(count) {
+function saturdaysInCurrentMonth() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const year = now.getFullYear(), month = now.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
   const dates = [];
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  const daysUntilSaturday = (6 - d.getDay() + 7) % 7 || 7;
-  d.setDate(d.getDate() + daysUntilSaturday);
-  for (let i = 0; i < count; i++) {
-    dates.push(new Date(d));
-    d.setDate(d.getDate() + 7);
+  for (let day = 1; day <= lastDay; day++) {
+    const d = new Date(year, month, day);
+    if (d.getDay() === 6 && d > now) dates.push(d);
   }
   return dates;
 }
@@ -1824,8 +1824,8 @@ const TRAINING_FEE = 50000;
 const TRAINING_CAPACITY = 18;
 
 function TrainingPage({ setView }) {
-  const saturdays = useMemo(() => nextSaturdays(6), []);
-  const [form, setForm] = useState({ name: "", phone: "", date: toDateInputValue(saturdays[0]) });
+  const saturdays = useMemo(() => saturdaysInCurrentMonth(), []);
+  const [form, setForm] = useState({ name: "", phone: "", date: saturdays[0] ? toDateInputValue(saturdays[0]) : "" });
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [slots, setSlots] = useState({}); // { 'YYYY-MM-DD': takenCount }
   const [phase, setPhase] = useState("form"); // form | payment | done
@@ -1998,21 +1998,28 @@ function TrainingPage({ setView }) {
         <input required placeholder="Нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
         <input required placeholder="Утасны дугаар" inputMode="numeric" value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
-        <select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle}>
-          {saturdays.map((d) => {
-            const key = toDateInputValue(d);
-            const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
-            return (
-              <option key={key} value={key} disabled={remaining === 0}>
-                {formatMnDate(d)} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
-              </option>
-            );
-          })}
-        </select>
-        <button type="submit" disabled={status.state === "submitting"} style={{
+        {saturdays.length > 0 ? (
+          <select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle}>
+            {saturdays.map((d) => {
+              const key = toDateInputValue(d);
+              const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
+              return (
+                <option key={key} value={key} disabled={remaining === 0}>
+                  {formatMnDate(d)} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
+                </option>
+              );
+            })}
+          </select>
+        ) : (
+          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>
+            Энэ сард үлдсэн сургалтын өдөр алга. Дараа сар шинэчлэгдэхийг хүлээнэ үү.
+          </div>
+        )}
+        <button type="submit" disabled={status.state === "submitting" || saturdays.length === 0} style={{
           background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
           fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-          cursor: status.state === "submitting" ? "default" : "pointer", opacity: status.state === "submitting" ? 0.7 : 1,
+          cursor: (status.state === "submitting" || saturdays.length === 0) ? "default" : "pointer",
+          opacity: (status.state === "submitting" || saturdays.length === 0) ? 0.7 : 1,
         }}>
           {status.state === "submitting" ? "Илгээж байна..." : "Төлбөр төлөх"}
         </button>
