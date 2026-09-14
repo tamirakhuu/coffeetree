@@ -484,7 +484,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="card" style="margin-top:20px">
       <div class="card-head"><div class="card-title">Брэнд/бараагаар нийт таталт</div><p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Хүлээн авагдсан шилжилтүүдийн (буцалтгүй) нийт дүн</p></div>
       <div class="table-wrap">
-        <table><thead><tr><th>Брэнд</th><th>Бараа</th><th>Нийлүүлэгчээс нэмэгдсэн</th><th>Нийт татагдсан</th><th>Нийт буцаагдсан</th></tr></thead><tbody id="transferTotalsTable"></tbody></table>
+        <table><thead><tr><th>Брэнд</th><th>Бараа</th><th>Нийлүүлэгчээс нэмэгдсэн</th><th>Хасагдсан (устгал)</th><th>Нийт татагдсан</th><th>Нийт буцаагдсан</th></tr></thead><tbody id="transferTotalsTable"></tbody></table>
       </div>
     </div>
 
@@ -759,10 +759,13 @@ function subscribeRealtimeNotifications() {
   sb.channel('admin-stock-transfers')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stock_transfers' }, (payload) => {
       const t = payload.new;
-      if (t.status !== 'pending' || (t.direction !== 'to_store' && t.direction !== 'to_warehouse')) return;
-      const dirText = t.direction === 'to_store' ? 'Дэлгүүрт илгээлээ' : 'Агуулах руу буцаалаа';
-      toast(`Агуулахаас бараа илгээлээ: ${t.product_name}`, 'success', 8000);
-      pushNotification({ type: 'transfer', title: 'Агуулахаас бараа илгээлээ', sub: `${t.product_name} ×${t.qty} · ${dirText}` });
+      if (t.status !== 'pending') return;
+      const dirText = t.direction === 'to_store' ? 'Дэлгүүрт илгээлээ'
+        : t.direction === 'to_warehouse' ? 'Агуулах руу буцаалаа'
+        : t.direction === 'writeoff' ? 'Агуулахаас хасах хүсэлт'
+        : 'Агуулахад нэмэх хүсэлт';
+      toast(`Агуулахын шилжилтийн хүсэлт: ${t.product_name}`, 'success', 8000);
+      pushNotification({ type: 'transfer', title: 'Агуулахын шилжилтийн хүсэлт', sub: `${t.product_name} ×${t.qty} · ${dirText}` });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification('CUPPA — Агуулахаас илгээлээ', { body: `${t.product_name} ×${t.qty}` });
       }
@@ -1718,7 +1721,8 @@ async function refreshTraining() {
 function directionBadge(direction) {
   if (direction === 'to_store') return `<span class="badge" style="background:var(--green-light);color:#2F4A22">Агуулах → Дэлгүүр</span>`;
   if (direction === 'to_warehouse') return `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Дэлгүүр → Агуулах</span>`;
-  return `<span class="badge" style="background:var(--gold);color:#fff">Нийлүүлэгчээс</span>`;
+  if (direction === 'writeoff') return `<span class="badge" style="background:var(--red-light);color:var(--red)">Хасалт (агуулахаас)</span>`;
+  return `<span class="badge" style="background:var(--gold);color:#fff">Нэмэлт (агуулахад)</span>`;
 }
 
 function renderPendingTransfers() {
@@ -1778,21 +1782,22 @@ async function receivePendingBatch() {
 function renderTransferTotals() {
   const tb = document.getElementById('transferTotalsTable');
   if (!tb) return;
-  const received = stockTransfers.filter(t => t.status !== 'pending');
+  const received = stockTransfers.filter(t => t.status === 'received');
   const byProduct = new Map();
   received.forEach(t => {
-    if (!byProduct.has(t.product_id)) byProduct.set(t.product_id, { name: t.product_name, toStore: 0, toWarehouse: 0, restocked: 0 });
+    if (!byProduct.has(t.product_id)) byProduct.set(t.product_id, { name: t.product_name, toStore: 0, toWarehouse: 0, restocked: 0, writtenOff: 0 });
     const entry = byProduct.get(t.product_id);
     if (t.direction === 'to_store') entry.toStore += t.qty;
     else if (t.direction === 'to_warehouse') entry.toWarehouse += t.qty;
+    else if (t.direction === 'writeoff') entry.writtenOff += t.qty;
     else entry.restocked += t.qty;
   });
-  const rows = [...byProduct.entries()].sort((a, b) => (b[1].toStore + b[1].toWarehouse + b[1].restocked) - (a[1].toStore + a[1].toWarehouse + a[1].restocked));
+  const rows = [...byProduct.entries()].sort((a, b) => (b[1].toStore + b[1].toWarehouse + b[1].restocked + b[1].writtenOff) - (a[1].toStore + a[1].toWarehouse + a[1].restocked + a[1].writtenOff));
   tb.innerHTML = rows.map(([productId, v]) => {
     const p = products.find(x => x.id === productId);
     const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-    return `<tr><td data-th="Брэнд">${brandName}</td><td data-th="Бараа">${v.name}</td><td class="mono" data-th="Нийлүүлэгчээс нэмэгдсэн">${v.restocked}</td><td class="mono" data-th="Нийт татагдсан">${v.toStore}</td><td class="mono" data-th="Нийт буцаагдсан">${v.toWarehouse}</td></tr>`;
-  }).join('') || `<tr><td colspan="5" class="empty">Мэдээлэл алга байна</td></tr>`;
+    return `<tr><td data-th="Брэнд">${brandName}</td><td data-th="Бараа">${v.name}</td><td class="mono" data-th="Нийлүүлэгчээс нэмэгдсэн">${v.restocked}</td><td class="mono" data-th="Хасагдсан (устгал)">${v.writtenOff}</td><td class="mono" data-th="Нийт татагдсан">${v.toStore}</td><td class="mono" data-th="Нийт буцаагдсан">${v.toWarehouse}</td></tr>`;
+  }).join('') || `<tr><td colspan="6" class="empty">Мэдээлэл алга байна</td></tr>`;
 }
 
 async function updateOrderStatus(orderNumber, status) {

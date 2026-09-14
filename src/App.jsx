@@ -1972,7 +1972,7 @@ function TrainingPage({ setView }) {
             boxShadow: "0 14px 34px rgba(36,28,20,.2)", display: "block",
           }} />
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
-            Өнгө өнгийн ундаа, смүүзийг мэргэжлийн орцоор хэрхэн хийхийг сурна.
+            Өнгө өнгийн меню, смүүтийг мэргэжлийн орцоор хэрхэн хийхийг сурна.
           </p>
         </div>
       </div>

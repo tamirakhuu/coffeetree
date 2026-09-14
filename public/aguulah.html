@@ -248,18 +248,22 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
       <div id="notif" style="display:flex;flex-direction:column;gap:20px"></div>
     </section>
 
-    <!-- Бараа нэмэх -->
+    <!-- Бараа нэмэх / хасах -->
     <section class="screen" id="s-add" hidden>
-      <div class="head"><h2>Агуулахын бараа нэмэх</h2></div>
+      <div class="head"><h2 id="add-title">Агуулахын бараа нэмэх</h2><p>Хүсэлт админ руу явж, баталгаажуулсны дараа үлдэгдэлд тусна.</p></div>
+      <div class="chips">
+        <button class="chip" data-add-mode="add" aria-pressed="true">➕ Нэмэх</button>
+        <button class="chip" data-add-mode="remove" aria-pressed="false">➖ Хасах</button>
+      </div>
       <div class="row">
         <input class="input" id="add-q" placeholder="Барааны нэр / брэндээр хайх" />
       </div>
       <div class="card" id="add-results" hidden style="padding:6px"></div>
-      <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Нэмэх жагсаалт</h3><span class="muted" id="add-count" style="font-size:12px"></span></div>
+      <div class="row" style="justify-content:space-between"><h3 style="font-size:18px" id="add-list-title">Нэмэх жагсаалт</h3><span class="muted" id="add-count" style="font-size:12px"></span></div>
       <div id="add-list" style="display:flex;flex-direction:column;gap:10px"></div>
       <div class="bar"><div class="in">
-        <div><small id="add-sum-label">Агуулахад нэмэгдэх</small><strong id="add-sum">0 ширхэг</strong></div>
-        <button class="btn btn-2" id="add-commit">Үлдэгдэлд нэмэх</button>
+        <div><small id="add-sum-label">Агуулахад нэмэгдэх хүсэлт</small><strong id="add-sum">0 ширхэг</strong></div>
+        <button class="btn btn-2" id="add-commit">Нэмэх хүсэлт илгээх</button>
       </div></div>
     </section>
 
@@ -331,6 +335,7 @@ let worker = null;                 // { email }
 let products = [], brands = [];
 let stockTransfers = [];
 let screen = 'home', store = STORES[0];
+let addMode = 'add'; // 'add' | 'remove' — Нэмэх/Хасах хэсгийн идэвхтэй горим
 let addDraft = [], sendDraft = [], nextK = 1;
 let stockBrandFilter = 'all', stockLowOnly = false, stockOutOnly = false;
 let seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
@@ -605,21 +610,27 @@ function addToDraft(mode, product){
 }
 
 /* ── ХАДГАЛАХ ҮЙЛДЛҮҮД ───────────────────────────────────── */
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-add-mode]'); if (!m) return;
+  addMode = m.dataset.addMode; addDraft = []; render();
+});
+
 $('#add-commit').addEventListener('click', async () => {
   const rows = addDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
   if (!rows.length) return toast('Бараа болон тоог оруулна уу');
+  const direction = addMode === 'add' ? 'restock' : 'writeoff';
   const btn = $('#add-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
   const calls = [];
   rows.forEach(r => {
-    if (r.cases > 0) calls.push(sb.rpc('warehouse_add_stock', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases }));
-    if (r.extra > 0) calls.push(sb.rpc('warehouse_add_stock', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra }));
+    if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: direction }));
+    if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: direction }));
   });
   const results = await Promise.all(calls);
-  btn.disabled = false; btn.textContent = 'Үлдэгдэлд нэмэх';
+  btn.disabled = false; btn.textContent = addMode === 'add' ? 'Нэмэх хүсэлт илгээх' : 'Хасах хүсэлт илгээх';
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message); return; }
-  addDraft = []; screen = 'stock'; await loadAll();
-  toast('Агуулахын үлдэгдэлд нэмэгдлээ');
+  addDraft = []; screen = 'history'; await loadAll();
+  toast('Хүсэлт илгээгдлээ, админ баталгаажуулахыг хүлээнэ');
 });
 
 $('#send-commit').addEventListener('click', async () => {
@@ -663,13 +674,14 @@ function renderStockFilters(){
 }
 
 function transferMeta(t){
-  const isIn = t.direction !== 'to_store';
-  const label = t.direction === 'restock' ? 'Шинээр буусан' : (t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн');
+  const isIn = t.direction === 'to_warehouse' || t.direction === 'restock';
+  const label = t.direction === 'restock' ? 'Нэмэлтийн хүсэлт'
+    : t.direction === 'writeoff' ? 'Хасалтын хүсэлт'
+    : t.direction === 'to_warehouse' ? 'Буцаалт' : 'Дэлгүүрт илгээсэн';
   let status, tone;
-  if (t.direction === 'restock') { status = 'Нэмэгдсэн'; tone = 'in'; }
-  else if (t.status === 'pending') { status = 'Хүлээгдэж байна'; tone = 'wait'; }
+  if (t.status === 'pending') { status = 'Хүлээгдэж байна'; tone = 'wait'; }
   else if (t.status === 'rejected') { status = 'Админ буцаасан'; tone = 'low'; }
-  else { status = 'Хүлээлгэн өгсөн'; tone = 'ok'; }
+  else { status = 'Хүлээн авсан'; tone = 'ok'; }
   return { isIn, label, status, tone };
 }
 
@@ -680,7 +692,7 @@ function render(){
 
   /* Нүүр */
   const totalStock = products.reduce((s,p) => s + (p.warehouse_unit_stock||0), 0);
-  const addedToday = stockTransfers.filter(t => t.direction === 'restock' && isToday(t.created_at)).reduce((s,t) => s + t.qty, 0);
+  const addedToday = stockTransfers.filter(t => t.direction === 'restock' && t.status === 'received' && isToday(t.received_at || t.created_at)).reduce((s,t) => s + t.qty, 0);
   $('#h-total').textContent   = totalStock;
   $('#h-added').textContent   = addedToday;
   $('#h-pending').textContent = stockTransfers.filter(t => t.status === 'pending').length;
@@ -698,7 +710,12 @@ function render(){
     </button>`;
   }).join('') || `<div class="empty">Мэдэгдэл байхгүй</div>`;
 
-  /* Нэмэх */
+  /* Нэмэх / Хасах */
+  $$('[data-add-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.addMode === addMode));
+  $('#add-title').textContent = addMode === 'add' ? 'Агуулахын бараа нэмэх' : 'Агуулахын бараа хасах';
+  $('#add-list-title').textContent = addMode === 'add' ? 'Нэмэх жагсаалт' : 'Хасах жагсаалт';
+  $('#add-sum-label').textContent = addMode === 'add' ? 'Агуулахад нэмэгдэх хүсэлт' : 'Агуулахаас хасагдах хүсэлт';
+  $('#add-commit').textContent = addMode === 'add' ? 'Нэмэх хүсэлт илгээх' : 'Хасах хүсэлт илгээх';
   const aq = $('#add-q').value, ar = results(aq, 'add');
   $('#add-results').hidden = !aq; $('#add-results').innerHTML = ar;
   $('#add-list').innerHTML = addDraft.map(r => draftRow(r)).join('')
