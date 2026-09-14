@@ -924,7 +924,8 @@ function categoryOptions(selectedId) {
   return categories.map(c => `<option value="${c.id}" ${String(c.id)===String(selectedId)?'selected':''}>${ICON_EMOJI[c.icon]||'☕'} ${c.name}</option>`).join('');
 }
 function brandOptions(selectedId) {
-  return brands.map(b => `<option value="${b.id}" ${String(b.id)===String(selectedId)?'selected':''}>${b.name}</option>`).join('');
+  const none = `<option value="" ${!selectedId ? 'selected' : ''}>Брэндгүй</option>`;
+  return none + brands.map(b => `<option value="${b.id}" ${String(b.id)===String(selectedId)?'selected':''}>${b.name}</option>`).join('');
 }
 function subOptionsDatalist(categoryId) {
   const cat = categories.find(c => String(c.id) === String(categoryId));
@@ -1117,7 +1118,7 @@ async function saveProduct(id) {
     }
     const row = {
       name,
-      brand_id: parseInt(document.getElementById('pf-brand').value, 10),
+      brand_id: document.getElementById('pf-brand').value ? parseInt(document.getElementById('pf-brand').value, 10) : null,
       category_id: parseInt(document.getElementById('pf-category').value, 10),
       subcategory: document.getElementById('pf-subcategory').value.trim(),
       origin: document.getElementById('pf-origin').value.trim(),
