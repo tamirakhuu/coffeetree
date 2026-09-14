@@ -551,6 +551,8 @@ function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setS
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub === subFilter);
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
+  const isFeatured = (p) => p.tag === "бестселлэр" || p.tag === "хямдралтай";
+  if (sortBy === "default") items = [...items].sort((a, b) => isFeatured(b) - isFeatured(a));
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
