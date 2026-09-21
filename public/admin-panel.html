@@ -567,6 +567,10 @@ const ICON_EMOJI = { CoffeeBean:'☕', TeaLeaf:'🍃', Syrup:'💧', Sauce:'🍯
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
 let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [], trainingRegistrations = [];
+// Төлбөр төлөгдөөгүй захиалга админд огт харагдахгүй байх ёстой тул orders
+// массивт зөвхөн payment_status='paid' мөрүүд л ордог — аль захиалгыг аль
+// хэдийн "шинэ" гэж мэдэгдсэнээ давхардуулахгүй тэмдэглэж байх Set
+let knownPaidOrders = new Set();
 
 const IMAGE_BUCKET = 'product-images';
 const MAX_PRODUCT_IMAGES = 3;
@@ -731,9 +735,16 @@ function subscribeRealtimeNotifications() {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
+  // Төлбөр төлөгдөөгүй захиалгыг админд харуулахгүй байхын тулд INSERT биш,
+  // payment_status='paid' болсон UPDATE-ийг л сонсоно. Мөн адил захиалга
+  // дараа нь өөр шалтгаанаар (жишээ нь status солигдох) дахин UPDATE хийгдэхэд
+  // давхардуулж мэдэгдэхгүй байхын тулд аль хэдийн мэдэгдсэн дугааруудыг
+  // knownPaidOrders-д хадгална.
   sb.channel('admin-orders')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: 'payment_status=eq.paid' }, (payload) => {
       const o = payload.new;
+      if (knownPaidOrders.has(o.order_number)) return;
+      knownPaidOrders.add(o.order_number);
       toast(`🛎️ Шинэ захиалга ирлээ: ${o.order_number}`, 'success', 8000);
       pushNotification({ type: 'order', title: '🛎️ Шинэ захиалга', sub: `${o.order_number} · ${fmt(o.subtotal)}`, orderNumber: o.order_number });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
@@ -799,7 +810,7 @@ async function loadAll() {
     sb.from('subcategories').select('*'),
     sb.from('brands').select('*').order('id'),
     sb.from('products').select('*').order('id', { ascending: false }),
-    sb.from('orders').select('*').order('created_at', { ascending: false }),
+    sb.from('orders').select('*').eq('payment_status', 'paid').order('created_at', { ascending: false }),
     sb.from('order_items').select('*'),
     sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
     sb.from('training_registrations').select('*').order('training_date', { ascending: false }),
@@ -807,6 +818,7 @@ async function loadAll() {
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
   stockTransfers = st.data || []; trainingRegistrations = tr.data || [];
+  knownPaidOrders = new Set(orders.map(x => x.order_number));
   populateProductFilters();
   renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport(); renderSalesReport(); renderTraining();
 }

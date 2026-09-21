@@ -1589,7 +1589,7 @@ function QpayPayment({ orderNumber, subtotal, invoice, onPaid }) {
         <div style={{
           fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, background: T.cream,
           border: `1px solid ${T.line}`, borderRadius: 10, padding: "8px 14px", marginBottom: 20,
-        }}>Demo горим — QPay мерчант эрх тохируулаагүй тул {"15 секундийн дараа автоматаар \"төлөгдсөн\" гэж үзнэ."}</div>
+        }}>Туршилтын горим — QPay мерчант эрх тохируулаагүй тул {"15 секундийн дараа автоматаар \"төлөгдсөн\" гэж үзнэ."}</div>
       )}
 
       {status === "paid" ? (
@@ -1609,23 +1609,26 @@ function QpayPayment({ orderNumber, subtotal, invoice, onPaid }) {
             />
           )}
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, margin: "18px 0 20px" }}>
-            Банкны аппаараа энэ QR кодыг уншуулж төлнө үү.
+            Банкны аппаараа дээрх QR кодыг уншуулж төлнө үү.
           </div>
 
           {invoice?.urls?.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 22 }}>
-              {invoice.urls.map((u) => (
-                <a key={u.name} href={u.link} style={{
-                  fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, color: T.ink,
-                  border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", textDecoration: "none", background: T.card,
-                }}>{u.name}</a>
-              ))}
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>Эсвэл банкны аппаа сонгон шууд төлөх</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                {invoice.urls.map((u) => (
+                  <a key={u.name} href={u.link} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textDecoration: "none", color: T.ink,
+                  }}>
+                    <img src={u.logo} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} style={{
+                      width: 44, height: 44, borderRadius: 12, objectFit: "contain", border: `1px solid ${T.line}`, background: "#fff",
+                    }} />
+                    <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 10.5, textAlign: "center", lineHeight: 1.2 }}>{u.name}</span>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
-
-          <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: 20 }}>
-            Төлбөр хийгдэхийг автоматаар шалгаж байна…
-          </div>
           {error && <div style={{ color: T.cherry, fontSize: 12.5, marginBottom: 14, fontFamily: "'Ubuntu', sans-serif" }}>{error}</div>}
         </>
       )}
@@ -1912,13 +1915,20 @@ function TrainingPage({ setView }) {
           Банкны аппаараа энэ QR кодыг уншуулж төлнө үү.
         </div>
         {invoice.urls?.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 22 }}>
-            {invoice.urls.map((u) => (
-              <a key={u.name} href={u.link} style={{
-                fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, color: T.ink,
-                border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", textDecoration: "none", background: T.card,
-              }}>{u.name}</a>
-            ))}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginBottom: 10 }}>Эсвэл банкны аппаа сонгон шууд төлөх</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+              {invoice.urls.map((u) => (
+                <a key={u.name} href={u.link} style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textDecoration: "none", color: T.ink,
+                }}>
+                  <img src={u.logo} alt="" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} style={{
+                    width: 44, height: 44, borderRadius: 12, objectFit: "contain", border: `1px solid ${T.line}`, background: "#fff",
+                  }} />
+                  <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 10.5, textAlign: "center", lineHeight: 1.2 }}>{u.name}</span>
+                </a>
+              ))}
+            </div>
           </div>
         )}
         <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, marginBottom: 20 }}>
@@ -2349,7 +2359,7 @@ export const BRANCHES = [
   {
     name: "Саруул зах",
     heading: "Дэлгүүрийн хаяг",
-    address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
+    address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00, UP 09:00 - 19:00",
     mapUrl: "https://maps.app.goo.gl/ZAZ4cCXETKV2xaSm8",
     phone: "70111772",
     email: "coffeetree2017@gmail.com",
