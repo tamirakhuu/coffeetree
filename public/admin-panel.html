@@ -364,13 +364,13 @@ tr:hover td{background:rgba(255,255,255,.4)}
     <div class="page-header">
       <div><h1>Бараа</h1><p id="prodCount">Нийт 0 бараа</p></div>
       <div class="page-filter-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="productSearch" oninput="renderProducts()" placeholder="Нэр эсвэл үнээр хайх..."
+        <input id="productSearch" oninput="productPage=1;renderProducts()" placeholder="Нэр эсвэл үнээр хайх..."
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif;width:220px">
-        <select id="productBrandFilter" onchange="renderProducts()"
+        <select id="productBrandFilter" onchange="productPage=1;renderProducts()"
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
           <option value="">Бүх брэнд</option>
         </select>
-        <select id="productCategoryFilter" onchange="renderProducts()"
+        <select id="productCategoryFilter" onchange="productPage=1;renderProducts()"
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
           <option value="">Бүх ангилал</option>
         </select>
@@ -381,6 +381,7 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div class="table-wrap">
         <table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Ангилал</th><th>Ширхэг үнэ</th><th>Хайрцаг үнэ</th><th>Үйлдэл</th></tr></thead><tbody id="productTable"></tbody></table>
       </div>
+      <div id="productPagination" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;border-top:1px solid var(--line)"></div>
     </div>
   </div>
 
@@ -901,6 +902,9 @@ function populateProductFilters() {
   }
 }
 
+const PRODUCTS_PER_PAGE = 20;
+let productPage = 1;
+
 function renderProducts() {
   const query = (document.getElementById('productSearch')?.value || '').trim().toLowerCase();
   const brandFilter = document.getElementById('productBrandFilter')?.value || '';
@@ -915,8 +919,13 @@ function renderProducts() {
   document.getElementById('prodCount').textContent = (query || brandFilter || categoryFilter)
     ? `${filtered.length} / Нийт ${products.length} бараа`
     : `Нийт ${products.length} бараа`;
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
+  productPage = Math.min(Math.max(1, productPage), totalPages);
+  const pageItems = filtered.slice((productPage - 1) * PRODUCTS_PER_PAGE, productPage * PRODUCTS_PER_PAGE);
+
   const tb = document.getElementById('productTable');
-  tb.innerHTML = filtered.map(p => {
+  tb.innerHTML = pageItems.map(p => {
     const brand = brands.find(b => b.id === p.brand_id);
     const cat = categories.find(c => c.id === p.category_id);
     const thumb = p.images && p.images[0]
@@ -931,6 +940,22 @@ function renderProducts() {
       <td data-th="Үйлдэл"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="6" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
+  renderProductPagination(totalPages);
+}
+
+function goProductPage(p) {
+  productPage = p;
+  renderProducts();
+  document.getElementById('page-products')?.scrollIntoView({ behavior: 'instant', block: 'start' });
+}
+function renderProductPagination(totalPages) {
+  const el = document.getElementById('productPagination');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button class="btn btn-outline btn-sm" onclick="goProductPage(${productPage - 1})" ${productPage <= 1 ? 'disabled' : ''}>‹ Өмнөх</button>
+    <span style="font-family:'Ubuntu',sans-serif;font-size:13px;color:var(--ink-soft)">Хуудас ${productPage} / ${totalPages}</span>
+    <button class="btn btn-outline btn-sm" onclick="goProductPage(${productPage + 1})" ${productPage >= totalPages ? 'disabled' : ''}>Дараах ›</button>`;
 }
 
 function categoryOptions(selectedId) {
