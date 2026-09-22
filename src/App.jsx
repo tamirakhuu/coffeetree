@@ -1345,7 +1345,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                   </div>
                 )}
                 <div style={{
-                  display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, flexShrink: 0,
+                  display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10, flexShrink: 0,
                 }}>
                   <span className="cuppa-category-icon-wrap" style={{
                     width: 34, height: 34, borderRadius: "50%",
@@ -1355,7 +1355,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                     <CategoryIcon icon={c.icon} size={17} color={T.ink} />
                   </span>
                   <span className="cuppa-category-label" style={{
-                    fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, color: T.ink, textAlign: "left", lineHeight: 1.2,
+                    fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, color: T.ink, textAlign: "center", lineHeight: 1.2,
                   }}>{c.name}</span>
                 </div>
               </button>
