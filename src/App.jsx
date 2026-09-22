@@ -4,7 +4,7 @@ import {
   ShoppingBag, Heart, Search, X, Plus, Minus, ChevronDown,
   ChevronLeft, ChevronRight, Check, Coffee,
   ArrowRight, ArrowUp, Trash2, ShieldAlert, MapPin, Phone, Mail,
-  Facebook, Instagram, Menu
+  Facebook, Instagram, Menu, Clock
 } from "lucide-react";
 import { fetchBootstrap, submitOrder, lookupOrdersByPhone, computeLineTotal, shapeProduct, revertExpiredDiscount, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD, createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots, lookupTrainingByPhone } from "./api.js";
 import { supabase } from "./supabaseClient.js";
@@ -2361,6 +2361,7 @@ export const BRANCHES = [
     name: "Саруул зах",
     heading: "Дэлгүүрийн хаяг",
     address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00, UP 09:00 - 19:00",
+    teaBreak: "13:00 - 13:30",
     mapUrl: "https://maps.app.goo.gl/ZAZ4cCXETKV2xaSm8",
     phone: "70111772",
     email: "coffeetree2017@gmail.com",
@@ -2372,6 +2373,7 @@ export const BRANCHES = [
   {
     name: "Яармаг",
     address: "Яармаг City Palace 3 давхар 11:00 - 19-00",
+    teaBreak: "13:00 - 13:30",
     mapUrl: "https://maps.app.goo.gl/CqwyKw4dLudAQbU68",
     phone: "76111772",
     email: "cuppayarmag@gmail.com",
@@ -2403,6 +2405,11 @@ export function Footer({ setView, transparent }) {
             }}>
               <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{b.address}</span>
             </a>
+            {b.teaBreak && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, opacity: 0.85 }}>
+                <Clock size={14} style={{ flexShrink: 0 }} /> <span>Цайны цаг {b.teaBreak}</span>
+              </div>
+            )}
             <a href={`tel:${b.phone}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, color: T.ink, textDecoration: "none", opacity: 0.85 }}>
               <Phone size={14} style={{ flexShrink: 0 }} /> {b.phone}
             </a>
