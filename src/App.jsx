@@ -1330,7 +1330,7 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
               const catImg = c.tileImage || products.find((p) => p.categoryId === c.id && p.images && p.images.length > 0)?.images[0];
               return (
               <button key={c.id} onClick={() => setView({ name: "category", categoryId: c.id })} className="cuppa-category-tile" style={{
-                position: "relative", overflow: "hidden",
+                display: "flex", flexDirection: "column", overflow: "hidden",
                 background: "rgb(255, 255, 255)",
                 border: "1px solid rgba(255,255,255,.6)", borderRadius: 14, padding: "14px",
                 cursor: "pointer",
@@ -1338,27 +1338,24 @@ function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
                 boxShadow: "0 2px 10px rgba(36,28,20,.06)", transition: "transform .15s ease, box-shadow .15s ease",
               }}>
                 {catImg && (
-                  <div style={{ position: "absolute", inset: 14, zIndex: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <img src={catImg} alt="" aria-hidden="true" style={{
-                      maxWidth: "76%", maxHeight: "76%", objectFit: "contain", pointerEvents: "none",
+                      maxWidth: "80%", maxHeight: "100%", objectFit: "contain", pointerEvents: "none",
                     }} />
                   </div>
                 )}
                 <div style={{
-                  position: "absolute", top: 10, left: 10, zIndex: 1, display: "flex", flexDirection: "row", alignItems: "center", gap: 10,
-                  maxWidth: "calc(100% - 20px)",
+                  display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, flexShrink: 0,
                 }}>
                   <span className="cuppa-category-icon-wrap" style={{
-                    width: 46, height: 46, borderRadius: "50%",
-                    background: catImg ? "rgba(255,255,255,.92)" : "transparent",
+                    width: 34, height: 34, borderRadius: "50%",
+                    background: T.cream,
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
-                    <CategoryIcon icon={c.icon} size={22} color={T.ink} />
+                    <CategoryIcon icon={c.icon} size={17} color={T.ink} />
                   </span>
                   <span className="cuppa-category-label" style={{
-                    fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink, textAlign: "left",
-                    textShadow: catImg ? "0 0 4px rgba(255,255,255,.95), 0 0 8px rgba(255,255,255,.85)" : "none",
-                    alignSelf: "flex-start", marginTop: 4,
+                    fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 13.5, color: T.ink, textAlign: "left", lineHeight: 1.2,
                   }}>{c.name}</span>
                 </div>
               </button>
