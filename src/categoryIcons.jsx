@@ -1,8 +1,5 @@
 import React from "react";
 
-// Ангиллын custom SVG дүрсүүд — lucide-react-ийн icon-той адил
-// {size, color, ...props} хүлээж авдаг, өнгө нь эцэг элементийн color-ыг
-// currentColor-оор өвлөнө (lucide-ийн зан төлөвтэй ижил)
 export function PaperCupIcon({ size = 24, color = "currentColor", ...props }) {
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" fill="none" {...props}>
