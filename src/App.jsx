@@ -504,6 +504,7 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
   const optionType = availableOptionTypes(product)[0] || "unit";
   const option = product[optionType];
   const inkCard = variant === "ink";
+  const soldOut = availableOptionTypes(product).every((t) => (product[t]?.stock || 0) <= 0);
   return (
     <div className="cuppa-product-card" style={{
       background: inkCard ? T.ink : "rgba(255, 255, 255, 0.98)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
@@ -528,9 +529,9 @@ function ProductCard({ product, onOpen, isWished, onToggleWish, variant }) {
         <div className="cuppa-product-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 8, gap: 6 }}>
           <span className="cuppa-product-price" style={{ fontFamily: "'Nunito Sans', sans-serif", fontWeight: 700, fontSize: 15, color: inkCard ? T.paper : T.ink }}>{money(option.price)}</span>
           <button className="cuppa-product-detail-btn" onClick={() => onOpen(product)} style={{
-            background: inkCard ? "#fff" : T.ink, color: inkCard ? T.ink : "#fff", border: "none", borderRadius: 999, padding: "7px 13px",
+            background: soldOut ? T.line : (inkCard ? "#fff" : T.ink), color: soldOut ? T.inkSoft : (inkCard ? T.ink : "#fff"), border: "none", borderRadius: 999, padding: "7px 13px",
             fontFamily: "'Nunito Sans', sans-serif", fontSize: 12.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
-          }}>Дэлгэрэнгүй</button>
+          }}>{soldOut ? "Дууссан" : "Дэлгэрэнгүй"}</button>
         </div>
       </div>
     </div>
