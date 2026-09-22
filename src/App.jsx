@@ -2360,7 +2360,7 @@ export const BRANCHES = [
   {
     name: "Саруул зах",
     heading: "Дэлгүүрийн хаяг",
-    address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00, UP 09:00 - 19:00",
+    address: "Саруул зах, 2 давхар, CUPPA 09:00 - 19:00",
     teaBreak: "13:00 - 13:30",
     mapUrl: "https://maps.app.goo.gl/ZAZ4cCXETKV2xaSm8",
     phone: "70111772",
