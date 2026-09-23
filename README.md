@@ -8,6 +8,21 @@ npm run dev
 ```
 Дараа нь зааж өгсөн хаягаар нээгдэнэ.
 
+## Хуудсууд ба шалгалт
+
+`src/pages/` доторх хуудсууд хэрэгтэй үедээ lazy loading-оор ачаалагдана.
+Нийтлэг UI нь `src/components/storefront.jsx`, сагс болон төлбөрийн төлөв нь
+`src/App.jsx` дотор байна.
+
+```sh
+npx playwright install chromium
+npm run test:smoke
+```
+
+Энэ шалгалт production build дээр 18 хуудас, lazy loading, navigation,
+сагс болон захиалга → QPay → баталгаажуулалтын урсгалыг туршилтын API
+өгөгдлөөр шалгана. Бодит захиалга, төлбөр үүсгэхгүй.
+
 ## Удирдлагын хуудсууд
 - admin-panel.html — бараа, захиалга, брэнд удирдах хуудас
 - aguulah.html — агуулахын ажилтны хуудас

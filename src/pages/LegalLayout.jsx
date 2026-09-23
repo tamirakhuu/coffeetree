@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header, Footer, T, DataContext, pathForView } from "../App.jsx";
+import { Header, Footer, T, DataContext, pathForView } from "../components/storefront.jsx";
 import { fetchBootstrap } from "../api.js";
 
 export const legal = {
