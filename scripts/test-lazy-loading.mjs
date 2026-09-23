@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 import { chromium } from 'playwright';
+import { tmpdir } from 'node:os';
 
 // Production bundle smoke test with isolated API fixtures; never creates real orders.
 const server = createServer(async (req, res) => {
@@ -94,6 +95,45 @@ try {
   assert.ok((await page.locator('main').innerText()).includes('TEST-1001'));
   assert.deepEqual(errors, []);
   console.log('PASS checkout, payment polling and confirmation state');
+
+  // Homepage with a complete category grid, discounted slides and mobile layout.
+  const names = ['Кофе', 'Сироп', 'Соус', 'Нунтаг', 'Бариста хэрэгсэл', 'Смүүти', 'Цай', 'Нэг удаагийн хэрэгсэл', 'Бейс', 'Эйд', 'Концентрат', 'Цэцэг, Жимс', 'Кофе шопын хэрэгсэл', 'Кофены хэрэгсэл'];
+  await page.route('**/rest/v1/categories?*', route => route.fulfill({ json: names.map((name, i) => ({ id: i + 1, name, icon: 'CoffeeBean' })) }));
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [
+    { ...product, tag: 'хямдралтай', name: 'CUPPA Coffee', unit_original_price: 25000, images: ['/cuppa-logo.png'], discount_ends_at: '2099-01-01T00:00:00Z' },
+    { ...product, id: 2, tag: 'хямдралтай', name: 'CUPPA Blend', images: ['/cuppa-logo.png'] },
+    { ...product, id: 3 }, { ...product, id: 4, tag: 'шинэ' },
+  ] }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(base);
+  await page.locator('.home-hero h1').waitFor();
+  assert.equal(await page.locator('.home-category-card').count(), 14);
+  assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 7);
+  await page.getByRole('button', { name: 'Дараах бараа', exact: true }).click();
+  assert.equal(await page.locator('.home-hero h1').innerText(), 'CUPPA Blend');
+  await page.getByRole('button', { name: 'Өмнөх бараа', exact: true }).click();
+  assert.ok(!(await page.locator('.home-price').innerText()).includes('%'));
+  assert.equal(await page.locator('.home-side-product').count(), 2);
+  assert.equal(await page.getByRole('button', { name: /Слайд түр зогсоох|Слайд үргэлжлүүлэх/ }).count(), 0);
+  await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-desktop.png'), fullPage: true });
+  for (const width of [820, 390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), width > 720 ? 4 : 2);
+    assert.ok(await page.locator('.home-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Home overflow at ${width}px`);
+    if (width === 390) await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-mobile.png'), fullPage: true });
+  }
+  await page.getByRole('button', { name: 'Бараа үзэх', exact: true }).click();
+  await page.waitForURL('**/product/1');
+  await page.goBack();
+  await page.locator('.home-category-card').first().click();
+  await page.waitForURL('**/category/1');
+  await page.goBack();
+  await page.getByRole('button', { name: 'Сургалттай танилцах' }).click();
+  await page.waitForURL('**/training');
+  assert.deepEqual(errors, []);
+  console.log('PASS homepage slides, 7/4/2-column layouts, mobile overflow and navigation');
+  console.log(`Screenshots: ${resolve(tmpdir(), 'cuppa-home-desktop.png')}, ${resolve(tmpdir(), 'cuppa-home-mobile.png')}`);
 } finally {
   await browser?.close();
   await new Promise(r => server.close(r));
