@@ -1,4 +1,6 @@
-import { T, money, DataContext, sideLabel, inputStyle } from "../components/storefront.jsx";
+import { T, sideLabel, inputStyle } from "../theme.js";
+import { money } from "../utils/format.js";
+import { DataContext } from "../context/DataContext.jsx";
 import React, { useState, useContext } from "react";
 import { ChevronLeft } from "lucide-react";
 import { computeLineTotal, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from "../api.js";

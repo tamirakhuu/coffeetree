@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { lookupTrainingByPhone } from "../api.js";
-import { T, BackButton, inputStyle, formatMnDate } from "../components/storefront.jsx";
+import { T, inputStyle } from "../theme.js";
+import { BackButton } from "../components/BackButton.jsx";
+import { formatMnDate } from "../utils/format.js";
 
 const TRAINING_PAYMENT_LABELS = { paid: "Төлсөн", pending: "Хүлээгдэж байна" };
 

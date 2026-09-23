@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { T } from "../components/storefront.jsx";
+import { T } from "../theme.js";
 import React from "react";
 
 export default function Confirmation({ orderNumber, onContinue, onTrack }) {

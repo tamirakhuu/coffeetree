@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Check, Facebook } from "lucide-react";
 import { createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots } from "../api.js";
-import { T, money, inputStyle, formatMnDate } from "../components/storefront.jsx";
+import { T, inputStyle } from "../theme.js";
+import { money, formatMnDate } from "../utils/format.js";
 
 function toDateInputValue(d) {
   const y = d.getFullYear();

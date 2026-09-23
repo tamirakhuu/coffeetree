@@ -1,5 +1,10 @@
 import React, { useState, useContext } from "react";
-import { T, DataContext, ProductCard, PageHeaderRow, CollapsibleSection, displayPrice } from "../components/storefront.jsx";
+import { T } from "../theme.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
+import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
+import { CollapsibleSection } from "../components/CollapsibleSection.jsx";
+import { displayPrice } from "../utils/products.js";
 
 export default function NewProductsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { products, brands, categories } = useContext(DataContext);

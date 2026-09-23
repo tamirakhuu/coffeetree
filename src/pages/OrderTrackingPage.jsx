@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { lookupOrdersByPhone } from "../api.js";
-import { T, money, BackButton, inputStyle } from "../components/storefront.jsx";
+import { T, inputStyle } from "../theme.js";
+import { money } from "../utils/format.js";
+import { BackButton } from "../components/BackButton.jsx";
 
 const ORDER_STATUS_LABELS = {
   pending: "Хүлээгдэж байна", prepared: "Бэлдсэн", handed_over: "Хүлээлгэн өгсөн", cancelled: "Цуцлагдсан",

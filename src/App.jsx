@@ -3,7 +3,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 import { fetchBootstrap, submitOrder, computeLineTotal, shapeProduct, revertExpiredDiscount, createQpayInvoice } from "./api.js";
 import { supabase } from "./supabaseClient.js";
-import { T, FONT_IMPORT, slugify, viewFromLocation, pathForView, DataContext, Toast, ScrollToTopButton, Header, availableOptionTypes, CartDrawer, primaryBtn, Footer } from "./components/storefront.jsx";
+import { T, FONT_IMPORT, primaryBtn } from "./theme.js";
+import { slugify, viewFromLocation, pathForView } from "./routing.js";
+import { DataContext } from "./context/DataContext.jsx";
+import { Toast } from "./components/Toast.jsx";
+import { ScrollToTopButton } from "./components/ScrollToTopButton.jsx";
+import { Header } from "./components/Header.jsx";
+import { availableOptionTypes } from "./utils/products.js";
+import { CartDrawer } from "./components/CartDrawer.jsx";
+import { Footer } from "./components/Footer.jsx";
 import { lazyPage, PageLoading } from "./components/LazyPage.jsx";
 
 const SearchPage = lazyPage(() => import("./pages/SearchPage.jsx"));

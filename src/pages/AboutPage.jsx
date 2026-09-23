@@ -1,4 +1,4 @@
-import { InfoPage } from "../components/storefront.jsx";
+import { InfoPage } from "../components/InfoPage.jsx";
 import React from "react";
 
 export default function AboutPage() {

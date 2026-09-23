@@ -1,4 +1,9 @@
-import { T, CategoryIcon, money, discountPercent, formatCountdown, DataContext, ProductCard, availableOptionTypes } from "../components/storefront.jsx";
+import { T } from "../theme.js";
+import { CategoryIcon } from "../components/CategoryIcon.jsx";
+import { money, discountPercent, formatCountdown } from "../utils/format.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
+import { availableOptionTypes } from "../utils/products.js";
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 

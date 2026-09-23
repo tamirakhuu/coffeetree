@@ -11,8 +11,11 @@ npm run dev
 ## Хуудсууд ба шалгалт
 
 `src/pages/` доторх хуудсууд хэрэгтэй үедээ lazy loading-оор ачаалагдана.
-Нийтлэг UI нь `src/components/storefront.jsx`, сагс болон төлбөрийн төлөв нь
-`src/App.jsx` дотор байна.
+Нийтлэг UI нь `src/components/` дотор компонент бүрээрээ тусдаа файлтай.
+Өнгө, нийтлэг style нь `src/theme.js`, URL хөрвүүлэлт нь `src/routing.js`,
+өгөгдлийн context нь `src/context/DataContext.jsx` дотор байна.
+Туслах функцууд `src/utils/`, салбарын мэдээлэл `src/data/` дотор байрлана.
+Сагс болон төлбөрийн төлөв `src/App.jsx` дотор байна.
 
 ```sh
 npx playwright install chromium

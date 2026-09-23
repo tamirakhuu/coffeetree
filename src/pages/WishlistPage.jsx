@@ -1,5 +1,8 @@
 import React, { useContext } from "react";
-import { T, DataContext, ProductCard, BackButton } from "../components/storefront.jsx";
+import { T } from "../theme.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
+import { BackButton } from "../components/BackButton.jsx";
 
 export default function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish, setView }) {
   const { products } = useContext(DataContext);

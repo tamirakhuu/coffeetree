@@ -1,5 +1,10 @@
 import React, { useRef, useContext } from "react";
-import { T, DataContext, ProductCard, PageHeaderRow, CollapsibleSection, subBtn, displayPrice } from "../components/storefront.jsx";
+import { T, subBtn } from "../theme.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
+import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
+import { CollapsibleSection } from "../components/CollapsibleSection.jsx";
+import { displayPrice } from "../utils/products.js";
 
 export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);

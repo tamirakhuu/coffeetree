@@ -1,5 +1,6 @@
 import React from "react";
-import { T, ProductCard } from "../components/storefront.jsx";
+import { T } from "../theme.js";
+import { ProductCard } from "../components/ProductCard.jsx";
 
 export default function SearchPage({ query, products, openProduct, quickAdd, wishlist, toggleWish }) {
     const q = query.toLowerCase();

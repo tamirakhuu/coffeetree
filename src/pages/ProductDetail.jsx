@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShoppingBag, Heart, Plus, Minus, ChevronLeft, ChevronRight, Check, Coffee } from "lucide-react";
 import { computeLineTotal } from "../api.js";
-import { T, money, discountPercent, DataContext, ProductArt, ProductCard, sideLabel, BackButton, availableOptionTypes, displayPrice, stepBtn } from "../components/storefront.jsx";
+import { T, sideLabel, stepBtn } from "../theme.js";
+import { money, discountPercent } from "../utils/format.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { ProductArt } from "../components/ProductArt.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
+import { BackButton } from "../components/BackButton.jsx";
+import { availableOptionTypes, displayPrice } from "../utils/products.js";
 
 const detailImgArrowStyle = {
   position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { checkQpayPayment } from "../api.js";
-import { T, money } from "../components/storefront.jsx";
+import { T } from "../theme.js";
+import { money } from "../utils/format.js";
 
 export default function QpayPayment({ orderNumber, subtotal, invoice, onPaid }) {
   const [status, setStatus] = useState("pending"); // pending | paid | error

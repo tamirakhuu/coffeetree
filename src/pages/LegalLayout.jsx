@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header, Footer, T, DataContext, pathForView } from "../components/storefront.jsx";
+import { Header } from "../components/Header.jsx";
+import { Footer } from "../components/Footer.jsx";
+import { T } from "../theme.js";
+import { DataContext } from "../context/DataContext.jsx";
+import { pathForView } from "../routing.js";
 import { fetchBootstrap } from "../api.js";
 
 export const legal = {
