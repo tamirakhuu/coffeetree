@@ -273,6 +273,10 @@ tr:hover td{background:rgba(255,255,255,.4)}
   .table-wrap table:not(.orders-table) td:empty{display:none}
   .table-wrap table:not(.orders-table) td.empty{padding:24px 0}
 }
+.product-category-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:16px;border-bottom:1px solid var(--line)}
+.product-category-tabs button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.product-group-row td{background:#eeeae5;font-weight:700;color:var(--ink);padding:12px 16px}
+@media(max-width:720px){.table-wrap table:not(.orders-table) .product-group-row{display:block;background:#eeeae5}.table-wrap table:not(.orders-table) .product-group-row td{display:block;width:100%;box-sizing:border-box}}
 </style>
 </head>
 <body>
@@ -377,11 +381,13 @@ tr:hover td{background:rgba(255,255,255,.4)}
           style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--ink);background:var(--card);outline:none;font-family:'Ubuntu',sans-serif">
           <option value="">Бүх ангилал</option>
         </select>
+        <button class="btn btn-outline" onclick="resetProductFilters()">Шүүлт цэвэрлэх</button>
         <button class="btn btn-primary" onclick="openAddProduct()">Бараа нэмэх</button>
       </div>
     </div>
     <div class="card">
       <div class="table-wrap">
+        <div id="productCategoryTabs" class="product-category-tabs" aria-label="Барааны ангилал"></div>
         <table><thead><tr><th>Бараа</th><th>Брэнд</th><th>Ангилал</th><th>Ширхэг үнэ</th><th>Хайрцаг үнэ</th><th>Үйлдэл</th></tr></thead><tbody id="productTable"></tbody></table>
       </div>
       <div id="productPagination" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:16px;border-top:1px solid var(--line)"></div>
@@ -908,10 +914,27 @@ function populateProductFilters() {
 const PRODUCTS_PER_PAGE = 20;
 let productPage = 1;
 
+function selectProductCategory(id) {
+  document.getElementById('productCategoryFilter').value = id;
+  productPage = 1;
+  renderProducts();
+}
+function resetProductFilters() {
+  ['productSearch', 'productBrandFilter', 'productCategoryFilter'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  productPage = 1;
+  renderProducts();
+}
 function renderProducts() {
   const query = (document.getElementById('productSearch')?.value || '').trim().toLowerCase();
   const brandFilter = document.getElementById('productBrandFilter')?.value || '';
   const categoryFilter = document.getElementById('productCategoryFilter')?.value || '';
+  const categoryCounts = new Map();
+  products.forEach(p => categoryCounts.set(p.category_id, (categoryCounts.get(p.category_id) || 0) + 1));
+  document.getElementById('productCategoryTabs').innerHTML =
+    `<button class="btn btn-outline btn-sm" aria-pressed="${!categoryFilter}" onclick="selectProductCategory('')">Бүгд (${products.length})</button>` +
+    categories.map(c => `<button class="btn btn-outline btn-sm" aria-pressed="${String(c.id) === categoryFilter}" onclick="selectProductCategory('${Number(c.id)}')">${escapeHtml(c.name)} (${categoryCounts.get(c.id) || 0})</button>`).join('');
   let filtered = query ? products.filter(p =>
     (p.name || '').toLowerCase().includes(query) ||
     String(p.unit_price ?? '').includes(query) ||
@@ -919,6 +942,15 @@ function renderProducts() {
   ) : products.slice();
   if (brandFilter) filtered = filtered.filter(p => String(p.brand_id) === brandFilter);
   if (categoryFilter) filtered = filtered.filter(p => String(p.category_id) === categoryFilter);
+  const categoryRanks = new Map(categories.map((c, i) => [c.id, i]));
+  const brandRanks = new Map([...brands].sort((a, b) => a.name.localeCompare(b.name)).map((b, i) => [b.id, i]));
+  filtered.sort((a, b) =>
+    ((categoryRanks.get(a.category_id) ?? categories.length) - (categoryRanks.get(b.category_id) ?? categories.length)) ||
+    String(a.category_id ?? '').localeCompare(String(b.category_id ?? '')) ||
+    ((brandRanks.get(a.brand_id) ?? brands.length) - (brandRanks.get(b.brand_id) ?? brands.length)) ||
+    String(a.brand_id ?? '').localeCompare(String(b.brand_id ?? '')) ||
+    (a.name || '').localeCompare(b.name || '')
+  );
   document.getElementById('prodCount').textContent = (query || brandFilter || categoryFilter)
     ? `${filtered.length} / Нийт ${products.length} бараа`
     : `Нийт ${products.length} бараа`;
@@ -928,13 +960,16 @@ function renderProducts() {
   const pageItems = filtered.slice((productPage - 1) * PRODUCTS_PER_PAGE, productPage * PRODUCTS_PER_PAGE);
 
   const tb = document.getElementById('productTable');
-  tb.innerHTML = pageItems.map(p => {
+  tb.innerHTML = pageItems.map((p, index) => {
     const brand = brands.find(b => b.id === p.brand_id);
     const cat = categories.find(c => c.id === p.category_id);
     const thumb = p.images && p.images[0]
       ? `<img src="${p.images[0]}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">`
       : `<div style="width:36px;height:36px;border-radius:8px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--ink))"></div>`;
-    return `<tr>
+    const previous = pageItems[index - 1];
+    const groupHeading = !previous || previous.category_id !== p.category_id || previous.brand_id !== p.brand_id
+      ? `<tr class="product-group-row"><td colspan="6">${escapeHtml(cat?.name || 'Ангилалгүй')} · ${escapeHtml(brand?.name || 'Брэндгүй')}</td></tr>` : '';
+    return `${groupHeading}<tr>
       <td data-th="Бараа"><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
       <td data-th="Брэнд">${brand?.name||'-'}</td>
       <td data-th="Ангилал">${cat?.name||'-'}</td>
