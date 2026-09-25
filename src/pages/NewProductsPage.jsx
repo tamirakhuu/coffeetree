@@ -4,7 +4,7 @@ import { DataContext } from "../context/DataContext.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
 import { CollapsibleSection } from "../components/CollapsibleSection.jsx";
-import { displayPrice } from "../utils/products.js";
+import { displayPrice, groupProductsByBrand } from "../utils/products.js";
 
 export default function NewProductsPage({ onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { products, brands, categories } = useContext(DataContext);
@@ -18,6 +18,7 @@ export default function NewProductsPage({ onOpen, onQuickAdd, wishlist, onToggle
   let items = newItems;
   if (categoryFilter.length) items = items.filter((p) => categoryFilter.includes(p.categoryId));
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
+  if (sortBy === "default") items = groupProductsByBrand(items, brands);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
 

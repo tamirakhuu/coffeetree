@@ -4,7 +4,7 @@ import { DataContext } from "../context/DataContext.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
 import { CollapsibleSection } from "../components/CollapsibleSection.jsx";
-import { displayPrice } from "../utils/products.js";
+import { displayPrice, groupProductsByBrand } from "../utils/products.js";
 
 export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
@@ -19,8 +19,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub === subFilter);
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
-  const isFeatured = (p) => p.tag === "бестселлэр" || p.tag === "хямдралтай";
-  if (sortBy === "default") items = [...items].sort((a, b) => isFeatured(b) - isFeatured(a));
+  if (sortBy === "default") items = groupProductsByBrand(items, brands);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
