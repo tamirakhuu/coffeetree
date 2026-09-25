@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 const html = await readFile('public/admin-panel.html', 'utf8');
 const formCode = html.slice(html.indexOf('function productFormHtml('), html.indexOf('function confirmDeleteProduct('));
 const dateCode = html.slice(html.indexOf('function toLocalDatetimeInput('), html.indexOf('async function checkAuth('));
+const escapeCode = html.slice(html.indexOf('function escapeHtml('), html.indexOf('// toLocaleDateString'));
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
@@ -21,6 +22,7 @@ try {
     const toast = () => {}, closeModal = () => {}, loadAll = async () => {};
     const sb = { from: () => ({ insert: row => ({ select: async () => { saved.push(row); return { data: [row], error: null }; } }) }) };
     ${dateCode}
+    ${escapeCode}
     ${formCode}
     function mount(product = {}) { document.getElementById('form').innerHTML = productFormHtml({ name: 'Test', unit_price: 80, ...product }); }
     mount();
@@ -68,6 +70,15 @@ try {
   await page.fill('#pf-discount-ends', '2099-01-01T12:00');
   await page.evaluate(() => saveProduct(null));
   assert.equal(await page.evaluate(() => saved.length), 2);
+  await page.evaluate(() => mount({ size: '750 мл "<b>"' }));
+  assert.equal(await page.inputValue('#pf-size'), '750 мл "<b>"');
+  assert.equal(await page.locator('#form b').count(), 0);
+  await page.fill('#pf-size', '  250 г  ');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved[2].size), '250 г');
+  await page.fill('#pf-size', '');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved[3].size), null);
   assert.match(await page.evaluate(() => saved[1].discount_ends_at), /^2099-/);
   assert.deepEqual(errors, []);
   console.log('PASS discount visibility, percentage, unit/box validation, optional/future dates and save blocking');

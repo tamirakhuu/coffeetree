@@ -42,8 +42,7 @@ export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWi
           {option && <div className="home-price"><strong>{money(option.price)}</strong>{option.originalPrice > option.price && <del>{money(option.originalPrice)}</del>}</div>}
           {countdown && <p className="home-countdown">Хямдрал дуусахад: {countdown}</p>}
           <div className="home-actions">
-            <button className="home-primary" onClick={() => current ? onOpen(current) : document.getElementById("home-categories").scrollIntoView({ behavior: "smooth" })}>{current ? "Бараа үзэх" : "Бараагаа сонгох"}<ArrowRight size={17} /></button>
-            {current && <button className="home-text-link" onClick={() => setView({ name: "discounts" })}>Бүх хямдрал <ArrowRight size={15} /></button>}
+            <button className="home-primary" onClick={() => setView({ name: "discounts" })}>Бүх хямдрал үзэх<ArrowRight size={17} /></button>
           </div>
         </div>
         <div className="home-hero-media" onTouchStart={e => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; swiped.current = false; }}
@@ -64,7 +63,7 @@ export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWi
           </div>}
         </div>
       </section>}
-      <section className="home-section" id="home-categories" aria-labelledby="home-categories-title">
+      <section className="home-section home-section-gray" id="home-categories" aria-labelledby="home-categories-title">
         <div className="home-section-heading"><div><h2 id="home-categories-title">Барааны ангилал</h2></div></div>
         <div className="home-category-grid">{categories.map(c => {
           const img = c.tileImage || products.find(p => p.categoryId === c.id && p.images?.length)?.images[0];
@@ -73,7 +72,7 @@ export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWi
       </section>
       {collections.map(collection => {
         const items = products.filter(p => p.tag === collection.tag).slice(0, 4);
-        return <section className="home-section" key={collection.view} aria-labelledby={`home-${collection.view}`}>
+        return <section className={`home-section${collection.view === "new" ? " home-section-gray" : ""}`} key={collection.view} aria-labelledby={`home-${collection.view}`}>
           <div className="home-section-heading"><div><h2 id={`home-${collection.view}`}>{collection.title}</h2></div><button className="home-text-link" onClick={() => setView({ name: collection.view })}>Бүгдийг үзэх <ArrowRight size={16} /></button></div>
           <div className="home-products cuppa-product-grid">{items.map(p => <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd} isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />)}</div>
           {!items.length && <p className="home-empty">Одоогоор бүтээгдэхүүн нэмэгдээгүй байна.</p>}

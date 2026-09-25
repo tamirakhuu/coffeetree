@@ -25,7 +25,7 @@ export function revertExpiredDiscount(p) {
 export function shapeProduct(r) {
   return revertExpiredDiscount({
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
-    origin: r.origin, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
+    origin: r.origin, size: r.size || null, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
     discountEndsAt: r.discount_ends_at || null,
     unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.warehouse_unit_stock },
     box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.warehouse_box_stock },
