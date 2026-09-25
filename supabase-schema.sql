@@ -50,6 +50,7 @@
     category_id bigint references categories(id) on delete set null,
     subcategory text,
     origin text,
+    size text,
     tag text,
     color text default '#6B4226',
     description text,

@@ -50,6 +50,7 @@ try {
     assert.equal(await page.getByRole('alert').count(), 0, `Error boundary on ${path}`);
     assert.ok((await page.locator('main').innerText()).trim(), `Empty page on ${path}`);
     assert.deepEqual(errors, [], `Runtime errors on ${path}`);
+    if (path === '/product/1') assert.equal(await page.locator('.cuppa-product-size').count(), 0);
     if (path === '/') {
       assert.ok(chunks.some(url => url.includes('/Home-')));
       assert.ok(!chunks.some(url => /\/(Checkout|TrainingPage|ProductDetail)-/.test(url)), 'Unvisited pages loaded eagerly');
@@ -100,7 +101,7 @@ try {
   const names = ['Кофе', 'Сироп', 'Соус', 'Нунтаг', 'Бариста хэрэгсэл', 'Смүүти', 'Цай', 'Нэг удаагийн хэрэгсэл', 'Бейс', 'Эйд', 'Концентрат', 'Цэцэг, Жимс', 'Кофе шопын хэрэгсэл', 'Кофены хэрэгсэл'];
   await page.route('**/rest/v1/categories?*', route => route.fulfill({ json: names.map((name, i) => ({ id: i + 1, name, icon: 'CoffeeBean' })) }));
   await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [
-    { ...product, tag: 'хямдралтай', name: 'CUPPA Coffee', unit_original_price: 25000, images: ['/cuppa-logo.png'], discount_ends_at: '2099-01-01T00:00:00Z' },
+    { ...product, size: '750 мл', tag: 'хямдралтай', name: 'CUPPA Coffee', unit_original_price: 25000, images: ['/cuppa-logo.png'], discount_ends_at: '2099-01-01T00:00:00Z' },
     { ...product, id: 2, tag: 'хямдралтай', name: 'CUPPA Blend', images: ['/cuppa-logo.png'] },
     { ...product, id: 3 }, { ...product, id: 4, tag: 'шинэ' },
   ] }));
@@ -123,14 +124,17 @@ try {
     assert.ok(await page.locator('.home-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Home overflow at ${width}px`);
     if (width === 390) await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-mobile.png'), fullPage: true });
   }
-  await page.getByRole('button', { name: 'Бараа үзэх', exact: true }).click();
+  await page.getByRole('button', { name: 'Бүх хямдрал үзэх', exact: true }).click();
+  await page.waitForURL('**/discount');
+  await page.goBack();
+  await page.getByRole('button', { name: 'CUPPA Coffee үзэх', exact: true }).click();
   await page.waitForURL('**/product/1');
+  await page.locator('.cuppa-product-size').waitFor();
+  assert.equal(await page.locator('.cuppa-product-size').innerText(), 'Хэмжээ: 750 мл');
   await page.goBack();
   await page.locator('.home-category-card').first().click();
   await page.waitForURL('**/category/1');
   await page.goBack();
-  await page.getByRole('button', { name: 'Сургалттай танилцах' }).click();
-  await page.waitForURL('**/training');
   assert.deepEqual(errors, []);
   console.log('PASS homepage slides, 7/4/2-column layouts, mobile overflow and navigation');
   console.log(`Screenshots: ${resolve(tmpdir(), 'cuppa-home-desktop.png')}, ${resolve(tmpdir(), 'cuppa-home-mobile.png')}`);
