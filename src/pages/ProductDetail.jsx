@@ -242,7 +242,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
               {qty >= bulkBoxQty
                 ? ` ${bulkBoxQty}+ ширхэгт бөөний үнээр тооцогдож байна`
-                : `${bulkBoxQty}+ ширхэг авбал нэгж нь ${money(bulkPrice)}`}
+                : `${bulkBoxQty}болон түүнээс дээш ширхэг авбал нэгийн үнэ нь ${money(bulkPrice)}`}
             </div>
           )}
 
