@@ -1070,6 +1070,17 @@ function productFormHtml(p) {
 
     <div class="form-section">
       <div class="form-section-head">
+        <span class="form-section-title">Бөөнөөр зарах</span>
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="fg"><label for="pf-bulk-qty">Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
+        <div class="fg"><label for="pf-bulk-unit-price">Бөөний нэгж үнэ (₮ / ширхэг)</label><input type="number" min="0" step="any" id="pf-bulk-unit-price" placeholder="Жишээ: 15000" value="${p.bulk_unit_price ?? ''}"></div>
+        <div class="form-hint">Ширхэгээр зарах үед бөөнөөр эхлэх тоонд хүрэхэд бүх ширхэгийг бөөний нэгж үнээр тооцно. Хайрцгаар зарахыг асаах шаардлагагүй. Бөөний нэгж үнийг хоосон үлдээвэл хайрцгийн нэгж үнийг ашиглана.</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-head">
         <label class="toggle-switch">
           <input type="checkbox" id="pf-unit-enable" ${hasUnit ? 'checked' : ''} onchange="toggleUnitSection()">
           <span class="toggle-slider"></span>
@@ -1080,9 +1091,6 @@ function productFormHtml(p) {
         <div class="fg"><label>Савлагааны нэр</label><input id="pf-unit-label" value="${p.unit_label||'ширхэг'}"></div>
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxSmart()" aria-describedby="pf-unit-price-error" value="${p.unit_price||''}"><div class="field-error" id="pf-unit-price-error" aria-live="polite"></div></div>
         <div class="fg" id="pf-unit-original-wrap" style="display:${p.tag==='хямдралтай'?'':'none'}"><label for="pf-unit-original-price">Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" oninput="validateProductDiscount()" aria-describedby="pf-unit-original-price-error pf-unit-discount-preview" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"><div class="field-error" id="pf-unit-original-price-error" aria-live="polite"></div><div class="discount-preview" id="pf-unit-discount-preview" aria-live="polite"></div></div>
-        <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
-        <div class="fg"><label for="pf-bulk-unit-price">Бөөний нэгж үнэ (₮ / ширхэг)</label><input type="number" min="0" step="any" id="pf-bulk-unit-price" placeholder="Жишээ: 15000" value="${p.bulk_unit_price ?? ''}"></div>
-        <div class="form-hint">Бөөнөөр эхлэх тоонд хүрэхэд бүх ширхэгийг бөөний нэгж үнээр тооцно. Хайрцгаар зарахыг асаах шаардлагагүй. Бөөний нэгж үнийг хоосон үлдээвэл хайрцгийн нэгж үнийг ашиглана.</div>
       </div>
     </div>
 
