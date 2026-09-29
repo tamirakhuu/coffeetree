@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient.js";
+import { compareProductNames } from "./utils/products.js";
 
 export const DELIVERY_FEE = 15000;
 export const FREE_DELIVERY_THRESHOLD = 500000;
@@ -71,7 +72,7 @@ export async function fetchBootstrap() {
     sub: subcategories.filter((s) => s.category_id === c.id).map((s) => s.name),
   }));
   const sortedBrands = [...brands].sort((a, b) => a.name.localeCompare(b.name));
-  return { categories: cats, brands: sortedBrands, products: products.map(shapeProduct) };
+  return { categories: cats, brands: sortedBrands, products: products.map(shapeProduct).sort(compareProductNames) };
 }
 
 // Захиалга үүсгэх — үнэ, нөөцийн шалгалт, бичилт бүгд submit_order гэсэн

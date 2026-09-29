@@ -8,14 +8,16 @@ export const displayPrice = (product) => {
   return t ? product[t].price : 0;
 };
 
-// Keep each brand together; featured products lead only within their own brand.
+const nameCollator = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
+export const compareProductNames = (a, b) => nameCollator.compare((a.name || '').trim(), (b.name || '').trim());
+
+// Keep brands together and order products A–Z within each brand.
 export function groupProductsByBrand(products, brands) {
   const ranks = new Map(brands.map((brand, index) => [brand.id, index]));
   for (const product of products) {
     if (!ranks.has(product.brandId)) ranks.set(product.brandId, ranks.size);
   }
-  const featured = product => product.tag === "бестселлэр" || product.tag === "хямдралтай";
   return [...products].sort((a, b) =>
-    ranks.get(a.brandId) - ranks.get(b.brandId) || Number(featured(b)) - Number(featured(a))
+    ranks.get(a.brandId) - ranks.get(b.brandId) || compareProductNames(a, b)
   );
 }
