@@ -67,6 +67,7 @@
     box_stock int default 0,
     warehouse_box_stock int default 0, -- агуулах дахь нөөц (хайрцаг) — эндээс дэлгүүрийн box_stock рүү татдаг
     bulk_qty int, -- бөөний үнэ бодогдож эхлэх ширхэгийн тоо (барааны хувиар өөр өөр байдаг)
+    bulk_unit_price numeric check (bulk_unit_price is null or bulk_unit_price > 0),
     unified_stock boolean default false, -- хайрцгаар ирж, ширхэгээр задарч зардаг бол box_stock-ыг unit_stock-оос автоматаар тооцно
     created_at timestamptz default now()
   );
@@ -268,7 +269,10 @@
         v_current_price := v_box_price;
       end if;
 
-      if v_option_type = 'unit' and v_product.bulk_qty is not null and coalesce(v_box_price, 0) > 0 and coalesce(v_product.box_per_box, 0) > 0 and v_qty >= v_product.bulk_qty then
+      if v_option_type = 'unit' and coalesce(v_product.bulk_qty, 0) > 0 and coalesce(v_product.bulk_unit_price, 0) > 0 and v_qty >= v_product.bulk_qty then
+        v_current_price := v_product.bulk_unit_price;
+        v_line_total := round(v_current_price * v_qty);
+      elsif v_option_type = 'unit' and coalesce(v_product.bulk_qty, 0) > 0 and coalesce(v_box_price, 0) > 0 and coalesce(v_product.box_per_box, 0) > 0 and v_qty >= v_product.bulk_qty then
         v_line_total := round((v_box_price / v_product.box_per_box) * v_qty);
       else
         v_line_total := v_current_price * v_qty;

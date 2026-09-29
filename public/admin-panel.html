@@ -1081,7 +1081,8 @@ function productFormHtml(p) {
         <div class="fg"><label>Үнэ (₮)</label><input type="number" id="pf-unit-price" oninput="recalcBoxSmart()" aria-describedby="pf-unit-price-error" value="${p.unit_price||''}"><div class="field-error" id="pf-unit-price-error" aria-live="polite"></div></div>
         <div class="fg" id="pf-unit-original-wrap" style="display:${p.tag==='хямдралтай'?'':'none'}"><label for="pf-unit-original-price">Хямдрахаас өмнөх үнэ (₮)</label><input type="number" id="pf-unit-original-price" oninput="validateProductDiscount()" aria-describedby="pf-unit-original-price-error pf-unit-discount-preview" placeholder="Зөвхөн хямдралтай бол" value="${p.unit_original_price||''}"><div class="field-error" id="pf-unit-original-price-error" aria-live="polite"></div><div class="discount-preview" id="pf-unit-discount-preview" aria-live="polite"></div></div>
         <div class="fg"><label>Бөөнөөр эхлэх тоо (ш)</label><input type="number" id="pf-bulk-qty" placeholder="Хоосон = тооцохгүй" value="${p.bulk_qty||''}"></div>
-        <div class="form-hint">"Бөөнөөр эхлэх тоо" бөглөвөл тэр тооноос дээш авахад доорх "Хайрцгаар" үнээр (÷ хайрцагт багтах тоо) бүх ширхэгийг автоматаар тооцно.</div>
+        <div class="fg"><label for="pf-bulk-unit-price">Бөөний нэгж үнэ (₮ / ширхэг)</label><input type="number" min="0" step="any" id="pf-bulk-unit-price" placeholder="Жишээ: 15000" value="${p.bulk_unit_price ?? ''}"></div>
+        <div class="form-hint">Бөөнөөр эхлэх тоонд хүрэхэд бүх ширхэгийг бөөний нэгж үнээр тооцно. Хайрцгаар зарахыг асаах шаардлагагүй. Бөөний нэгж үнийг хоосон үлдээвэл хайрцгийн нэгж үнийг ашиглана.</div>
       </div>
     </div>
 
@@ -1220,6 +1221,24 @@ async function saveProduct(id) {
   const boxEnabled = document.getElementById('pf-box-enable').checked;
   if (!unitEnabled && !boxEnabled) { toast('Дор хаяж нэг худалдах хэлбэр (ширхэг эсвэл хайрцаг) сонгоно уу', 'err'); return; }
   if (!validateProductDiscount(true)) return;
+  const bulkQtyText = document.getElementById('pf-bulk-qty').value.trim();
+  const bulkPriceInput = document.getElementById('pf-bulk-unit-price');
+  const bulkPriceText = bulkPriceInput.value.trim();
+  const bulkQty = Number(bulkQtyText);
+  const bulkPrice = Number(bulkPriceText);
+  if (unitEnabled && (bulkQtyText || bulkPriceText || bulkPriceInput.validity.badInput)) {
+    if (!Number.isInteger(bulkQty) || bulkQty <= 0) {
+      toast('Бөөнөөр эхлэх тоог 0-ээс их бүхэл тоогоор оруулна уу.', 'err');
+      document.getElementById('pf-bulk-qty').focus(); return;
+    }
+    if (bulkPriceInput.validity.badInput || (bulkPriceText && (!Number.isFinite(bulkPrice) || bulkPrice <= 0 || bulkPrice > Number(document.getElementById('pf-unit-price').value)))) {
+      toast('Бөөний нэгж үнэ 0-ээс их, ширхэгийн үнээс ихгүй байх ёстой.', 'err');
+      bulkPriceInput.focus(); return;
+    }
+    if (!bulkPriceText && !(boxEnabled && Number(document.getElementById('pf-box-price').value) > 0 && Number(document.getElementById('pf-box-per').value) > 0)) {
+      toast('Бөөний нэгж үнэ оруулна уу.', 'err'); bulkPriceInput.focus(); return;
+    }
+  }
   const saveBtn = document.querySelector('#modalFoot .btn-primary');
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Хадгалж байна…'; }
   try {
@@ -1251,6 +1270,7 @@ async function saveProduct(id) {
       unit_price: unitEnabled ? (Number(document.getElementById('pf-unit-price').value) || 0) : 0,
       unit_original_price: unitEnabled ? (Number(document.getElementById('pf-unit-original-price').value) || null) : null,
       bulk_qty: unitEnabled ? (parseInt(document.getElementById('pf-bulk-qty').value, 10) || null) : null,
+      bulk_unit_price: unitEnabled && bulkPriceText ? bulkPrice : null,
       box_label: boxEnabled ? (document.getElementById('pf-box-label').value || '1 хайрцаг') : '1 хайрцаг',
       box_price: boxEnabled ? (Number(document.getElementById('pf-box-price').value) || 0) : 0,
       box_original_price: boxEnabled ? (Number(document.getElementById('pf-box-original-price').value) || null) : null,
