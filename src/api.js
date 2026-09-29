@@ -30,18 +30,24 @@ export function shapeProduct(r) {
     unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.warehouse_unit_stock },
     box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.warehouse_box_stock },
     bulkQty: r.bulk_qty || null,
+    bulkUnitPrice: r.bulk_unit_price == null ? null : Number(r.bulk_unit_price),
   });
 }
 
 // Барааг ширхэгээр авахад, тоо нь тухайн барааны "бөөний тоо"-нд хүрвэл
 // (админ бараа бүрээр тохируулдаг — жишээ нь FORTE кофе 3ш, сироп 6ш,
-// нэг удаагийн аяга 1000ш гэх мэт өөр өөр байдаг) хайрцгийн нэгжийн үнээр
-// (box_price / box_per_box) бүх ширхэгийг нь автоматаар тооцно.
+// нэг удаагийн аяга 1000ш гэх мэт) бөөний нэгж үнээр бүх ширхэгийг тооцно.
+// Тусдаа үнэ оруулаагүй хуучин бараанд хайрцгийн нэгж үнийг ашиглана.
+export function getBulkUnitPrice(product) {
+  if (product.bulkUnitPrice > 0) return product.bulkUnitPrice;
+  if (product.box?.price > 0 && product.box?.perBox > 0) return product.box.price / product.box.perBox;
+  return null;
+}
 export function computeLineTotal(product, optionType, qty) {
   if (optionType === "unit") {
     const boxQty = product.bulkQty;
-    if (boxQty && product.box?.price > 0 && product.box?.perBox > 0 && qty >= boxQty) {
-      const bulkUnitPrice = product.box.price / product.box.perBox;
+    const bulkUnitPrice = getBulkUnitPrice(product);
+    if (boxQty > 0 && bulkUnitPrice > 0 && qty >= boxQty) {
       return Math.round(bulkUnitPrice * qty);
     }
   }

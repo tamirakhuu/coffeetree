@@ -81,5 +81,23 @@ try {
   assert.equal(await page.evaluate(() => saved[3].size), null);
   assert.match(await page.evaluate(() => saved[1].discount_ends_at), /^2099-/);
   assert.deepEqual(errors, []);
+  await page.evaluate(() => mount({ unit_price: 16500 }));
+  await page.fill('#pf-bulk-qty', '3');
+  await page.fill('#pf-bulk-unit-price', '15000');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.at(-1).bulk_unit_price), 15000);
+  assert.equal(await page.evaluate(() => saved.at(-1).bulk_qty), 3);
+  assert.equal(await page.evaluate(() => saved.at(-1).box_price), 0);
+  const count = await page.evaluate(() => saved.length);
+  for (const price of ['-1', '20000', '']) {
+    await page.fill('#pf-bulk-unit-price', price);
+    await page.evaluate(() => saveProduct(null));
+    assert.equal(await page.evaluate(() => saved.length), count);
+  }
+  await page.fill('#pf-bulk-unit-price', '15000');
+  await page.fill('#pf-bulk-qty', '2.5');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.length), count);
+  console.log('PASS unit-only bulk price persistence and invalid bulk settings blocked');
   console.log('PASS discount visibility, percentage, unit/box validation, optional/future dates and save blocking');
 } finally { await browser.close(); }

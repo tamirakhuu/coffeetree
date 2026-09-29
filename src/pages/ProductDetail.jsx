@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShoppingBag, Heart, Plus, Minus, ChevronLeft, ChevronRight, Check, Coffee } from "lucide-react";
-import { computeLineTotal } from "../api.js";
+import { computeLineTotal, getBulkUnitPrice } from "../api.js";
 import { T, sideLabel, stepBtn } from "../theme.js";
 import { money, discountPercent } from "../utils/format.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -116,7 +116,8 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const productCategory = categories.find((c) => c.id === product.categoryId);
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
   const isColdCup = product.sub === "Хүйтний аяга";
-  const bulkBoxQty = product.box?.price > 0 ? product.bulkQty : undefined;
+  const bulkPrice = getBulkUnitPrice(product);
+  const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   const suggestedPump = pumpName
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
@@ -241,7 +242,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
               {qty >= bulkBoxQty
                 ? ` ${bulkBoxQty}+ ширхэгт бөөний үнээр тооцогдож байна`
-                : `${bulkBoxQty} ширхэг болон хайрцагаар нь авбал бөөний үнээр тооцно`}
+                : `${bulkBoxQty}+ ширхэг авбал нэгж нь ${money(bulkPrice)}`}
             </div>
           )}
 
