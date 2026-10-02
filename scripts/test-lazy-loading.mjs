@@ -112,8 +112,10 @@ try {
   assert.equal(await page.locator('.home-category-card').count(), 14);
   assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 7);
   await page.getByRole('button', { name: 'Дараах бараа', exact: true }).click();
-  assert.equal(await page.locator('.home-hero h1').innerText(), 'CUPPA Blend');
+  assert.equal(await page.locator('.home-hero h1').innerText(), 'CUPPA Coffee');
   await page.getByRole('button', { name: 'Өмнөх бараа', exact: true }).click();
+  assert.equal(await page.locator('.home-hero h1').innerText(), 'CUPPA Blend');
+  await page.getByRole('button', { name: 'Слайд 2', exact: true }).click();
   assert.ok(!(await page.locator('.home-price').innerText()).includes('%'));
   assert.equal(await page.locator('.home-side-product').count(), 2);
   assert.equal(await page.getByRole('button', { name: /Слайд түр зогсоох|Слайд үргэлжлүүлэх/ }).count(), 0);
@@ -170,7 +172,8 @@ try {
   coffeeSizes.size_1kg.stock = 0;
   await page.goto(base + '/product/1');
   await page.getByText('Хэмжээ сонгох', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: /Дууссан/ }).isDisabled(), true);
+  await page.getByText('Бараа дууссан байна', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: /Сагслах/ }).count(), 0);
   await page.getByRole('button', { name: /^250гр/ }).click();
   assert.equal(await page.getByRole('button', { name: /Сагслах/ }).isEnabled(), true);
   assert.deepEqual(errors, []);

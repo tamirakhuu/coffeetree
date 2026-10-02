@@ -691,7 +691,7 @@ function render(){
   TABS.forEach(([id]) => $('#s-' + id).hidden = screen !== id);
 
   /* Нүүр */
-  const totalStock = products.reduce((s,p) => s + (p.warehouse_unit_stock||0), 0);
+  const totalStock = products.reduce((s,p) => s + (p.coffee_sizes ? p.coffee_sizes.size_1kg.stock + p.coffee_sizes.size_250g.stock : (p.warehouse_unit_stock||0)), 0);
   const addedToday = stockTransfers.filter(t => t.direction === 'restock' && t.status === 'received' && isToday(t.received_at || t.created_at)).reduce((s,t) => s + t.qty, 0);
   $('#h-total').textContent   = totalStock;
   $('#h-added').textContent   = addedToday;
