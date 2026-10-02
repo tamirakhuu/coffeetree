@@ -349,8 +349,8 @@ const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const prod = (id) => products.find(p => p.id === id);
 const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
-const hasUnit = (p) => !!(p.unit_price || p.warehouse_unit_stock);
-const hasBox = (p) => !!(p.box_price || p.warehouse_box_stock);
+const hasUnit = (p) => !p.coffee_sizes && !!(p.unit_price || p.warehouse_unit_stock);
+const hasBox = (p) => !p.coffee_sizes && !!(p.box_price || p.warehouse_box_stock);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
 // unit_label/box_label нь "1 ширхэг", "1 хайрцаг", зарим бараанд "100 ширхэг",
 // "500 ширхэг" гэх мэт (боодлоор зарагддаг бараа) худалдан авах нэгжийн бүтэн
@@ -581,7 +581,7 @@ function bindDraft(container, listOf){
 function results(q, mode){
   const s = q.trim().toLowerCase();
   if (!s) return '';
-  const hits = products.filter(p => (p.name + ' ' + brandName(p)).toLowerCase().includes(s)).slice(0,6);
+  const hits = products.filter(p => !p.coffee_sizes && (p.name + ' ' + brandName(p)).toLowerCase().includes(s)).slice(0,6);
   if (!hits.length) return `<div style="padding:14px;font-size:13.5px" class="muted">Бараа олдсонгүй.</div>`;
   return hits.map(p => `<button class="pick" data-pick="${p.id}" data-mode="${mode}">
     ${productThumb(p, 36)}
@@ -741,6 +741,7 @@ function render(){
   if (!q) stockRows.sort((a, b) => (b.warehouse_unit_stock||0) - (a.warehouse_unit_stock||0));
   $('#stock-list').innerHTML = stockRows
     .map(p => { const n = p.warehouse_unit_stock || 0, out = hasUnit(p) && n === 0, low = !out && hasUnit(p) && n < LOW;
+      if (p.coffee_sizes) return `<div class="line">${productThumb(p)}<div style="flex:1"><div class="n">${esc(p.name)}</div><div class="m">Нөөцийг админы Бараа хэсгээс засна</div></div><div>1кг: ${p.coffee_sizes.size_1kg.stock} ш<br>250гр: ${p.coffee_sizes.size_250g.stock} ш</div></div>`;
       return `<div class="line">
         ${productThumb(p)}
         <div style="flex:1;min-width:0"><div class="n">${esc(p.name)}</div>

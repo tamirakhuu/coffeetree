@@ -1,7 +1,9 @@
 
 
+export const COFFEE_SIZES = { size_1kg: '1кг', size_250g: '250гр' };
 export const availableOptionTypes = (product) =>
-  product ? ["unit", "box"].filter((t) => (product[t]?.price || 0) > 0) : [];
+  product ? (product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
+    .filter((t) => (product[t]?.price || 0) > 0) : [];
 
 export const displayPrice = (product) => {
   const t = availableOptionTypes(product)[0];

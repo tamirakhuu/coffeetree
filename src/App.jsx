@@ -123,6 +123,7 @@ export default function App() {
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
 
   const addToCart = (product, optionType, qty, note) => {
+    if (!availableOptionTypes(product).includes(optionType) || !(product[optionType]?.stock > 0)) return;
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product.id && i.optionType === optionType && (i.note || "") === (note || ""));
       if (existing) return prev.map((i) => i === existing ? { ...i, qty: Math.min(product[optionType].stock || i.qty, i.qty + qty) } : i);
@@ -130,7 +131,7 @@ export default function App() {
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
-  const quickAdd = (product) => addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
+  const quickAdd = (product) => product.hasCoffeeSizes ? openProduct(product) : addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
   const updateQty = (productId, optionType, note, qty) =>
     setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
   const removeItem = (productId, optionType, note) =>
@@ -160,16 +161,9 @@ export default function App() {
     try {
       const { orderNumber, subtotal, deliveryFee } = await submitOrder({ form, cart, products: data.products });
       setOrderNumber(orderNumber);
-      // noots hasagdah
-      setData((prev) => ({
-        ...prev,
-        products: prev.products.map((p) => {
-          const item = cart.find((i) => i.productId === p.id);
-          if (!item) return p;
-          const field = item.optionType === "box" ? "box" : "unit";
-          return { ...p, [field]: { ...p[field], stock: Math.max(0, (p[field].stock || 0) - item.qty) } };
-        }),
-      }));
+      // Reload authoritative stocks; realtime may already have delivered this sale.
+      // Subtracting locally again would count the same order twice.
+      fetchBootstrap().then(setData).catch(error => console.warn('Stock refresh failed', error));
       setCart([]);
       const serverTotal = (subtotal || 0) + (deliveryFee || 0);
       // Захиалга аль хэдийн бүртгэгдсэн тул QPay нэхэмжлэл үүсгэхэд алдаа гарсан ч
