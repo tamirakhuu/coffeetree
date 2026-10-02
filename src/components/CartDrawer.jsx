@@ -4,6 +4,7 @@ import { computeLineTotal } from "../api.js";
 import { T, iconBtnStyle, stepBtn } from "../theme.js";
 import { money } from "../utils/format.js";
 import { DataContext } from "../context/DataContext.jsx";
+import { availableOptionTypes } from "../utils/products.js";
 
 export function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCheckout }) {
   const { products } = useContext(DataContext);
@@ -28,7 +29,7 @@ export function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtota
           {cart.map((item) => {
             const product = products.find((p) => p.id === item.productId);
             if (!product) return null;
-            const option = product[item.optionType] || { label: 'Хэмжээ өөрчлөгдсөн — устгаад дахин сонгоно уу', stock: 0 };
+            const option = availableOptionTypes(product).includes(item.optionType) ? product[item.optionType] : { label: 'Хэмжээ өөрчлөгдсөн — устгаад дахин сонгоно уу', stock: 0 };
             return (
               <div key={item.productId + item.optionType + (item.note || "")} style={{ display: "flex", gap: 12, padding: "14px 0", borderBottom: `1px solid ${T.line}` }}>
                 {product.images && product.images.length ? (

@@ -52,6 +52,7 @@
     origin text,
     size text,
     tag text,
+    discount_ends_at timestamptz,
     color text default '#6B4226',
     description text,
     images jsonb default '[]'::jsonb,
@@ -511,4 +512,3 @@ end $$;
 drop trigger if exists validate_coffee_sizes on public.products;
 create trigger validate_coffee_sizes before insert or update of coffee_sizes, brand_id, category_id, tag
 on public.products for each row execute function public.validate_coffee_sizes();
-

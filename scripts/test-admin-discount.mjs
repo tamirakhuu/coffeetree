@@ -135,5 +135,22 @@ try {
   assert.equal(await page.evaluate(() => saved.at(-1).coffee_sizes.size_250g.original_price), 38000);
   assert.deepEqual(errors, []);
   console.log('PASS Jack\'s Coffee gating, two prices/stocks, zero stock, invalid stock and discounts');
+  const conditions = await page.evaluate(async () => {
+    const coffee_sizes = saved.at(-1).coffee_sizes;
+    mount({ id: 10, coffee_sizes });
+    document.querySelector('#pf-brand option').textContent = "Jack's Coffee";
+    document.querySelector('#pf-category option').textContent = 'Кофе';
+    const filters = [];
+    const query = {
+      eq: (key, value) => { filters.push([key, value]); return query; },
+      select: async () => ({ data: [], error: null }),
+    };
+    sb.from = () => ({ update: () => query });
+    await saveProduct(10);
+    return { filters, snapshot: JSON.stringify(coffee_sizes), stillOpen: !!document.getElementById('pf-name') };
+  });
+  assert.deepEqual(conditions.filters, [['id', 10], ['coffee_sizes', conditions.snapshot]]);
+  assert.equal(conditions.stillOpen, true);
+  console.log('PASS admin stock save includes snapshot precondition');
   console.log('PASS discount visibility, percentage, unit/box validation, optional/future dates and save blocking');
 } finally { await browser.close(); }
