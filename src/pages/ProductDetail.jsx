@@ -82,7 +82,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
     setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType("Хавтгай"); setZoomed(false);
-  }, [product?.id]);
+  }, [product?.id, product?.hasCoffeeSizes]);
   useEffect(() => {
     const el = zoomWrapRef.current;
     if (!el) return;
@@ -109,7 +109,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   }, [product?.id]);
 
   if (!product) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Бараа олдсонгүй.</div>;
-  const option = product[optionType];
+  const option = product[optionType] || { price: 0, stock: 0 };
   const outOfStock = (option.stock || 0) <= 0;
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
@@ -204,12 +204,12 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
           <h1 className="cuppa-detail-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>{product.origin}</div>
-          {product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
+          {!product.hasCoffeeSizes && product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26 }}>{product.desc}</p>
 
           {availableTypes.length > 1 && (
           <div style={{ marginBottom: 22 }}>
-            <div style={sideLabel}>Савлагаа сонгох</div>
+            <div style={sideLabel}>{product.hasCoffeeSizes ? 'Хэмжээ сонгох' : 'Савлагаа сонгох'}</div>
             <div style={{ display: "flex", gap: 10 }}>
               {availableTypes.map((t) => (
                 <button key={t} onClick={() => { setOptionType(t); setQty(1); }} style={{
@@ -219,7 +219,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
                   position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.ink}22` : "none",
                 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.ink, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
-                    {t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
+                    {product.hasCoffeeSizes ? product[t].label : t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
@@ -235,7 +235,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           )}
 
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: bulkBoxQty ? 6 : 20 }}>
-            Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "unit" ? "ширхэг" : "хайрцаг"} байна
+            Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "box" ? "хайрцаг" : "ширхэг"} байна
             {optionType === "box" && <> · 1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
           </div>
           {optionType === "unit" && bulkBoxQty && (

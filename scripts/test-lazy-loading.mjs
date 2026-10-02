@@ -137,6 +137,44 @@ try {
   await page.goBack();
   assert.deepEqual(errors, []);
   console.log('PASS homepage slides, 7/4/2-column layouts, mobile overflow and navigation');
+  const coffeeSizes = {
+    size_1kg: { price: 100000, stock: 2 },
+    size_250g: { price: 34000, stock: 5 },
+  };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [{ ...product, coffee_sizes: coffeeSizes }] }));
+  await page.evaluate(() => localStorage.setItem('cuppa:cart:guest', '[]'));
+  await page.goto(base + '/product/1');
+  await page.getByText('Хэмжээ сонгох', { exact: true }).waitFor();
+  await page.getByRole('button', { name: /^1кг/ }).click();
+  await page.getByRole('button', { name: /Сагслах/ }).click();
+  await page.getByRole('button', { name: /^250гр/ }).click();
+  assert.match(await page.locator('main').innerText(), /Нөөцөд: 5 ширхэг/);
+  await page.getByRole('button', { name: /Сагслах/ }).click();
+  assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('cuppa:cart:guest')).map(i => [i.optionType, i.qty])), [['size_1kg', 1], ['size_250g', 1]]);
+  await page.goto(base + '/checkout');
+  assert.match(await page.locator('main').innerText(), /Test Coffee · 1кг/);
+  assert.match(await page.locator('main').innerText(), /Test Coffee · 250гр/);
+  let sizeOrder;
+  await page.route('**/rest/v1/rpc/submit_order', route => {
+    sizeOrder = route.request().postDataJSON();
+    return route.fulfill({ json: { orderNumber: 'SIZE-1001', subtotal: 134000, deliveryFee: 0 } });
+  });
+  await page.getByPlaceholder('Хүлээн авагчийн нэр').fill('Size Customer');
+  await page.getByPlaceholder('Утасны дугаар', { exact: true }).fill('99112233');
+  await page.getByRole('button', { name: 'Очиж авах(Саруул зах)', exact: true }).click();
+  await page.getByRole('button', { name: 'Хувь хүн', exact: true }).click();
+  await page.getByRole('button', { name: 'Баталгаажуулах', exact: true }).click();
+  await page.getByRole('button', { name: 'Төлбөр төлөх', exact: true }).click();
+  await page.waitForURL('**/payment');
+  assert.deepEqual(sizeOrder.p_items.map(i => i.option_type), ['size_1kg', 'size_250g']);
+  coffeeSizes.size_1kg.stock = 0;
+  await page.goto(base + '/product/1');
+  await page.getByText('Хэмжээ сонгох', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: /Дууссан/ }).isDisabled(), true);
+  await page.getByRole('button', { name: /^250гр/ }).click();
+  assert.equal(await page.getByRole('button', { name: /Сагслах/ }).isEnabled(), true);
+  assert.deepEqual(errors, []);
+  console.log('PASS size selection, separate cart lines, checkout labels, RPC options and independent sold-out states');
   console.log(`Screenshots: ${resolve(tmpdir(), 'cuppa-home-desktop.png')}, ${resolve(tmpdir(), 'cuppa-home-mobile.png')}`);
 } finally {
   await browser?.close();

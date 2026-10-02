@@ -99,5 +99,41 @@ try {
   await page.evaluate(() => saveProduct(null));
   assert.equal(await page.evaluate(() => saved.length), count);
   console.log('PASS unit-only bulk price persistence and invalid bulk settings blocked');
+  await page.evaluate(() => { mount(); toggleCoffeeSizes(); });
+  assert.equal(await page.locator('#pf-coffee-section').isVisible(), false);
+  await page.evaluate(() => {
+    document.querySelector('#pf-brand option').textContent = "Jack's Coffee";
+    document.querySelector('#pf-category option').textContent = '☕ Кофе';
+    toggleCoffeeSizes();
+  });
+  await page.check('#pf-coffee-enable');
+  assert.equal(await page.locator('#pf-legacy-pricing').isVisible(), false);
+  const beforeSizes = await page.evaluate(() => saved.length);
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.length), beforeSizes);
+  await page.fill('#pf-size_1kg-price', '100000');
+  await page.fill('#pf-size_1kg-stock', '4');
+  await page.fill('#pf-size_250g-price', '34000');
+  await page.fill('#pf-size_250g-stock', '0');
+  await page.evaluate(() => saveProduct(null));
+  assert.deepEqual(await page.evaluate(() => saved.at(-1).coffee_sizes), {
+    size_1kg: { price: 100000, stock: 4, original_price: null },
+    size_250g: { price: 34000, stock: 0, original_price: null },
+  });
+  assert.equal(await page.evaluate(() => saved.at(-1).unit_price), 0);
+  assert.equal(await page.evaluate(() => saved.at(-1).box_price), 0);
+  await page.fill('#pf-size_250g-stock', '1.5');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.length), beforeSizes + 1);
+  await page.fill('#pf-size_250g-stock', '5');
+  await page.selectOption('#pf-tag', 'хямдралтай');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.length), beforeSizes + 1);
+  await page.fill('#pf-size_1kg-original', '120000');
+  await page.fill('#pf-size_250g-original', '38000');
+  await page.evaluate(() => saveProduct(null));
+  assert.equal(await page.evaluate(() => saved.at(-1).coffee_sizes.size_250g.original_price), 38000);
+  assert.deepEqual(errors, []);
+  console.log('PASS Jack\'s Coffee gating, two prices/stocks, zero stock, invalid stock and discounts');
   console.log('PASS discount visibility, percentage, unit/box validation, optional/future dates and save blocking');
 } finally { await browser.close(); }

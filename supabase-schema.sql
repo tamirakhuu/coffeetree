@@ -59,6 +59,7 @@
     unit_price numeric default 0,
     unit_original_price numeric, -- хямдрахаас өмнөх үнэ (зөвхөн хямдралтай үед бөглөнө)
     unit_stock int default 0,
+    coffee_sizes jsonb, -- Jack's Coffee size prices and independent stocks
     warehouse_unit_stock int default 0, -- агуулах дахь нөөц (ширхэг) — эндээс дэлгүүрийн unit_stock рүү татдаг
     box_label text,
     box_price numeric default 0,
@@ -144,12 +145,20 @@
   -- submit_order функц дотроос л дуудагдана, эс тэгвэл хэн ч захиалга
   -- үүсгэлгүйгээр дурын барааны нөөцийг хий хоосон хасаж/нэмж чадна.
   create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
-  returns boolean as $$
+  returns boolean as $
   declare
     v_unified boolean;
     v_per_box int;
     v_new_unit int;
   begin
+    if p_qty is null or p_qty <= 0 then return false; end if;
+    if p_option_type in ('size_1kg', 'size_250g') then
+      update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
+        to_jsonb((coffee_sizes->p_option_type->>'stock')::int - p_qty))
+      where id = p_product_id and (coffee_sizes->p_option_type->>'stock')::int >= p_qty;
+      return found;
+    end if;
+    if p_option_type is null or p_option_type not in ('unit', 'box') then return false; end if;
     select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
       -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
@@ -176,7 +185,7 @@
       return found;
     end if;
   end;
-  $$ language plpgsql security definer;
+  $ language plpgsql security definer set search_path = public;
   revoke execute on function decrement_stock(bigint, text, int) from public, anon, authenticated;
 
   -- Захиалга үүсгэх (эсвэл дараагийн бараа хангалтгүй болж цуцлах) явцад
@@ -184,12 +193,21 @@
   -- anon/authenticated-д шууд грант хийхгүй — submit_order доторх алдааны
   -- үед автомат транзакцийн rollback хангалттай, гаднаас дуудах шаардлагагүй.
   create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
-  returns void as $$
+  returns void as $
   declare
     v_unified boolean;
     v_per_box int;
     v_new_unit int;
   begin
+    if p_qty is null or p_qty <= 0 then raise exception 'Invalid stock quantity'; end if;
+    if p_option_type in ('size_1kg', 'size_250g') then
+      update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
+        to_jsonb((coffee_sizes->p_option_type->>'stock')::int + p_qty))
+      where id = p_product_id and coffee_sizes ? p_option_type;
+      if not found then raise exception 'Coffee size not found'; end if;
+      return;
+    end if;
+    if p_option_type is null or p_option_type not in ('unit', 'box') then raise exception 'Invalid stock option'; end if;
     select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
       if p_option_type = 'box' then
@@ -206,7 +224,7 @@
       end if;
     end if;
   end;
-  $$ language plpgsql security definer;
+  $ language plpgsql security definer set search_path = public;
   revoke execute on function restore_stock(bigint, text, int) from public, anon, authenticated;
 
   -- Захиалга үүсгэх цорын ганц зам — үнэ, нөөцийн шалгалт, бичилт бүгд
@@ -218,7 +236,7 @@
     p_customer_name text, p_phone text, p_address text, p_receipt_type text,
     p_register_number text, p_delivery_method text, p_items jsonb
   ) returns jsonb
-  language plpgsql security definer as $function$
+  language plpgsql security definer set search_path = public as $function$
   declare
     v_order_number text;
     v_item jsonb;
@@ -251,23 +269,39 @@
       v_option_type := v_item->>'option_type';
       v_qty := (v_item->>'qty')::int;
       v_note := v_item->>'note';
-      if v_option_type not in ('unit','box') or v_qty is null or v_qty <= 0 or v_qty > 1000 then
+      if v_option_type is null or v_option_type not in ('unit','box','size_1kg','size_250g') or v_qty is null or v_qty <= 0 or v_qty > 1000 then
         raise exception 'Буруу барааны мэдээлэл.';
       end if;
 
-      select * into v_product from products where id = (v_item->>'product_id')::bigint;
+      select * into v_product from products where id = (v_item->>'product_id')::bigint for update;
       if not found then
         raise exception 'Бараа олдсонгүй.';
+      end if;
+
+      if v_product.coffee_sizes is not null then
+        if v_option_type not in ('size_1kg', 'size_250g') or not exists (
+          select 1 from brands b join categories c on c.id = v_product.category_id
+          where b.id = v_product.brand_id and lower(replace(trim(b.name), '’', '''')) = 'jack''s coffee' and c.name = 'Кофе'
+        ) then raise exception 'Хэмжээг дахин сонгоно уу.'; end if;
+      elsif v_option_type not in ('unit', 'box') then
+        raise exception 'Энэ бараанд хэмжээний сонголт байхгүй.';
       end if;
 
       v_discount_expired := v_product.tag = 'хямдралтай' and v_product.discount_ends_at is not null and v_product.discount_ends_at <= now();
       v_box_price := case when v_discount_expired then coalesce(v_product.box_original_price, v_product.box_price) else v_product.box_price end;
 
-      if v_option_type = 'unit' then
+      if v_option_type in ('size_1kg', 'size_250g') then
+        v_current_price := case when v_discount_expired then
+          coalesce((v_product.coffee_sizes->v_option_type->>'original_price')::numeric,
+            (v_product.coffee_sizes->v_option_type->>'price')::numeric)
+          else (v_product.coffee_sizes->v_option_type->>'price')::numeric end;
+      elsif v_option_type = 'unit' then
         v_current_price := case when v_discount_expired then coalesce(v_product.unit_original_price, v_product.unit_price) else v_product.unit_price end;
       else
         v_current_price := v_box_price;
       end if;
+
+      if v_current_price is null or v_current_price <= 0 then raise exception 'Барааны үнэ тохируулагдаагүй байна.'; end if;
 
       if v_option_type = 'unit' and coalesce(v_product.bulk_qty, 0) > 0 and coalesce(v_product.bulk_unit_price, 0) > 0 and v_qty >= v_product.bulk_qty then
         v_current_price := v_product.bulk_unit_price;
@@ -284,7 +318,7 @@
       end if;
 
       v_subtotal := v_subtotal + v_line_total;
-      v_label := case when v_option_type = 'unit' then v_product.unit_label else v_product.box_label end;
+      v_label := case v_option_type when 'size_1kg' then '1кг' when 'size_250g' then '250гр' when 'unit' then v_product.unit_label else v_product.box_label end;
       if v_note is not null and length(v_note) > 0 then
         v_label := v_label || ' · ' || v_note;
       end if;
@@ -434,3 +468,47 @@
   -- ---------------------------------------------------------------------
   alter publication supabase_realtime add table orders;
   alter publication supabase_realtime add table products;
+
+alter table public.products add column if not exists coffee_sizes jsonb;
+
+-- Keep sizes on the existing product. Old stock is deliberately not reassigned.
+create or replace function public.validate_coffee_sizes() returns trigger
+language plpgsql set search_path = public as $$
+declare k text; v jsonb;
+begin
+  if TG_OP = 'UPDATE' then
+    if old.coffee_sizes is not null and new.coffee_sizes is null then
+      raise exception 'Existing coffee sizes cannot be removed (order stock history).';
+    end if;
+  end if;
+  if new.coffee_sizes is null then return new; end if;
+  if not exists (select 1 from public.brands b join public.categories c on c.id = new.category_id
+    where b.id = new.brand_id and lower(replace(trim(b.name), '’', '''')) = 'jack''s coffee' and c.name = 'Кофе') then
+    raise exception 'Sizes are only available for Jack''s Coffee coffee products.';
+  end if;
+  if jsonb_typeof(new.coffee_sizes) <> 'object' or not (new.coffee_sizes ?& array['size_1kg','size_250g'])
+    or (new.coffee_sizes - 'size_1kg' - 'size_250g') <> '{}'::jsonb then
+    raise exception 'Both coffee sizes are required.';
+  end if;
+  foreach k in array array['size_1kg','size_250g'] loop
+    v := new.coffee_sizes->k;
+    if jsonb_typeof(v) is distinct from 'object'
+      or jsonb_typeof(v->'price') is distinct from 'number'
+      or jsonb_typeof(v->'stock') is distinct from 'number' then raise exception 'Invalid size price or stock'; end if;
+    if (v->>'price')::numeric <= 0 or (v->>'stock')::numeric < 0
+      or (v->>'stock')::numeric > 2147483647 or (v->>'stock')::numeric <> trunc((v->>'stock')::numeric) then
+      raise exception 'Price must be positive and stock a nonnegative integer';
+    end if;
+    if v->>'original_price' is not null then
+      if jsonb_typeof(v->'original_price') <> 'number' or (v->>'original_price')::numeric <= (v->>'price')::numeric then
+        raise exception 'Original price must exceed size price';
+      end if;
+    end if;
+    if new.tag = 'хямдралтай' and v->>'original_price' is null then raise exception 'Original size prices required'; end if;
+  end loop;
+  return new;
+end $$;
+drop trigger if exists validate_coffee_sizes on public.products;
+create trigger validate_coffee_sizes before insert or update of coffee_sizes, brand_id, category_id, tag
+on public.products for each row execute function public.validate_coffee_sizes();
+

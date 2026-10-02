@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { compareProductNames } from "./utils/products.js";
+import { compareProductNames, COFFEE_SIZES, availableOptionTypes } from "./utils/products.js";
 
 export const DELIVERY_FEE = 15000;
 export const FREE_DELIVERY_THRESHOLD = 500000;
@@ -18,6 +18,8 @@ export function revertExpiredDiscount(p) {
     ...p,
     tag: null,
     discountEndsAt: null,
+    ...Object.fromEntries(Object.keys(COFFEE_SIZES).filter(key => p[key]).map(key => [key,
+      { ...p[key], price: p[key].originalPrice || p[key].price, originalPrice: null }])),
     unit: { ...p.unit, price: p.unit.originalPrice || p.unit.price, originalPrice: null },
     box: { ...p.box, price: p.box.originalPrice || p.box.price, originalPrice: null },
   };
@@ -25,6 +27,11 @@ export function revertExpiredDiscount(p) {
 
 export function shapeProduct(r) {
   return revertExpiredDiscount({
+    hasCoffeeSizes: !!r.coffee_sizes,
+    ...Object.fromEntries(Object.entries(COFFEE_SIZES).filter(([key]) => r.coffee_sizes?.[key]).map(([key, label]) => [key, {
+      label, price: Number(r.coffee_sizes[key].price), stock: Number(r.coffee_sizes[key].stock),
+      originalPrice: r.coffee_sizes[key].original_price == null ? null : Number(r.coffee_sizes[key].original_price),
+    }])),
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
     origin: r.origin, size: r.size || null, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
     discountEndsAt: r.discount_ends_at || null,
@@ -52,7 +59,7 @@ export function computeLineTotal(product, optionType, qty) {
       return Math.round(bulkUnitPrice * qty);
     }
   }
-  return product[optionType].price * qty;
+  return (product[optionType]?.price || 0) * qty;
 }
 
 // Ангилал, брэнд, бараа — бүгд нээлттэй уншигддаг (public read RLS policy)
@@ -86,6 +93,9 @@ export async function submitOrder({ form, cart, products }) {
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
   if (!validItems.length) throw new Error("Сагс хоосон байна.");
+  if (validItems.some(({ item, product }) => !availableOptionTypes(product).includes(item.optionType))) {
+    throw new Error("Барааны хэмжээ өөрчлөгдсөн байна. Сагснаас устгаад хэмжээг дахин сонгоно уу.");
+  }
 
   const { data, error } = await supabase.rpc("submit_order", {
     p_customer_name: form.name,

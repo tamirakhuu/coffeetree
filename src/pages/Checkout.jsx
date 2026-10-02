@@ -108,7 +108,7 @@ export default function Checkout({ cart, subtotal, onConfirm, onBack }) {
             if (!product) return null;
             return (
               <div key={item.productId + item.optionType + (item.note || "")} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, marginBottom: 8, color: T.ink }}>
-                <span>{product.name}{item.note ? ` · ${item.note}` : ""} × {item.qty}</span>
+                <span>{product.name}{product.hasCoffeeSizes ? ` · ${product[item.optionType]?.label || 'Хэмжээг дахин сонгоно уу'}` : ''}{item.note ? ` · ${item.note}` : ""} × {item.qty}</span>
                 <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(computeLineTotal(product, item.optionType, item.qty))}</span>
               </div>
             );
