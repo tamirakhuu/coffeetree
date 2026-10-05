@@ -123,14 +123,15 @@ export async function lookupOrdersByPhone({ phone }) {
   return data || [];
 }
 
-// Сургалтад бүртгүүлэх — register_training нь SECURITY DEFINER тул
-// нэг өдөрт 18 хүний хязгаарыг серверийн талд атомикаар шалгадаг
+// Сургалтад бүртгүүлэх — register_scheduled_training нь SECURITY DEFINER тул
+// админы тохируулсан сул суудлыг серверийн талд атомикаар шалгадаг
 // (хоёр хэрэглэгч сүүлийн байрыг зэрэг авахыг зөвшөөрөхгүй).
-export async function registerTraining({ name, phone, trainingDate }) {
-  const { data, error } = await supabase.rpc("register_training", {
+export async function registerTraining({ name, phone, trainingDate, requestId }) {
+  const { data, error } = await supabase.rpc("register_scheduled_training", {
     p_name: name.trim(),
     p_phone: phone.trim(),
     p_training_date: trainingDate,
+    p_request_id: requestId,
   });
   if (error) throw new Error(error.message);
   return data; // шинэ бүртгэлийн id
@@ -173,10 +174,11 @@ export async function checkQpayPayment({ invoiceId, orderNumber, registrationId,
   return data; // { paid, paidAmount, demo }
 }
 
-// Ирээдүйн Бямба гараг тус бүрт хэдэн хүн (аль хэдийн) бүртгүүлснийг харна —
-// хувийн мэдээлэл (нэр/утас) ороогүй, зөвхөн тоо тул нийтэд ил дуудагдана.
-export async function getTrainingSlots(dates) {
-  const { data, error } = await supabase.rpc("training_slots", { p_dates: dates });
+// Only admin-published dates and remaining seats; no registration/customer data.
+export async function getTrainingSlots() {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
+  const { data, error } = await supabase.from('training_sessions')
+    .select('training_date,remaining_seats').eq('is_active', true).gte('training_date', today).order('training_date');
   if (error) throw new Error(error.message);
-  return data || []; // [{ training_date, taken }]
+  return data || [];
 }

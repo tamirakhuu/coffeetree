@@ -178,6 +178,42 @@ try {
   assert.equal(await page.getByRole('button', { name: /Сагслах/ }).isEnabled(), true);
   assert.deepEqual(errors, []);
   console.log('PASS size selection, separate cart lines, checkout labels, RPC options and independent sold-out states');
+  const trainingDays = [
+    { training_date: '2099-06-06', remaining_seats: 0 },
+    { training_date: '2099-06-07', remaining_seats: 3 },
+  ];
+  paid = false;
+  await page.route('**/rest/v1/training_sessions?*', route => route.fulfill({ json: trainingDays }));
+  let registrations = 0, trainingPayload, invoices = 0;
+  await page.route('**/rest/v1/rpc/register_scheduled_training', route => {
+    registrations++; trainingPayload = route.request().postDataJSON();
+    return route.fulfill({ json: 444 });
+  });
+  await page.route('**/functions/v1/qpay-create-invoice', route => {
+    invoices++;
+    return invoices === 1 ? route.fulfill({ status: 500, json: { error: 'Temporary invoice failure' } })
+      : route.fulfill({ json: { invoiceId: 'training-test', urls: [], demo: true } });
+  });
+  await page.goto(base + '/training');
+  await page.locator('select').waitFor();
+  assert.equal(await page.locator('select').inputValue(), '2099-06-07');
+  assert.equal(await page.locator('option[value="2099-06-06"]').isDisabled(), true);
+  assert.match(await page.locator('option[value="2099-06-07"]').innerText(), /Ням.*3 сул суудал/);
+  await page.getByPlaceholder('Нэр', { exact: true }).fill('Training Test');
+  await page.getByPlaceholder('Утасны дугаар', { exact: true }).fill('99112233');
+  await page.getByRole('button', { name: 'Төлбөр төлөх', exact: true }).click();
+  await page.getByRole('button', { name: 'Төлбөр дахин оролдох', exact: true }).click();
+  await page.getByRole('heading', { name: 'QPay-ээр төлөх' }).waitFor();
+  assert.equal(registrations, 1);
+  assert.equal(trainingPayload.p_training_date, '2099-06-07');
+  assert.ok(trainingPayload.p_request_id);
+  assert.equal(invoices, 2);
+  trainingDays.length = 0;
+  await page.goto(base + '/training');
+  await page.getByText('Одоогоор сургалтын өдөр зарлагдаагүй байна.', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Төлбөр төлөх', exact: true }).isDisabled(), true);
+  assert.deepEqual(errors, []);
+  console.log('PASS admin-published training dates, Sunday selection, sold-out/empty schedule and invoice retry without duplicate registration');
   console.log(`Screenshots: ${resolve(tmpdir(), 'cuppa-home-desktop.png')}, ${resolve(tmpdir(), 'cuppa-home-mobile.png')}`);
 } finally {
   await browser?.close();
