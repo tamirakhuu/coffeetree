@@ -1,77 +1,69 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Check, Facebook } from "lucide-react";
 import { createQpayInvoice, checkQpayPayment, registerTraining, getTrainingSlots } from "../api.js";
 import { T, inputStyle } from "../theme.js";
 import { money, formatMnDate } from "../utils/format.js";
 
-function toDateInputValue(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function saturdaysInCurrentMonth() {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const year = now.getFullYear(), month = now.getMonth();
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const dates = [];
-  for (let day = 1; day <= lastDay; day++) {
-    const d = new Date(year, month, day);
-    if (d.getDay() === 6 && d > now) dates.push(d);
-  }
-  return dates;
-}
-
 const TRAINING_FEE = 50000;
 
-const TRAINING_CAPACITY = 18;
-
 export default function TrainingPage({ setView }) {
-  const saturdays = useMemo(() => saturdaysInCurrentMonth(), []);
-  const [form, setForm] = useState({ name: "", phone: "", date: saturdays[0] ? toDateInputValue(saturdays[0]) : "" });
+  const [form, setForm] = useState({ name: "", phone: "", date: "" });
   const [status, setStatus] = useState({ state: "idle", message: "" });
-  const [slots, setSlots] = useState({}); // { 'YYYY-MM-DD': takenCount }
+  const [sessions, setSessions] = useState([]);
+  const [scheduleStatus, setScheduleStatus] = useState('loading');
   const [phase, setPhase] = useState("form"); // form | payment | done
   const [payment, setPayment] = useState(null); // { registrationId, invoice }
   const [payError, setPayError] = useState("");
-
-  const dateKeys = useMemo(() => saturdays.map(toDateInputValue), [saturdays]);
+  const bookingRequest = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
-    getTrainingSlots(dateKeys).then((rows) => {
+    const refresh = () => getTrainingSlots().then((rows) => {
       if (cancelled) return;
-      const map = {};
-      rows.forEach((r) => { map[r.training_date] = Number(r.taken) || 0; });
-      setSlots(map);
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [dateKeys]);
+      setSessions(rows);
+      setScheduleStatus('ready');
+      setForm(prev => ({ ...prev, date: rows.some(r => r.training_date === prev.date && r.remaining_seats > 0)
+        ? prev.date : rows.find(r => r.remaining_seats > 0)?.training_date || '' }));
+    }).catch(() => { if (!cancelled) setScheduleStatus('error'); });
+    refresh();
+    const timer = setInterval(refresh, 30000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
+  const selectedSession = sessions.find(r => r.training_date === form.date);
+  const cannotSubmit = status.state === 'submitting' || scheduleStatus !== 'ready' || !(selectedSession?.remaining_seats > 0);
 
   const infoCards = [
-    { label: "Хугацаа", value: "Бямба гарагт, 10:00-13:00 цагийн хооронд явагдана" },
+    { label: "Хугацаа", value: "Зарласан Бямба, Ням гарагт 10:00–13:00" },
     { label: "Сургалтын төлбөр", value: "50,000₮ / 1 хүн" },
-    { label: "Багтаамж", value: "Нэг өдрийн сургалтын багтаамж нь 18 хүн" },
+    { label: "Сул суудал", value: selectedSession ? `${selectedSession.remaining_seats} хүн` : 'Сургалтын өдрөө сонгоно уу' },
     { label: "Лавлах утасны дугаар", value: "91997525"},
   ];
 
+  const loadTrainingInvoice = async (registrationId) => {
+    setPayError('');
+    try {
+      const invoice = await createQpayInvoice({ registrationId, kind: 'training', description: `CUPPA сургалт бүртгэл #${registrationId}` });
+      setPayment({ registrationId, invoice });
+    } catch (error) {
+      setPayError(error.message || 'Нэхэмжлэл үүсгэж чадсангүй. Дахин оролдоно уу.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || form.phone.trim().length < 6 || !form.date) {
+    if (cannotSubmit) return;
+    if (!form.name.trim() || form.phone.trim().length !== 8 || !form.date) {
       setStatus({ state: "error", message: "Нэр, утасны дугаараа зөв бөглөнө үү." });
       return;
     }
     setStatus({ state: "submitting", message: "" });
     try {
-      const registrationId = await registerTraining({ name: form.name, phone: form.phone, trainingDate: form.date });
-      const invoice = await createQpayInvoice({
-        registrationId, kind: "training",
-        description: `CUPPA сургалт бүртгэл #${registrationId}`,
-      });
-      setPayment({ registrationId, invoice });
+      const key = JSON.stringify([form.name.trim(), form.phone.trim(), form.date]);
+      if (bookingRequest.current?.key !== key) bookingRequest.current = { key, requestId: crypto.randomUUID() };
+      const registrationId = await registerTraining({ name: form.name, phone: form.phone, trainingDate: form.date, requestId: bookingRequest.current.requestId });
+      setPayment({ registrationId, invoice: null });
       setPhase("payment");
+      await loadTrainingInvoice(registrationId);
     } catch (err) {
       setStatus({ state: "error", message: err.message || "Бүртгэхэд алдаа гарлаа." });
     }
@@ -96,6 +88,11 @@ export default function TrainingPage({ setView }) {
 
   if (phase === "payment") {
     const invoice = payment.invoice;
+    if (!invoice) return <div style={{ maxWidth: 480, margin: '60px auto', padding: 20 }}>
+      <h1>Сургалтын бүртгэл #{payment.registrationId}</h1>
+      <p>{payError || 'Төлбөрийн нэхэмжлэл үүсгэж байна…'}</p>
+      {payError && <button onClick={() => loadTrainingInvoice(payment.registrationId)}>Төлбөр дахин оролдох</button>}
+    </div>;
     return (
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px 100px", textAlign: "center" }}>
         <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>QPay-ээр төлөх</h1>
@@ -210,28 +207,31 @@ export default function TrainingPage({ setView }) {
         <input required placeholder="Нэр" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
         <input required placeholder="Утасны дугаар" inputMode="numeric" value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "").slice(0, 8) })} style={inputStyle} />
-        {saturdays.length > 0 ? (
+        {sessions.length > 0 ? (
           <select required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} style={inputStyle}>
-            {saturdays.map((d) => {
-              const key = toDateInputValue(d);
-              const remaining = Math.max(0, TRAINING_CAPACITY - (slots[key] || 0));
+            <option value="" disabled>Сургалтын өдрөө сонгоно уу</option>
+            {sessions.map((session) => {
+              const key = session.training_date;
+              const d = new Date(key + 'T00:00:00');
+              const remaining = session.remaining_seats;
               return (
                 <option key={key} value={key} disabled={remaining === 0}>
-                  {formatMnDate(d)} (Бямба) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
+                  {formatMnDate(d)} ({d.getDay() === 6 ? 'Бямба' : 'Ням'}) — {remaining === 0 ? "Дүүрсэн" : `${remaining} сул суудал`}
                 </option>
               );
             })}
           </select>
         ) : (
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft }}>
-            Энэ сард үлдсэн сургалтын өдөр алга. Дараа сар шинэчлэгдэхийг хүлээнэ үү.
+            {scheduleStatus === 'loading' ? 'Хуваарь ачаалж байна…' : scheduleStatus === 'error' ? 'Хуваарь ачаалж чадсангүй. Дахин оролдоно уу.' : 'Одоогоор сургалтын өдөр зарлагдаагүй байна.'}
           </div>
         )}
-        <button type="submit" disabled={status.state === "submitting" || saturdays.length === 0} style={{
+        {scheduleStatus === 'error' && sessions.length > 0 && <div role="alert">Хуваарь шинэчилж чадсангүй. Түр хүлээгээд дахин оролдоно уу.</div>}
+        <button type="submit" disabled={cannotSubmit} style={{
           background: T.ink, color: T.cream, border: "none", borderRadius: 999, padding: "12px 26px",
           fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14,
-          cursor: (status.state === "submitting" || saturdays.length === 0) ? "default" : "pointer",
-          opacity: (status.state === "submitting" || saturdays.length === 0) ? 0.7 : 1,
+          cursor: cannotSubmit ? "default" : "pointer",
+          opacity: cannotSubmit ? 0.7 : 1,
         }}>
           {status.state === "submitting" ? "Илгээж байна..." : "Төлбөр төлөх"}
         </button>

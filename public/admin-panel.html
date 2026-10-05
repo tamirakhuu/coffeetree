@@ -535,7 +535,13 @@ tr:hover td{background:rgba(255,255,255,.4)}
         <button class="btn btn-outline btn-sm" id="trainingRefreshBtn" onclick="refreshTraining()">Шинэчлэх</button>
       </div>
     </div>
-    <div class="card"><div class="table-wrap"><table><thead><tr><th>Огноо (Бямба)</th><th>Нэр</th><th>Утас</th><th>Төлбөр</th><th>Бүртгүүлсэн</th><th></th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
+    <div class="card" style="padding:20px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><h2>Сургалтын хуваарь</h2><button class="btn btn-primary" onclick="openTrainingSession()">Өдөр нэмэх</button></div>
+      <p>Бямба, Ням гарагийн сургалтын өдөр болон одоо байгаа сул суудлыг оруулна.</p>
+      <div id="trainingScheduleError" role="alert"></div>
+      <div class="table-wrap"><table><thead><tr><th>Огноо</th><th>Сул суудал</th><th>Төлөв</th><th></th></tr></thead><tbody id="trainingScheduleTable"></tbody></table></div>
+    </div>
+    <div class="card"><div class="table-wrap"><table><thead><tr><th>Огноо</th><th>Нэр</th><th>Утас</th><th>Төлбөр</th><th>Бүртгүүлсэн</th><th></th></tr></thead><tbody id="trainingTable"></tbody></table></div></div>
   </div>
 
 </main>
@@ -577,6 +583,7 @@ const ICON_EMOJI = { CoffeeBean:'☕', TeaLeaf:'🍃', Syrup:'💧', Sauce:'🍯
 const ICON_KEYS = Object.keys(ICON_EMOJI);
 
 let categories = [], subcategories = [], brands = [], products = [], orders = [], orderItems = [], stockTransfers = [], trainingRegistrations = [];
+let trainingSessions = [], trainingScheduleError = '';
 // Төлбөр төлөгдөөгүй захиалга админд огт харагдахгүй байх ёстой тул orders
 // массивт зөвхөн payment_status='paid' мөрүүд л ордог — аль захиалгыг аль
 // хэдийн "шинэ" гэж мэдэгдсэнээ давхардуулахгүй тэмдэглэж байх Set
@@ -770,7 +777,7 @@ function subscribeRealtimeNotifications() {
       const r = payload.new;
       const dateLabel = formatMnDate(new Date(r.training_date + 'T00:00:00'), false);
       toast(`📝 Сургалтад шинэ бүртгэл: ${r.name}`, 'success', 8000);
-      pushNotification({ type: 'training', title: '📝 Сургалтын шинэ бүртгэл', sub: `${escapeHtml(r.name)} · ${dateLabel} (Бямба)` });
+      pushNotification({ type: 'training', title: '📝 Сургалтын шинэ бүртгэл', sub: `${escapeHtml(r.name)} · ${dateLabel}` });
       if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification('CUPPA — Сургалтын шинэ бүртгэл', { body: `${r.name} · ${dateLabel}` });
       }
@@ -816,7 +823,7 @@ async function doLogout() {
 }
 
 async function loadAll() {
-  const [c, s, b, p, o, oi, st, tr] = await Promise.all([
+  const [c, s, b, p, o, oi, st, tr, ts] = await Promise.all([
     sb.from('categories').select('*').order('id'),
     sb.from('subcategories').select('*'),
     sb.from('brands').select('*').order('id'),
@@ -825,10 +832,12 @@ async function loadAll() {
     sb.from('order_items').select('*'),
     sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
     sb.from('training_registrations').select('*').order('training_date', { ascending: false }),
+    sb.from('training_sessions').select('*').order('training_date'),
   ]);
   categories = c.data || []; subcategories = s.data || []; brands = b.data || [];
   products = p.data || []; orders = o.data || []; orderItems = oi.data || [];
   stockTransfers = st.data || []; trainingRegistrations = tr.data || [];
+  trainingSessions = ts.data || []; trainingScheduleError = ts.error ? 'Хуваарь ачаалж чадсангүй: ' + ts.error.message : '';
   knownPaidOrders = new Set(orders.map(x => x.order_number));
   populateProductFilters();
   renderDashboard(); renderProducts(); renderCategories(); renderBrands(); renderOrders(); renderReport(); renderSalesReport(); renderTraining();
@@ -1838,7 +1847,70 @@ function toggleTrainingMonth(key) {
   renderTraining();
 }
 
+function trainingToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
+}
+function renderTrainingSchedule() {
+  document.getElementById('trainingScheduleError').textContent = trainingScheduleError;
+  document.getElementById('trainingScheduleTable').innerHTML = trainingSessions.map(s => {
+    const day = new Date(s.training_date + 'T00:00:00').getDay();
+    return `<tr><td>${s.training_date} (${day === 6 ? 'Бямба' : 'Ням'})</td><td>${s.remaining_seats}</td><td>${s.is_active ? 'Нээлттэй' : 'Хаалттай'}</td><td><button class="btn btn-outline btn-sm" onclick="openTrainingSession('${s.training_date}')">Засах</button></td></tr>`;
+  }).join('') || '<tr><td colspan="4" class="empty">Сургалтын өдөр нэмээгүй байна</td></tr>';
+}
+async function loadTrainingSchedule() {
+  const { data, error } = await sb.from('training_sessions').select('*').order('training_date');
+  trainingScheduleError = error ? 'Хуваарь ачаалж чадсангүй: ' + error.message : '';
+  if (!error) trainingSessions = data || [];
+  renderTrainingSchedule();
+}
+function trainingWeekendOptions(month, selected = '') {
+  if (!/^\d{4}-\d{2}$/.test(month)) return '';
+  const [year, m] = month.split('-').map(Number);
+  const days = new Date(year, m, 0).getDate();
+  const options = [];
+  for (let n = 1; n <= days; n++) {
+    const date = `${month}-${String(n).padStart(2, '0')}`;
+    const day = new Date(date + 'T00:00:00').getDay();
+    if ((day === 0 || day === 6) && date >= trainingToday()) options.push(`<option value="${date}" ${date === selected ? 'selected' : ''}>${date} (${day === 6 ? 'Бямба' : 'Ням'})</option>`);
+  }
+  return options.join('') || '<option value="">Энэ сард сонгох өдөр алга</option>';
+}
+function openTrainingSession(date) {
+  const session = trainingSessions.find(s => s.training_date === date);
+  openTrainingSession.snapshot = session ? { ...session } : null;
+  const month = (date || trainingToday()).slice(0, 7);
+  openModal(session ? 'Сургалтын өдөр засах' : 'Сургалтын өдөр нэмэх', `
+    <div class="form-grid">
+      ${session ? `<div class="fg"><label>Огноо</label><input id="ts-date" value="${date}" disabled></div>` : `
+        <div class="fg"><label for="ts-month">Сар</label><input id="ts-month" type="month" min="${trainingToday().slice(0, 7)}" value="${month}" onchange="document.getElementById('ts-date').innerHTML=trainingWeekendOptions(this.value)"></div>
+        <div class="fg"><label for="ts-date">Өдөр (Бямба / Ням)</label><select id="ts-date">${trainingWeekendOptions(month)}</select></div>`}
+      <div class="fg"><label for="ts-seats">Одоо байгаа сул суудал</label><input id="ts-seats" type="number" min="0" step="1" value="${session?.remaining_seats ?? ''}"></div>
+      <label><input id="ts-active" type="checkbox" ${!session || session.is_active ? 'checked' : ''}> Бүртгэл нээлттэй</label>
+      <p>Бүртгэл нэмэгдэхэд сул суудал автоматаар 1-ээр хасагдана. 0 суудалтай эсвэл хаалттай өдөрт шинэ бүртгэл авахгүй.</p>
+    </div>`, '<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveTrainingSession()">Хадгалах</button>');
+}
+async function saveTrainingSession() {
+  const snapshot = openTrainingSession.snapshot;
+  const date = document.getElementById('ts-date').value;
+  const seatsInput = document.getElementById('ts-seats');
+  const seats = Number(seatsInput.value);
+  const day = new Date(date + 'T00:00:00').getDay();
+  if (!date || ![0, 6].includes(day) || (!snapshot && date < trainingToday())) { toast('Ирээдүйн Бямба эсвэл Ням гарагийг сонгоно уу.', 'err'); return; }
+  if (!seatsInput.value.trim() || !Number.isInteger(seats) || seats < 0 || seats > 2147483647) { toast('Сул суудлыг 0 буюу түүнээс их бүхэл тоогоор оруулна уу.', 'err'); return; }
+  const row = { training_date: date, remaining_seats: seats, is_active: document.getElementById('ts-active').checked };
+  const button = document.querySelector('#modalFoot .btn-primary');
+  button.disabled = true;
+  try {
+    const query = snapshot ? sb.from('training_sessions').update(row).eq('training_date', date).eq('updated_at', snapshot.updated_at) : sb.from('training_sessions').insert(row);
+    const { data, error } = await query.select();
+    if (error) { toast(error.code === '23505' ? 'Энэ өдөр аль хэдийн нэмэгдсэн байна. Засах товчийг ашиглана уу.' : error.message, 'err'); return; }
+    if (!data?.length) { toast('Суудлын тоо өөрчлөгдсөн байна. Хуваарийг шинэчлээд дахин засна уу.', 'err'); return; }
+    closeModal(); await loadTrainingSchedule(); toast('Сургалтын хуваарь хадгалагдлаа');
+  } finally { button.disabled = false; }
+}
+
 function renderTraining() {
+  renderTrainingSchedule();
   const query = (document.getElementById('trainingSearch')?.value || '').trim().toLowerCase();
   const filtered = trainingRegistrations.filter(r =>
     !query || (r.name || '').toLowerCase().includes(query) || (r.phone || '').includes(query)
@@ -1879,7 +1951,7 @@ function renderTraining() {
       const items = byDate.get(date).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       const d = new Date(date + 'T00:00:00');
       const dateHeader = `<tr><td colspan="6" style="background:var(--card);font-size:11px;color:var(--ink-soft);padding:6px 12px 2px;font-weight:600">
-        ${formatMnDate(d)} (Бямба) · ${items.length}/18
+        ${formatMnDate(d)} (${d.getDay() === 6 ? 'Бямба' : d.getDay() === 0 ? 'Ням' : ''}) · ${items.length} бүртгэл
       </td></tr>`;
       const rows = items.map(r => `<tr>
         <td data-th="Огноо"></td>
@@ -1905,6 +1977,7 @@ async function deleteTrainingRegistration(id) {
   const { error } = await sb.from('training_registrations').delete().eq('id', id);
   if (error) { toast(error.message, 'error'); return; }
   trainingRegistrations = trainingRegistrations.filter(r => r.id !== id);
+  await loadTrainingSchedule();
   renderTraining();
   toast('Устгагдлаа', 'success');
 }
@@ -1916,6 +1989,7 @@ async function refreshTraining() {
   if (btn) { btn.disabled = false; btn.textContent = 'Шинэчлэх'; }
   if (error) { toast(error.message, 'error'); return; }
   trainingRegistrations = data || [];
+  await loadTrainingSchedule();
   renderTraining();
   toast('Мэдээлэл шинэчлэгдлээ', 'success');
 }
