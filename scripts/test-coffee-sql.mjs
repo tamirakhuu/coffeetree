@@ -3,20 +3,45 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
 const { PGlite } = await import(pathToFileURL(resolve(process.argv[2], 'dist/index.js')).href);
 const db = new PGlite();
 try {
   await db.exec('create role anon; create role authenticated; create schema auth; create table auth.users(id uuid primary key);');
+  await db.exec(`
+    create function auth.email() returns text language sql as $$ select null::text $$;
+    create function auth.uid() returns uuid language sql as $$ select null::uuid $$;
+    create schema storage;
+    create table storage.objects(id bigint, bucket_id text);
+    create publication supabase_realtime;
+  `);
   const schema = await readFile('supabase-schema.sql', 'utf8');
   // Only table definitions, never the destructive schema reset or Supabase services.
   await db.exec(schema.slice(schema.indexOf('  create table admins ('), schema.indexOf('  -- 2) Row Level Security')));
   // Ensure migration creates its column, rather than relying on the fresh schema.
-  await db.exec('alter table products drop column coffee_sizes;');
-  const migration = await readFile('supabase/migrations/202610020001_add_coffee_sizes.sql', 'utf8');
+  await db.exec('alter table products drop column coffee_sizes, drop column size, drop column bulk_unit_price, drop column discount_ends_at;');
+  const migration = await readFile('supabase/run-all-updates.sql', 'utf8');
+  await db.exec(`
+    insert into categories(id, name, icon) values (90001, 'Нэг удаа', 'https://example.test/custom.svg');
+    insert into subcategories(id, category_id, name) values (90001, 90001, 'Custom'), (90002, 90001, 'Соруул');
+    insert into products(id, name, tag, warehouse_unit_stock) values (90001, 'Existing product', 'алдартай', 17);
+    insert into orders(order_number, customer_name, subtotal) values ('KEEP-ORDER', 'Existing customer', 12345);
+    create function decrement_stock(bigint, text, int) returns void language plpgsql as $$ begin return; end $$;
+  `);
   await db.exec(migration);
   await db.exec(migration); // Rerunning the migration must remain safe.
+  assert.equal((await db.query('select count(*)::int as n from subcategories where category_id = 90001')).rows[0].n, 8);
+  assert.equal((await db.query('select name from subcategories where id = 90001')).rows[0].name, 'Custom');
+  assert.equal((await db.query('select name from subcategories where id = 90002')).rows[0].name, 'Соруул');
+  assert.equal((await db.query('select icon from categories where id = 90001')).rows[0].icon, 'https://example.test/custom.svg');
+  assert.deepEqual((await db.query('select tag, warehouse_unit_stock from products where id = 90001')).rows[0], { tag: 'бестселлэр', warehouse_unit_stock: 17 });
+  assert.equal(Number((await db.query("select subtotal from orders where order_number = 'KEEP-ORDER'")).rows[0].subtotal), 12345);
+  assert.equal((await db.query("select count(*)::int as n from pg_publication_tables where pubname = 'supabase_realtime'")).rows[0].n, 2);
+  assert.equal((await db.query("select has_function_privilege('anon', 'decrement_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
+  assert.equal((await db.query("select has_function_privilege('anon', 'restore_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
   await db.exec(await readFile('supabase/tests/coffee_sizes.sql', 'utf8'));
   console.log('PASS PostgreSQL migration, repeat apply, independent stock, server pricing, rollback, restore and brand validation');
+  console.log('PASS supplied SQL merge: preserved products/orders/subcategory IDs/custom icons, idempotent defaults, Realtime and legacy void function upgrade');
 } catch (error) {
   console.error(error.message, error.where || '', error.detail || '', error.position || '');
   process.exitCode = 1;
