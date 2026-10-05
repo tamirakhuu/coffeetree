@@ -1,4 +1,4 @@
--- Run after 202610020001_add_coffee_sizes.sql on a TEST database as its owner.
+-- Run after run-all-updates.sql on a TEST database as its owner.
 -- All fixture rows/orders are rolled back. No payment API calls are made.
 begin;
 do $$

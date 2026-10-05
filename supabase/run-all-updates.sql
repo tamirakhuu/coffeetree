@@ -1,5 +1,231 @@
--- Apply after the existing migrations, before deploying the new storefront/admin.
+-- Combined with the supplied Supabase run-all-updates query.
+-- Reuse that saved query; supabase-schema.sql remains separate for new databases only.
+-- Preserves existing rows. Historical tags are renamed and missing defaults are added.
 begin;
+set local search_path = public;
+
+---------------
+update products set tag = 'эрэлттэй' where tag = 'алдартай';
+
+-- ---------------------------------------------------------------------
+-- 2) Брэндүүд нэмэх
+-- ---------------------------------------------------------------------
+insert into brands (name) values
+  ('Pomona'), ('Taco'), ('Daeho'), ('Sweet Page'), ('Nature Tea')
+on conflict (name) do nothing;
+
+-- ---------------------------------------------------------------------
+-- 3) И-баримт (хувь хүн/байгууллага) талбарууд
+-- ---------------------------------------------------------------------
+alter table orders add column if not exists receipt_type text default 'individual';
+alter table orders add column if not exists register_number text;
+
+-- ---------------------------------------------------------------------
+-- 4) admins хүснэгт, is_admin() функц, захиалгын эзэмшигч (user_id),
+--    RLS policy-г "хэн ч нэвтэрсэн бол болно" байснаас зөвхөн admin
+--    болгож чангатгах
+-- ---------------------------------------------------------------------
+create table if not exists admins (
+  email text primary key
+);
+alter table admins enable row level security;
+insert into admins (email) values ('cuppabrandmanager@gmail.com')
+on conflict (email) do nothing;
+
+create or replace function public.is_admin() returns boolean as $$
+  select exists(select 1 from public.admins where lower(email) = lower(auth.email()));
+$$ language sql security definer stable set search_path = public;
+grant execute on function is_admin() to authenticated, anon;
+
+alter table orders add column if not exists user_id uuid references auth.users(id) on delete set null;
+
+drop policy if exists "admin insert categories" on categories;
+drop policy if exists "admin update categories" on categories;
+drop policy if exists "admin delete categories" on categories;
+create policy "admin insert categories" on categories for insert with check (is_admin());
+create policy "admin update categories" on categories for update using (is_admin());
+create policy "admin delete categories" on categories for delete using (is_admin());
+
+drop policy if exists "admin insert subcategories" on subcategories;
+drop policy if exists "admin delete subcategories" on subcategories;
+create policy "admin insert subcategories" on subcategories for insert with check (is_admin());
+create policy "admin delete subcategories" on subcategories for delete using (is_admin());
+
+drop policy if exists "admin insert brands" on brands;
+drop policy if exists "admin delete brands" on brands;
+create policy "admin insert brands" on brands for insert with check (is_admin());
+create policy "admin delete brands" on brands for delete using (is_admin());
+
+drop policy if exists "admin insert products" on products;
+drop policy if exists "admin update products" on products;
+drop policy if exists "admin delete products" on products;
+create policy "admin insert products" on products for insert with check (is_admin());
+create policy "admin update products" on products for update using (is_admin());
+create policy "admin delete products" on products for delete using (is_admin());
+
+drop policy if exists "admin read orders" on orders;
+drop policy if exists "admin update orders" on orders;
+drop policy if exists "admin delete orders" on orders;
+drop policy if exists "user read own orders" on orders;
+create policy "admin read orders" on orders for select using (is_admin());
+create policy "user read own orders" on orders for select using (user_id = auth.uid());
+create policy "admin update orders" on orders for update using (is_admin());
+create policy "admin delete orders" on orders for delete using (is_admin());
+
+drop policy if exists "admin read order_items" on order_items;
+drop policy if exists "admin delete order_items" on order_items;
+drop policy if exists "user read own order_items" on order_items;
+create policy "admin read order_items" on order_items for select using (is_admin());
+create policy "user read own order_items" on order_items for select using (
+  exists (select 1 from orders o where o.order_number = order_items.order_number and o.user_id = auth.uid())
+);
+create policy "admin delete order_items" on order_items for delete using (is_admin());
+
+-- ---------------------------------------------------------------------
+-- 6) Хямдрахаас өмнөх үнэ хадгалах багана
+-- ---------------------------------------------------------------------
+alter table products add column if not exists unit_original_price numeric;
+alter table products add column if not exists box_original_price numeric;
+
+-- ---------------------------------------------------------------------
+-- 7) Хүргэлтийн хэлбэр, хураамж
+-- ---------------------------------------------------------------------
+alter table orders add column if not exists delivery_method text default 'pickup'; -- pickup | delivery
+alter table orders add column if not exists delivery_fee numeric default 0;
+
+-- ---------------------------------------------------------------------
+-- 8) Storage bucket-ийн зураг upload/устгах эрхийг зөвхөн админд олгох
+-- ---------------------------------------------------------------------
+
+drop policy if exists "admin upload product images" on storage.objects;
+drop policy if exists "admin delete product images" on storage.objects;
+create policy "admin upload product images"
+  on storage.objects for insert
+  with check (bucket_id = 'product-images' and is_admin());
+create policy "admin delete product images"
+  on storage.objects for delete
+  using (bucket_id = 'product-images' and is_admin());
+
+-- ---------------------------------------------------------------------
+-- 9) Админ гараар оруулдаг "хэдэн хайрцаг" талбар (очиж авах, хүргэлт
+--    хоёуланд нь адилхан)
+-- ---------------------------------------------------------------------
+alter table orders add column if not exists box_count integer default 0;
+
+-- ---------------------------------------------------------------------
+-- 10) "эрэлттэй" шошготой барааг "бестселлэр" болгох
+-- ---------------------------------------------------------------------
+update products set tag = 'бестселлэр' where tag = 'эрэлттэй';
+
+-- ---------------------------------------------------------------------
+-- 11) Шинэ захиалга ирэхэд admin panel-д refresh хийхгүйгээр мэдэгдэл
+--     өгөх боломжтой болгох (Supabase Realtime-г orders хүснэгтэд асаах)
+-- ---------------------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table orders;
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------
+-- 12) Агуулахын нөөц: гараар 2 газар (агуулах -1, дэлгүүр +1) бичихийн
+--     оронд admin panel дээрх "Татах" товчоор нэг л удаа оруулдаг болгох
+-- ---------------------------------------------------------------------
+alter table products add column if not exists warehouse_unit_stock int default 0;
+alter table products add column if not exists warehouse_box_stock int default 0;
+
+-- Бөөний үнэ бодогдож эхлэх ширхэгийн тоо (жишээ нь: FORTE кофе 3ш, сироп 6ш,
+-- зарим повдер 12ш, нэг удаагийн аяга 1000ш — бараа бүрээр өөр өөр байдаг тул
+-- ангиллаар биш барааны хувиар админ гараар тохируулна)
+alter table products add column if not exists bulk_qty int;
+
+-- ---------------------------------------------------------------------
+-- 14) "Нэгдсэн нөөц" — хайрцгаар ирсэн барааг задалж ширхэгээр зарж байгаа
+--     барааны хайрцгийн нөөцийг ширхэгийн нөөцөөс автоматаар тооцно
+--     (жишээ нь: сироп, повдер зэрэг агуулахаас дандаа хайрцгаар ирж,
+--     лангуунд ширхэгээр өрөгддөг бараа)
+-- ---------------------------------------------------------------------
+alter table products add column if not exists unified_stock boolean default false;
+
+-- ---------------------------------------------------------------------
+-- 15) Анхны/хоосон ангиллын дүрсийг шинэ түлхүүрүүд рүү шилжүүлэх.
+--     Админы сонгосон дүрс болон custom SVG URL-ийг өөрчлөхгүй.
+-- ---------------------------------------------------------------------
+update categories set icon = 'CoffeeBean' where name = 'Кофе' and (icon is null or icon in ('Coffee', ''));
+update categories set icon = 'Syrup' where name = 'Сироп' and (icon is null or icon in ('Coffee', ''));
+update categories set icon = 'Sauce' where name = 'Соус' and (icon is null or icon in ('Coffee', ''));
+update categories set icon = 'Powder' where name = 'Нунтаг' and (icon is null or icon in ('Coffee', ''));
+update categories set icon = 'Smoothie' where name = 'Смүүти' and (icon is null or icon in ('Coffee', ''));
+update categories set icon = 'TeaLeaf' where name = 'Цай' and (icon is null or icon in ('Coffee', ''));
+
+-- ---------------------------------------------------------------------
+-- 13) Агуулах ⇄ дэлгүүрийн шилжилтийн түүх (Тайлан хуудсанд харуулна)
+-- ---------------------------------------------------------------------
+create table if not exists stock_transfers (
+  id bigint generated by default as identity primary key,
+  product_id bigint references products(id) on delete set null,
+  product_name text not null,
+  option_type text not null, -- 'unit' | 'box'
+  direction text not null, -- 'to_store' (агуулахаас татсан) | 'to_warehouse' (дэлгүүрээс буцаасан)
+  qty int not null,
+  admin_email text,
+  created_at timestamptz default now()
+);
+alter table stock_transfers enable row level security;
+drop policy if exists "admin read stock_transfers" on stock_transfers;
+drop policy if exists "admin insert stock_transfers" on stock_transfers;
+create policy "admin read stock_transfers" on stock_transfers for select using (is_admin());
+create policy "admin insert stock_transfers" on stock_transfers for insert with check (is_admin());
+
+-- ---------------------------------------------------------------------
+-- 15) Хэрэглэгчийн хуудсан дээр нөөц бууруулахад refresh хийхгүйгээр
+--     realtime-р шинэчлэгддэг болгох (Supabase Realtime-г products
+--     хүснэгтэд асаах)
+-- ---------------------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'products'
+  ) then
+    alter publication supabase_realtime add table products;
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------
+-- 16) "Нэг удаа" ангиллын дүрсийг paper-cup SVG-тэй тохируулах
+-- ---------------------------------------------------------------------
+update categories set icon = 'PaperCup' where name = 'Нэг удаа' and (icon is null or icon in ('Coffee', ''));
+
+-- Add missing disposable-cup subcategories; keep existing rows and IDs.
+insert into public.subcategories (category_id, name)
+select c.id, s.name from public.categories c cross join unnest(array[
+  'Хуйтний аяга', 'Давхар аяга', 'Дан аяга', 'Зайрмаг / Десерт аяга',
+  'Соруул', 'Салфетка', 'Takeaway/Sleeve'
+]) as s(name)
+where c.name = 'Нэг удаа' and not exists (
+  select 1 from public.subcategories existing where existing.category_id = c.id and existing.name = s.name
+);
+
+-- Current product sizes, pricing and atomic warehouse/size stock functions.
+-- Older installations returned void. Change only that historical signature.
+-- No CASCADE: unexpected dependent objects stop the transaction instead of being deleted.
+do $$
+begin
+  if exists (select 1 from pg_proc where oid = to_regprocedure('public.decrement_stock(bigint,text,integer)')
+    and prorettype <> 'boolean'::regtype) then
+    drop function public.decrement_stock(bigint, text, int);
+  end if;
+end $$;
+
+alter table public.products add column if not exists size text;
+alter table public.products add column if not exists bulk_unit_price numeric
+  check (bulk_unit_price is null or bulk_unit_price > 0);
+alter table public.products add column if not exists discount_ends_at timestamptz;
 alter table public.products add column if not exists coffee_sizes jsonb;
 
 -- Keep sizes on the existing product. Old stock is deliberately not reassigned.
@@ -248,5 +474,7 @@ on public.products for each row execute function public.validate_coffee_sizes();
   $function$;
 
 
+
+grant execute on function public.submit_order(text, text, text, text, text, text, jsonb) to anon, authenticated;
 notify pgrst, 'reload schema';
 commit;
