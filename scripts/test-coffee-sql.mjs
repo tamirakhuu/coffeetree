@@ -22,6 +22,10 @@ try {
   // Ensure migration creates its column, rather than relying on the fresh schema.
   await db.exec('alter table products drop column coffee_sizes, drop column size, drop column bulk_unit_price, drop column discount_ends_at;');
   const migration = await readFile('supabase/run-all-updates.sql', 'utf8');
+  const trainingMarker = '-- Admin-managed weekend training dates.';
+  assert.ok(migration.includes(trainingMarker), 'run-all-updates must include the training setup');
+  assert.equal(migration.slice(migration.indexOf(trainingMarker), migration.lastIndexOf("notify pgrst")).trim(),
+    schema.slice(schema.indexOf(trainingMarker)).trim(), 'Training setup must match the standalone schema');
   await db.exec(`
     insert into categories(id, name, icon) values (90001, 'Нэг удаа', 'https://example.test/custom.svg');
     insert into subcategories(id, category_id, name) values (90001, 90001, 'Custom'), (90002, 90001, 'Соруул');
