@@ -873,7 +873,75 @@ function openModal(title, body, foot, wide) {
   document.getElementById('modalBox').classList.toggle('modal-lg', !!wide);
   document.getElementById('modalBg').classList.add('open');
 }
-function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+let passwordConfirmation = null;
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+  if (passwordConfirmation) {
+    const pending = passwordConfirmation;
+    passwordConfirmation = null;
+    const input = document.getElementById('confirm-password');
+    if (input) input.value = '';
+    pending.resolve(false);
+  }
+}
+
+function requestAdminPassword(description) {
+  if (passwordConfirmation) return Promise.resolve(false);
+  return new Promise(resolve => {
+    passwordConfirmation = { resolve, busy: false };
+    openModal('Нууц үгээр баталгаажуулах', `
+      <p>${escapeHtml(description)}</p>
+      <form id="password-confirm-form" onsubmit="event.preventDefault(); submitAdminPassword()">
+        <div class="fg"><label for="confirm-password">Нэвтэрсэн админы нууц үг</label>
+        <input id="confirm-password" type="password" autocomplete="current-password" required></div>
+        <p id="confirm-password-error" role="alert" style="color:#b91c1c"></p>
+      </form>`, `<button class="btn btn-outline" onclick="closeModal()">Болих</button>
+      <button id="confirm-password-submit" class="btn btn-primary" type="submit" form="password-confirm-form">Баталгаажуулах</button>`);
+    document.getElementById('confirm-password').focus();
+  });
+}
+
+async function submitAdminPassword() {
+  const pending = passwordConfirmation;
+  if (!pending || pending.busy) return;
+  const input = document.getElementById('confirm-password');
+  if (!input.value) { input.reportValidity(); return; }
+  pending.busy = true;
+  const button = document.getElementById('confirm-password-submit');
+  button.disabled = true;
+  document.getElementById('confirm-password-error').textContent = '';
+  let verifier;
+  try {
+    const { data, error } = await sb.auth.getUser();
+    if (error || !data.user?.email) throw new Error('Нэвтрэлт дууссан байна. Дахин нэвтэрнэ үү.');
+    if (passwordConfirmation !== pending) return;
+    verifier = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'admin-password-check' }
+    });
+    const result = await verifier.auth.signInWithPassword({ email: data.user.email, password: input.value });
+    input.value = '';
+    if (result.error || result.data.user?.id !== data.user.id) {
+      throw new Error('Нууц үг буруу эсвэл баталгаажуулах боломжгүй байна. Дахин оролдоно уу.');
+    }
+    const current = await sb.auth.getUser();
+    if (current.error || current.data.user?.id !== data.user.id) throw new Error('Нэвтрэлт өөрчлөгдсөн байна. Дахин нэвтэрнэ үү.');
+    if (passwordConfirmation !== pending) return;
+    passwordConfirmation = null;
+    closeModal();
+    pending.resolve(true);
+  } catch (error) {
+    if (passwordConfirmation === pending) {
+      input.value = '';
+      document.getElementById('confirm-password-error').textContent = error.message || 'Баталгаажуулахад алдаа гарлаа.';
+      input.focus();
+    }
+  } finally {
+    // Only revoke the temporary verification session, never the admin's active session.
+    if (verifier) await verifier.auth.signOut({ scope: 'local' }).catch(() => {});
+    pending.busy = false;
+    if (passwordConfirmation === pending) button.disabled = false;
+  }
+}
 
 function renderDashboard() {
   document.getElementById('nb-products').textContent = products.length;
@@ -1370,6 +1438,7 @@ function confirmDeleteProduct(id) {
     `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteProductNow(${id})">Устгах</button>`);
 }
 async function deleteProductNow(id) {
+  if (!await requestAdminPassword('Барааг устгах үйлдлийг баталгаажуулна уу.')) return;
   const { error } = await sb.from('products').delete().eq('id', id);
   closeModal();
   if (error) { toast('Устгахад алдаа гарлаа', 'err'); return; }
@@ -1530,6 +1599,7 @@ function confirmDeleteCategory(id) {
     `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteCategoryNow(${id})">Устгах</button>`);
 }
 async function deleteCategoryNow(id) {
+  if (!await requestAdminPassword('Ангилал болон дэд ангиллуудыг устгах үйлдлийг баталгаажуулна уу.')) return;
   const { error } = await sb.from('categories').delete().eq('id', id);
   closeModal();
   if (error) { toast('Устгахад алдаа гарлаа (энэ ангилалд хамаарах бараа байж магадгүй)', 'err'); return; }
@@ -1583,6 +1653,7 @@ function confirmDeleteBrand(id) {
     `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-danger" onclick="deleteBrandNow(${id})">Устгах</button>`);
 }
 async function deleteBrandNow(id) {
+  if (!await requestAdminPassword('Брэндийг устгах үйлдлийг баталгаажуулна уу.')) return;
   const { error } = await sb.from('brands').delete().eq('id', id);
   closeModal();
   if (error) { toast('Устгахад алдаа гарлаа (энэ брэндэд хамаарах бараа байж магадгүй)', 'err'); return; }
@@ -2043,6 +2114,7 @@ async function receivePendingBatch() {
   if (!checks.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
   const accepted = checks.filter(c => c.checked).map(c => +c.dataset.id);
   const rejected = checks.filter(c => !c.checked).map(c => +c.dataset.id);
+  if (!await requestAdminPassword(`${accepted.length} хүсэлт хүлээн авч, ${rejected.length} хүсэлтийг агуулах руу буцаах үйлдлийг баталгаажуулна уу.`)) return;
   if (rejected.length && !confirm(`${rejected.length} бараа хүлээн авагдаагүй тул агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
 
   const results = await Promise.all([
