@@ -157,6 +157,10 @@ tr:hover td{background:rgba(255,255,255,.4)}
 .notif-item .ni-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
 .notif-item .ni-time{font-size:10.5px;color:var(--ink-soft);margin-top:4px}
 .notif-empty{padding:26px 16px;text-align:center;font-size:12.5px;color:var(--ink-soft)}
+.notif-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.notif-row .notif-item{flex:1;min-width:0}
+.notif-delete{flex:none;align-self:center;margin-right:8px;width:32px;height:32px;border:0;border-radius:6px;background:none;color:var(--ink-soft);cursor:pointer;font-size:20px}
+.notif-delete:hover{background:#fee2e2;color:#b91c1c}
 .toast{background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;transform:translateX(20px);opacity:0;transition:all .25s;min-width:240px}
 .toast.show{transform:translateX(0);opacity:1}
 .toast.success{border-left:3px solid var(--moss)}
@@ -658,6 +662,7 @@ function renderNotifBell() {
   const list = document.getElementById('notifList');
   if (!list) return;
   list.innerHTML = notifications.length ? notifications.map(n => `
+    <div class="notif-row">
     <button class="notif-item ${n.read ? '' : 'unread'}" onclick="handleNotifClick('${n.id}')">
       <span class="ni-dot"></span>
       <span class="ni-body">
@@ -665,7 +670,15 @@ function renderNotifBell() {
         ${n.sub ? `<div class="ni-sub">${n.sub}</div>` : ''}
         <div class="ni-time">${new Date(n.time).toLocaleString('mn-MN')}</div>
       </span>
-    </button>`).join('') : `<div class="notif-empty">Мэдэгдэл алга байна</div>`;
+    </button>
+    <button type="button" class="notif-delete" aria-label="Мэдэгдэл устгах" title="Мэдэгдэл устгах" onclick="event.stopPropagation();deleteNotification('${n.id}')">×</button>
+    </div>`).join('') : `<div class="notif-empty">Мэдэгдэл алга байна</div>`;
+}
+
+function deleteNotification(id) {
+  notifications = notifications.filter(n => n.id !== id);
+  saveNotifications();
+  renderNotifBell();
 }
 
 function markAllNotificationsRead() {
