@@ -1,0 +1,29 @@
+.mobile-menu { position: fixed; inset: 0; z-index: 200; visibility: hidden; pointer-events: none; transition: visibility .25s; color: #171717; font-family: 'Ubuntu', sans-serif; }
+.mobile-menu.is-open { visibility: visible; pointer-events: auto; }
+.mobile-menu-backdrop { position: absolute; inset: 0; background: #0006; opacity: 0; transition: opacity .25s; }
+.is-open .mobile-menu-backdrop { opacity: 1; }
+.mobile-menu-panel { position: absolute; inset: 0 auto 0 0; width: min(88vw, 360px); background: #fff; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .25s ease; box-shadow: 12px 0 40px #0002; }
+.is-open .mobile-menu-panel { transform: translateX(0); }
+.mobile-menu button { font: inherit; cursor: pointer; color: inherit; }
+.mobile-menu button:focus-visible { outline: 2px solid #171717; outline-offset: -3px; }
+.mobile-menu-head { display: flex; align-items: center; justify-content: space-between; padding: max(18px, env(safe-area-inset-top)) 20px 18px; border-bottom: 1px solid #eee; }
+.mobile-menu-head img { height: 28px; filter: invert(1); }
+.mobile-menu-close { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #f4f4f4; }
+.mobile-menu-content { overflow-y: auto; overscroll-behavior: contain; padding: 18px 16px max(24px, env(safe-area-inset-bottom)); }
+.mobile-menu-shortcuts { display: grid; gap: 4px; padding-bottom: 16px; }
+.mobile-menu-shortcuts button { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 12px; border: 0; border-radius: 10px; background: #f6f6f6; font-size: 14px; font-weight: 500; }
+.mobile-menu-shortcuts button span { flex: 1; text-align: left; }
+.mobile-menu-section { border-top: 1px solid #eaeaea; }
+.mobile-menu-heading { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 56px; padding: 14px 4px; border: 0; background: transparent; font-weight: 600 !important; font-size: 15px !important; }
+.mobile-menu-heading svg { transition: transform .2s; }
+.mobile-menu-heading[aria-expanded=true] svg { transform: rotate(180deg); }
+.mobile-menu-categories { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-bottom: 18px; }
+.mobile-menu-categories button { display: flex; align-items: center; gap: 8px; padding: 10px; min-height: 64px; text-align: left; border: 1px solid #ededed; border-radius: 12px; background: #fff; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.mobile-menu-icon { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 30px; }
+.mobile-menu-brands { display: grid; gap: 4px; padding-bottom: 16px; }
+.mobile-menu-brands button { display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 8px 10px; background: #fff; border: 1px solid #eee; border-radius: 10px; text-align: left; font-size: 14px; }
+.mobile-menu-brands button > span:nth-child(2) { flex: 1; overflow-wrap: anywhere; }
+.mobile-menu-brand-logo { width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; background: #f6f6f6; border-radius: 8px; }
+.mobile-menu-brand-logo img { width: 26px; height: 26px; object-fit: contain; }
+@media (hover: hover) { .mobile-menu-content button:hover { background: #f0f0f0; } }
+@media (prefers-reduced-motion: reduce) { .mobile-menu, .mobile-menu-panel, .mobile-menu-backdrop, .mobile-menu-heading svg { transition: none; } }
