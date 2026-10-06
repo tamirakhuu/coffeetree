@@ -24,7 +24,7 @@ try {
   const migration = await readFile('supabase/run-all-updates.sql', 'utf8');
   const trainingMarker = '-- Admin-managed weekend training dates.';
   assert.ok(migration.includes(trainingMarker), 'run-all-updates must include the training setup');
-  assert.equal(migration.slice(migration.indexOf(trainingMarker), migration.lastIndexOf("notify pgrst")).trim(),
+  assert.equal(migration.slice(migration.indexOf(trainingMarker), migration.indexOf('-- BEGIN approved stock top-up')).trim(),
     schema.slice(schema.indexOf(trainingMarker)).trim(), 'Training setup must match the standalone schema');
   await db.exec(`
     insert into categories(id, name, icon) values (90001, 'Нэг удаа', 'https://example.test/custom.svg');
@@ -54,6 +54,34 @@ try {
   assert.equal((await db.query("select has_function_privilege('anon', 'restore_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
   await db.exec(await readFile('supabase/tests/coffee_sizes.sql', 'utf8'));
   await testTrainingSQL(db);
+  await db.exec('begin');
+  await db.exec(`
+    delete from stock_topup_audit; delete from stock_topup_runs;
+    insert into products(id,name,unit_price,box_price,warehouse_unit_stock,warehouse_box_stock) values
+      (91001,'Empty',100,0,0,0),(91002,'Odd',100,500,3,5);
+    insert into products(id,name,unit_price,box_price,warehouse_unit_stock,warehouse_box_stock,unified_stock,box_per_box)
+      values(91003,'Shared',100,600,7,1,true,6);
+    insert into brands(name) values ('Jack''s Coffee') on conflict do nothing;
+    insert into categories(id,name) values(91001,'Кофе');
+    insert into products(id,name,brand_id,category_id,coffee_sizes) values
+      (91004,'Sizes',(select id from brands where name='Jack''s Coffee'),91001,
+       '{"size_1kg":{"price":100,"stock":0},"size_250g":{"price":50,"stock":3}}');
+  `);
+  const topup = migration.slice(migration.indexOf('-- BEGIN approved stock top-up'), migration.indexOf('-- END approved stock top-up'));
+  await db.exec(topup);
+  const stocks = (await db.query('select id,warehouse_unit_stock as units,warehouse_box_stock as boxes,coffee_sizes from products where id between 91001 and 91004 order by id')).rows;
+  assert.equal(stocks[0].units,10);
+  assert.equal(stocks[0].boxes,0);
+  assert.equal(stocks[1].units,14);
+  assert.equal(stocks[1].boxes,16);
+  assert.equal(stocks[2].units,72);
+  assert.equal(stocks[2].boxes,12);
+  assert.equal(stocks[3].coffee_sizes.size_1kg.stock,10);
+  assert.equal(stocks[3].coffee_sizes.size_250g.stock,14);
+  await db.exec(topup);
+  assert.deepEqual((await db.query('select id,warehouse_unit_stock as units,warehouse_box_stock as boxes,coffee_sizes from products where id between 91001 and 91004 order by id')).rows, stocks);
+  await db.exec('rollback');
+  console.log('PASS one-time even stock top-up, disabled options, shared inventory and coffee sizes; rerun does not add twice');
   console.log('PASS PostgreSQL migration, repeat apply, independent stock, server pricing, rollback, restore and brand validation');
   console.log('PASS supplied SQL merge: preserved products/orders/subcategory IDs/custom icons, idempotent defaults, Realtime and legacy void function upgrade');
 } catch (error) {

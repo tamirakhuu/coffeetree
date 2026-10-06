@@ -585,6 +585,69 @@ grant execute on function public.register_scheduled_training(text,text,date,uuid
 revoke all on function public.reserve_training_seat() from public, anon, authenticated;
 revoke all on function public.restore_training_seat() from public, anon, authenticated;
 
+-- BEGIN approved stock top-up 2026-10-06. Once only, including on repeated Run.
+create table if not exists public.stock_topup_runs (
+  operation text primary key,
+  applied_at timestamptz not null default now(),
+  changed_products integer not null default 0
+);
+create table if not exists public.stock_topup_audit (
+  operation text not null references public.stock_topup_runs(operation),
+  product_id bigint not null,
+  before_stock jsonb not null,
+  after_stock jsonb not null,
+  primary key(operation, product_id)
+);
+alter table public.stock_topup_runs enable row level security;
+alter table public.stock_topup_audit enable row level security;
+revoke all on public.stock_topup_runs, public.stock_topup_audit from public, anon, authenticated;
+do $$
+declare
+  p public.products%rowtype;
+  units bigint; boxes bigint; sizes jsonb; k text; n bigint;
+  changed integer := 0;
+begin
+  insert into public.stock_topup_runs(operation) values ('approved-even-topup-2026-10-06') on conflict do nothing;
+  if not found then return; end if;
+  for p in select * from public.products order by id for update loop
+    units := p.warehouse_unit_stock; boxes := p.warehouse_box_stock; sizes := p.coffee_sizes;
+    if sizes is not null then
+      foreach k in array array['size_1kg','size_250g'] loop
+        if coalesce((sizes->k->>'price')::numeric, 0) > 0 then
+          n := greatest(coalesce((sizes->k->>'stock')::bigint, 0), 0) + 10;
+          sizes := jsonb_set(sizes, array[k,'stock'], to_jsonb(n + n % 2));
+        end if;
+      end loop;
+    elsif p.unified_stock and coalesce(p.box_per_box, 0) > 0 and (p.unit_price > 0 or p.box_price > 0) then
+      -- Shared stock: an even box count gives both an even unit count and an exact conversion.
+      n := greatest(coalesce(units, 0), 0) + case when p.unit_price > 0 then 10 else 0 end;
+      boxes := greatest(ceil(n::numeric / p.box_per_box)::bigint,
+        greatest(coalesce(boxes, 0), 0) + case when p.box_price > 0 then 10 else 0 end);
+      boxes := boxes + boxes % 2;
+      units := boxes * p.box_per_box;
+    else
+      if p.unit_price > 0 then
+        units := greatest(coalesce(units, 0), 0) + 10;
+        units := units + units % 2;
+      end if;
+      if p.box_price > 0 then
+        boxes := greatest(coalesce(boxes, 0), 0) + 10;
+        boxes := boxes + boxes % 2;
+      end if;
+    end if;
+    if units is not distinct from p.warehouse_unit_stock and boxes is not distinct from p.warehouse_box_stock
+      and sizes is not distinct from p.coffee_sizes then continue; end if;
+    insert into public.stock_topup_audit(operation, product_id, before_stock, after_stock) values (
+      'approved-even-topup-2026-10-06', p.id,
+      jsonb_build_object('unit',p.warehouse_unit_stock,'box',p.warehouse_box_stock,'coffee_sizes',p.coffee_sizes),
+      jsonb_build_object('unit',units,'box',boxes,'coffee_sizes',sizes));
+    update public.products set warehouse_unit_stock=units, warehouse_box_stock=boxes, coffee_sizes=sizes where id=p.id;
+    changed := changed + 1;
+  end loop;
+  update public.stock_topup_runs set changed_products=changed where operation='approved-even-topup-2026-10-06';
+end $$;
+-- END approved stock top-up 2026-10-06.
+
 notify pgrst, 'reload schema';
 commit;
 
@@ -593,4 +656,5 @@ select
   'run-all-updates: training schedule ready' as update_status,
   to_regclass('public.training_sessions')::text as training_table,
   to_regprocedure('public.register_scheduled_training(text,text,date,uuid)')::text as registration_function,
-  has_table_privilege('authenticated', 'public.training_sessions', 'INSERT,UPDATE') as admin_table_access;
+  has_table_privilege('authenticated', 'public.training_sessions', 'INSERT,UPDATE') as admin_table_access,
+  (select changed_products from public.stock_topup_runs where operation='approved-even-topup-2026-10-06') as stock_topup_products;
