@@ -10,21 +10,30 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
   const { categories, brands, products } = useContext(DataContext);
   const brand = brands.find((b) => b.id === brandId);
   const [categoryFilter, setCategoryFilter] = useState(null);
+  const [subFilter, setSubFilter] = useState(null);
   const [sortBy, setSortBy] = useState("default");
   const productsRef = useRef(null);
   const chooseCategory = (id) => {
     setCategoryFilter(id);
+    setSubFilter(null);
+  };
+  const chooseSub = (sub) => {
+    setSubFilter(sub);
     if (window.innerWidth <= 720 && productsRef.current) {
       setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
 
-  useEffect(() => { setCategoryFilter(null); setSortBy("default"); }, [brandId]);
+  useEffect(() => { setCategoryFilter(null); setSubFilter(null); setSortBy("default"); }, [brandId]);
 
   if (!brand) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Брэнд олдсонгүй.</div>;
 
   let items = products.filter((p) => p.brandId === brandId);
   if (categoryFilter) items = items.filter((p) => p.categoryId === categoryFilter);
+  const presentSubs = [...new Set(items.map(p => p.sub?.trim()).filter(Boolean))];
+  const configuredSubs = categories.find(c => c.id === categoryFilter)?.sub || [];
+  const subcategories = [...new Set([...configuredSubs, ...presentSubs])].filter(sub => presentSubs.includes(sub));
+  if (categoryFilter && subFilter) items = items.filter(p => p.sub?.trim() === subFilter);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
@@ -46,6 +55,14 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
             <button key={c.id} onClick={() => chooseCategory(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
           ))}
         </CollapsibleSection>
+        {categoryFilter && subcategories.length > 0 && (
+          <CollapsibleSection key={categoryFilter} label="Дэд ангилал">
+            <button onClick={() => chooseSub(null)} aria-pressed={subFilter === null} style={subBtn(subFilter === null)}>Бүгд</button>
+            {subcategories.map(sub => (
+              <button key={sub} onClick={() => chooseSub(sub)} aria-pressed={subFilter === sub} style={subBtn(subFilter === sub)}>{sub}</button>
+            ))}
+          </CollapsibleSection>
+        )}
       </aside>
 
       <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
