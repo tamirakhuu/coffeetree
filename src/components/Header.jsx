@@ -4,11 +4,11 @@ import { CategoryIcon } from "./CategoryIcon.jsx";
 import { X, ShoppingBag, Heart, Search, ChevronDown, Menu } from "lucide-react";
 import { DataContext } from "../context/DataContext.jsx";
 
-export const NavButton = React.forwardRef(function NavButton({ onClick, active, children }, ref) {
+export const NavButton = React.forwardRef(function NavButton({ onClick, active, children, ...props }, ref) {
   return (
-    <button ref={ref} onClick={onClick}
+    <button ref={ref} onClick={onClick} {...props}
       style={{
-        background: active ? "color: T.ink" : "transparent", border: "none", color: T.cream, opacity: 0.85,
+        background: active ? "rgba(255,255,255,0.08)" : "transparent", border: "none", color: T.cream, opacity: 0.85,
         fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 500, padding: "8px 10px",
         borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
       }}
@@ -18,16 +18,16 @@ export const NavButton = React.forwardRef(function NavButton({ onClick, active, 
   );
 });
 
-export function ProductsMegaMenu({ categories, brands, products, activeCat, setActiveCat, onGoCategory, onGoBrand, left }) {
+export function ProductsMegaMenu({ categories, brands, activeCat, setActiveCat, onGoCategory, onGoBrand, left, section = "products" }) {
   const activeCategory = categories.find((c) => c.id === activeCat) || categories[0];
   return (
     <div className="cuppa-megamenu" style={{
       position: "absolute", top: "calc(100% + 10px)", left, transform: "translateX(-50%)",
       background: T.card, border: `1px solid ${T.line}`,
       borderRadius: 14, padding: "22px 24px", display: "flex", gap: 32, boxShadow: "0 24px 50px rgba(0,0,0,.35)",
-      zIndex: 120, minWidth: 400,
+      zIndex: 120, minWidth: 220, maxHeight: "75vh", overflowY: "auto",
     }}>
-      <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
+      {section === "products" && <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
         <div style={sideLabel}>Бүтээгдэхүүн</div>
         {categories.map((c) => {
           const active = activeCategory?.id === c.id;
@@ -43,8 +43,8 @@ export function ProductsMegaMenu({ categories, brands, products, activeCat, setA
             </button>
           );
         })}
-      </div>
-      <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
+      </div>}
+      {section === "brands" && <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
         <div style={sideLabel}>Брэнд</div>
         <div className="cuppa-megamenu-brands">
           {brands.map((b) => (
@@ -65,7 +65,7 @@ export function ProductsMegaMenu({ categories, brands, products, activeCat, setA
         {brands.length === 0 && (
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -165,7 +165,7 @@ export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, 
 }
 
 export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) {
-  const { categories, brands, products } = useContext(DataContext);
+  const { categories, brands } = useContext(DataContext);
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -173,6 +173,7 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
   const [activeCat, setActiveCat] = useState(null);
   const navRef = useRef(null);
   const menuTriggerRef = useRef(null);
+  const brandTriggerRef = useRef(null);
   const [menuLeft, setMenuLeft] = useState(0);
 
   useEffect(() => {
@@ -182,12 +183,25 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
   useEffect(() => {
     const onDocClick = (e) => { if (navRef.current && !navRef.current.contains(e.target)) setMenuOpen(false); };
     document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        if (navRef.current?.contains(document.activeElement)) {
+          (menuOpen === "brands" ? brandTriggerRef : menuTriggerRef).current?.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
-    if (menuOpen && menuTriggerRef.current) {
-      setMenuLeft(menuTriggerRef.current.offsetLeft + menuTriggerRef.current.offsetWidth / 2);
+    const trigger = menuOpen === "brands" ? brandTriggerRef.current : menuTriggerRef.current;
+    if (menuOpen && trigger) {
+      setMenuLeft(trigger.offsetLeft + trigger.offsetWidth / 2);
     }
   }, [menuOpen]);
 
@@ -210,15 +224,18 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
             <Menu size={21} />
           </button>
           <div className="cuppa-nav-links" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-            <NavButton ref={menuTriggerRef} active={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-              Ангилал <ChevronDown size={14} style={{ transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
+            <NavButton ref={menuTriggerRef} active={menuOpen === "products"} aria-expanded={menuOpen === "products"} onClick={() => setMenuOpen((v) => v === "products" ? false : "products")}>
+              Бүтээгдэхүүн <ChevronDown size={14} style={{ transform: menuOpen === "products" ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
             </NavButton>
-            <NavButton onClick={() => setView({ name: "bestseller" })}>Бестселлэр</NavButton>
-            <NavButton onClick={() => setView({ name: "training" })}>Сургалт</NavButton>
+            <NavButton ref={brandTriggerRef} active={menuOpen === "brands"} aria-expanded={menuOpen === "brands"} onClick={() => setMenuOpen((v) => v === "brands" ? false : "brands")}>
+              Брэнд <ChevronDown size={14} style={{ transform: menuOpen === "brands" ? "rotate(180deg)" : "none", transition: "transform .35s" }} />
+            </NavButton>
+            <NavButton onClick={() => { setMenuOpen(false); setView({ name: "bestseller" }); }}>Бестселлэр</NavButton>
+            <NavButton onClick={() => { setMenuOpen(false); setView({ name: "training" }); }}>Сургалт</NavButton>
           </div>
 
           {menuOpen && (
-            <ProductsMegaMenu categories={categories} brands={brands} products={products}
+            <ProductsMegaMenu categories={categories} brands={brands} section={menuOpen}
               activeCat={activeCat} setActiveCat={setActiveCat} onGoCategory={goCategory} onGoBrand={goBrand}
               left={menuLeft} />
           )}
