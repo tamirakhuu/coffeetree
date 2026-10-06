@@ -13,6 +13,13 @@ export const displayPrice = (product) => {
 const nameCollator = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
 export const compareProductNames = (a, b) => nameCollator.compare((a.name || '').trim(), (b.name || '').trim());
 
+// Stable priority: keep the chosen name/brand/price order inside each group.
+export function prioritizeTaggedProducts(products, now = Date.now()) {
+  const featured = p => p.tag === 'бестселлэр' || p.tag === 'шинэ' ||
+    (p.tag === 'хямдралтай' && (!p.discountEndsAt || new Date(p.discountEndsAt).getTime() > now));
+  return [...products].sort((a, b) => Number(featured(b)) - Number(featured(a)));
+}
+
 // Keep brands together and order products A–Z within each brand.
 export function groupProductsByBrand(products, brands) {
   const ranks = new Map(brands.map((brand, index) => [brand.id, index]));

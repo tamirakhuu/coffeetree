@@ -1,3 +1,4 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -37,6 +38,7 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
+  items = prioritizeTaggedProducts(items);
 
   const categoriesInBrand = categories.filter((c) => products.some((p) => p.brandId === brandId && p.categoryId === c.id));
 

@@ -1,3 +1,4 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useRef, useContext } from "react";
 import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -23,6 +24,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
+  items = prioritizeTaggedProducts(items);
 
   const brandsInCat = brands.filter((b) => products.some((p) => p.categoryId === categoryId && p.brandId === b.id));
 

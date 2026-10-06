@@ -1,3 +1,4 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useContext } from "react";
 import { T } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -6,7 +7,7 @@ import { BackButton } from "../components/BackButton.jsx";
 
 export default function WishlistPage({ wishlist, onOpen, onQuickAdd, onToggleWish, setView }) {
   const { products } = useContext(DataContext);
-  const items = products.filter((p) => wishlist.includes(p.id));
+  const items = prioritizeTaggedProducts(products.filter((p) => wishlist.includes(p.id)));
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
       <BackButton onClick={() => setView({ name: "home" })} />

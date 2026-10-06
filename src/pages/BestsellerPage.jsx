@@ -1,3 +1,4 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useState, useContext } from "react";
 import { T } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -21,6 +22,7 @@ export default function BestsellerPage({ onOpen, onQuickAdd, wishlist, onToggleW
   if (sortBy === "default") items = groupProductsByBrand(items, brands);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
+  items = prioritizeTaggedProducts(items);
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
