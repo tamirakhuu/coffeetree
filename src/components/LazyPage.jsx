@@ -1,7 +1,8 @@
 import React, { Component, lazy, useState } from "react";
+import "./LazyPage.css";
 
 export function PageLoading() {
-  return <div role="status" aria-live="polite" style={{ minHeight: 240, display: "grid", placeItems: "center", fontFamily: "'Ubuntu', sans-serif", color: "#5C4E3E" }}>Хуудас ачаалж байна…</div>;
+  return <div className="page-loading" role="status" aria-live="polite"><span className="page-loading-spinner" aria-hidden="true" /><span>Түр хүлээнэ үү</span></div>;
 }
 
 class PageErrorBoundary extends Component {
