@@ -1,3 +1,4 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShoppingBag, Heart, Plus, Minus, ChevronLeft, ChevronRight, Check, Coffee } from "lucide-react";
 import { computeLineTotal, getBulkUnitPrice } from "../api.js";
@@ -123,7 +124,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
   const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
-  const suggestions = suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions;
+  const suggestions = prioritizeTaggedProducts(suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions);
   const productBaseName = stripSizeSuffix(product.name).toLowerCase();
   const sameNameOtherBrands = productBaseName ? products.filter((p) =>
     p.brandId !== product.brandId && stripSizeSuffix(p.name).toLowerCase() === productBaseName) : [];
@@ -134,9 +135,9 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const sameBrandSimilar = products.filter((p) =>
     p.id !== product.id && p.brandId === product.brandId &&
     p.categoryId === product.categoryId && p.sub === product.sub);
-  const similarProducts = [...new Map(
+  const similarProducts = prioritizeTaggedProducts([...new Map(
     [...sameNameOtherBrands, ...sameBrandSimilar].map((p) => [p.id, p])
-  ).values()].slice(0, 8);
+  ).values()]).slice(0, 8);
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
   const lidNote = isColdCup ? `Таг: ${lidType}` : undefined;

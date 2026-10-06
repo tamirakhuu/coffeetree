@@ -1,10 +1,11 @@
+import { prioritizeTaggedProducts } from "../utils/products.js";
 import React from "react";
 import { T } from "../theme.js";
 import { ProductCard } from "../components/ProductCard.jsx";
 
 export default function SearchPage({ query, products, openProduct, quickAdd, wishlist, toggleWish }) {
     const q = query.toLowerCase();
-    const results = products.filter((p) => p.name.toLowerCase().includes(q) || (p.origin || "").toLowerCase().includes(q));
+    const results = prioritizeTaggedProducts(products.filter((p) => p.name.toLowerCase().includes(q) || (p.origin || "").toLowerCase().includes(q)));
     return (
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 20px 90px" }}>
         <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 24, fontWeight: 700, color: T.ink, marginBottom: 6 }}>“{query}” хайлтын үр дүн</h1>
