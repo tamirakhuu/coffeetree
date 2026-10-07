@@ -237,8 +237,8 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           )}
 
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft, marginBottom: bulkBoxQty ? 6 : 20 }}>
-            Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "box" ? "хайрцаг" : "ширхэг"} байна
-            {optionType === "box" && <> · 1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
+            Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "box" ? "хайрцаг" : "ширхэг"} байна.
+            {optionType === "box" && <>  1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
           </div>
           {optionType === "unit" && bulkBoxQty && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
