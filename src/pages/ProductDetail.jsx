@@ -1,4 +1,5 @@
 import { prioritizeTaggedProducts } from "../utils/products.js";
+import "./ProductDetail.css";
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShoppingBag, Heart, Plus, Minus, ChevronLeft, ChevronRight, Check, Coffee } from "lucide-react";
 import { computeLineTotal, getBulkUnitPrice } from "../api.js";

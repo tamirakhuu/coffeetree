@@ -594,6 +594,18 @@ let trainingSessions = [], trainingScheduleError = '';
 let knownPaidOrders = new Set();
 
 const IMAGE_BUCKET = 'product-images';
+async function uploadAdminImage(path, file) {
+  const { data, error: authError } = await sb.auth.getUser();
+  if (authError || !data.user) return { error: { message: 'Нэвтрэлт дууссан байна. Дахин нэвтэрч зураг оруулна уу.' } };
+  const { data: isAdmin, error: roleError } = await sb.rpc('is_admin');
+  if (roleError) return { error: { message: 'Админ эрхийг шалгаж чадсангүй. Холболтоо шалгаад дахин оролдоно уу.' } };
+  if (!isAdmin) return { error: { message: 'Энэ бүртгэлд админ эрх байхгүй байна.' } };
+  const result = await sb.storage.from(IMAGE_BUCKET).upload(path, file, { contentType: file.type });
+  if (result.error && /row.level security|policy/i.test(result.error.message)) {
+    return { error: { message: 'Storage зураг оруулах эрхийг хориглолоо. Supabase дээр шинэчилсэн run-all-updates.sql-ийг бүтнээр ажиллуулна уу.' } };
+  }
+  return result;
+}
 const MAX_PRODUCT_IMAGES = 3;
 let productImages = [];
 
@@ -1395,7 +1407,7 @@ async function saveProduct(id) {
       if (img.file) {
         const ext = (img.file.name.split('.').pop() || 'jpg').toLowerCase();
         const path = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, img.file, { contentType: img.file.type });
+        const { error: upErr } = await uploadAdminImage(path, img.file);
         if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
         const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
         images.push(pub.publicUrl);
@@ -1568,7 +1580,7 @@ async function saveCategory(id) {
     if (categoryIconFile) {
       const ext = (categoryIconFile.name.split('.').pop() || 'svg').toLowerCase();
       const path = `categories/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, categoryIconFile, { contentType: categoryIconFile.type });
+      const { error: upErr } = await uploadAdminImage(path, categoryIconFile);
       if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
       const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
       icon = pub.publicUrl;
@@ -1577,7 +1589,7 @@ async function saveCategory(id) {
     if (categoryTileImageFile) {
       const ext = (categoryTileImageFile.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `category-tiles/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await sb.storage.from(IMAGE_BUCKET).upload(path, categoryTileImageFile, { contentType: categoryTileImageFile.type });
+      const { error: upErr } = await uploadAdminImage(path, categoryTileImageFile);
       if (upErr) { toast('Зураг upload хийхэд алдаа гарлаа: ' + upErr.message, 'err'); return; }
       const { data: pub } = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path);
       tileImage = pub.publicUrl;

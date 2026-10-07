@@ -97,11 +97,20 @@ alter table orders add column if not exists delivery_fee numeric default 0;
 -- 8) Storage bucket-ийн зураг upload/устгах эрхийг зөвхөн админд олгох
 -- ---------------------------------------------------------------------
 
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "public read product images" on storage.objects;
+create policy "public read product images"
+  on storage.objects for select to anon, authenticated
+  using (bucket_id = 'product-images');
+
 drop policy if exists "admin upload product images" on storage.objects;
 drop policy if exists "admin delete product images" on storage.objects;
 create policy "admin upload product images"
-  on storage.objects for insert
-  with check (bucket_id = 'product-images' and is_admin());
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'product-images' and public.is_admin());
 create policy "admin delete product images"
   on storage.objects for delete
   using (bucket_id = 'product-images' and is_admin());

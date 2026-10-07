@@ -1,0 +1,22 @@
+@font-face {
+  font-family: "Mogul Freeset";
+  src: url("/fonts/Mogul-Freeset.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.cuppa-detail-info,
+.cuppa-detail-info :where(div, p, h1, span, strong, button, input, label) {
+  font-family: "Mogul Freeset", Arial, sans-serif !important;
+}
+
+.cuppa-detail-info .cuppa-detail-title {
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.02em;
+}
+
+.cuppa-detail-info strong {
+  font-weight: 600;
+}
