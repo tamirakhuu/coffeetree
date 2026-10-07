@@ -13,6 +13,7 @@ try {
     create function auth.email() returns text language sql as $$ select null::text $$;
     create function auth.uid() returns uuid language sql as $$ select null::uuid $$;
     create schema storage;
+    create table storage.buckets(id text primary key, name text, public boolean);
     create table storage.objects(id bigint, bucket_id text);
     create publication supabase_realtime;
   `);
@@ -41,6 +42,23 @@ try {
   `);
   await db.exec(migration);
   await db.exec(migration); // Rerunning the migration must remain safe.
+  await db.exec(`
+    begin;
+    alter table storage.objects enable row level security;
+    grant usage on schema storage, auth to authenticated, anon;
+    grant select, insert on storage.objects to authenticated, anon;
+    create or replace function auth.email() returns text language sql as $$ select current_setting('test.email', true) $$;
+    select set_config('test.email', 'cuppabrandmanager@gmail.com', true);
+    set local role authenticated;
+    insert into storage.objects(id,bucket_id) values(1,'product-images');
+  `);
+  assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n, 1);
+  await db.exec("select set_config('test.email', 'customer@example.test', true); savepoint denied_upload;");
+  await assert.rejects(db.exec("insert into storage.objects(id,bucket_id) values(2,'product-images')"), /row-level security/);
+  await db.exec('rollback to savepoint denied_upload; set local role anon; savepoint anonymous_upload;');
+  await assert.rejects(db.exec("insert into storage.objects(id,bucket_id) values(3,'product-images')"), /row-level security/);
+  await db.exec('rollback;');
+  console.log('PASS Storage admin upload/read, customer and anonymous upload denied');
   assert.deepEqual((await db.query('select name,payment_status,schedule_reserved from training_registrations where id=90001')).rows[0],
     { name: 'Existing student', payment_status: 'paid', schedule_reserved: false });
   assert.equal((await db.query('select count(*)::int as n from subcategories where category_id = 90001')).rows[0].n, 8);
