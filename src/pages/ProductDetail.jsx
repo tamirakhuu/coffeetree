@@ -355,7 +355,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
                     <button onClick={() => onQuickAdd(s)} style={{
                       background: T.cherry, color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px",
                       fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                    }}>+ Нэмэх</button>
+                    }}>+ нэмэх</button>
                   </div>
                 ))}
               </div>
