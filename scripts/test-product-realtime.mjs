@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { applyProductChange } from '../src/utils/productRealtime.js';
+const insert = { eventType: 'INSERT', new: { id: 2, name: 'Apple' } };
+const original = [{ id: 1, name: 'Coffee' }];
+let products = applyProductChange(original, insert);
+assert.deepEqual(products.map(p => p.id), [2, 1]);
+products = applyProductChange(products, insert);
+assert.equal(products.length, 2, 'repeated events must not duplicate products');
+products = applyProductChange(products, { eventType: 'UPDATE', new: { id: 2, name: 'Tea' } });
+assert.deepEqual(products.map(p => p.name), ['Coffee', 'Tea']);
+products = applyProductChange(products, { eventType: 'DELETE', old: { id: 2 } });
+assert.deepEqual(products, original);
+assert.deepEqual([insert, { eventType: 'DELETE', old: { id: 2 } }].reduce(applyProductChange, original), original);
+assert.equal(original.length, 1, 'do not mutate React state');
+console.log('PASS realtime insert, update, delete, ordering, deduplication and snapshot event replay');

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
-import { fetchBootstrap, submitOrder, computeLineTotal, shapeProduct, revertExpiredDiscount, createQpayInvoice } from "./api.js";
+import { fetchBootstrap, submitOrder, computeLineTotal, revertExpiredDiscount, createQpayInvoice } from "./api.js";
 import { supabase } from "./supabaseClient.js";
 import { T, FONT_IMPORT, primaryBtn } from "./theme.js";
 import { slugify, viewFromLocation, pathForView } from "./routing.js";
@@ -13,6 +13,7 @@ import { availableOptionTypes } from "./utils/products.js";
 import { CartDrawer } from "./components/CartDrawer.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { lazyPage, PageLoading } from "./components/LazyPage.jsx";
+import { applyProductChange } from "./utils/productRealtime.js";
 
 const SearchPage = lazyPage(() => import("./pages/SearchPage.jsx"));
 const CategoryPage = lazyPage(() => import("./pages/CategoryPage.jsx"));
@@ -59,35 +60,55 @@ export default function App() {
 
   // Лого animation
   const MIN_LOADING_MS = 1500;
-  const loadData = async () => {
+  const pendingLoads = useRef(new Set());
+  const loadVersion = useRef(0);
+  const loadData = async (background = false) => {
+    const version = ++loadVersion.current;
+    const changes = [];
+    pendingLoads.current.add(changes);
     const startedAt = Date.now();
     try {
       const d = await fetchBootstrap();
       const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_LOADING_MS) await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed));
+      if (!background && elapsed < MIN_LOADING_MS) await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed));
+      if (version !== loadVersion.current) return;
+      d.products = changes.reduce(applyProductChange, d.products);
       setData(d);
       setDataStatus("ready");
     } catch (e) {
-      setDataStatus("error");
+      if (version === loadVersion.current) {
+        setDataStatus(current => background && current === "ready" ? current : "error");
+      }
+    } finally {
+      pendingLoads.current.delete(changes);
     }
   };
 
   useEffect(() => { loadData(); }, []);
   useEffect(() => {
     const channel = supabase.channel("products-stock")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, (payload) => {
-        const updated = shapeProduct(payload.new);
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, (payload) => {
+        pendingLoads.current.forEach(changes => changes.push(payload));
         setData((prev) => ({
           ...prev,
-          products: prev.products.map((p) => (p.id === updated.id ? updated : p)),
+          products: applyProductChange(prev.products, payload),
         }));
       })
       .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") loadData(true);
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           console.error("Realtime холболт амжилтгүй боллоо:", status, err);
         }
       });
-    return () => { supabase.removeChannel(channel); };
+    const refreshVisible = () => { if (!document.hidden) loadData(true); };
+    document.addEventListener("visibilitychange", refreshVisible);
+    window.addEventListener("online", refreshVisible);
+    return () => {
+      ++loadVersion.current;
+      document.removeEventListener("visibilitychange", refreshVisible);
+      window.removeEventListener("online", refreshVisible);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Mobile/tab background руу орох үед browser нь setInterval-ыг удаашруулдаг
@@ -210,7 +231,7 @@ export default function App() {
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, lineHeight: 1.6, marginBottom: 16 }}>
             Интернэт холболтоо шалгана уу, эсвэл <code>  CuppA  </code>дэлгүүртэй холбогдож мэдээллэнэ үү Баярлалаа
           </div>
-          <button onClick={loadData} style={{ ...primaryBtn, marginTop: 16 }}>Дахин оролдох</button>
+          <button onClick={() => loadData()} style={{ ...primaryBtn, marginTop: 16 }}>Дахин оролдох</button>
         </div>
       </div>
     );

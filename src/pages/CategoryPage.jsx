@@ -1,4 +1,3 @@
-import { prioritizeTaggedProducts } from "../utils/products.js";
 import React, { useRef, useContext } from "react";
 import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
