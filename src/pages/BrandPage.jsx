@@ -1,4 +1,5 @@
 import { prioritizeTaggedProducts } from "../utils/products.js";
+import { useSearchParams } from "react-router-dom";
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
@@ -10,22 +11,22 @@ import { displayPrice } from "../utils/products.js";
 export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
   const brand = brands.find((b) => b.id === brandId);
-  const [categoryFilter, setCategoryFilter] = useState(null);
-  const [subFilter, setSubFilter] = useState(null);
+  const [params, setParams] = useSearchParams();
+  const categoryFilter = Number(params.get('category')) || null;
+  const subFilter = params.get('sub') || null;
   const [sortBy, setSortBy] = useState("default");
   const productsRef = useRef(null);
   const chooseCategory = (id) => {
-    setCategoryFilter(id);
-    setSubFilter(null);
+    setParams(id == null ? {} : { category: String(id) });
   };
   const chooseSub = (sub) => {
-    setSubFilter(sub);
+    setParams({ category: String(categoryFilter), sub: sub || '' });
     if (window.innerWidth <= 720 && productsRef.current) {
       setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
 
-  useEffect(() => { setCategoryFilter(null); setSubFilter(null); setSortBy("default"); }, [brandId]);
+  useEffect(() => { setSortBy("default"); }, [brandId]);
 
   if (!brand) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Брэнд олдсонгүй.</div>;
 

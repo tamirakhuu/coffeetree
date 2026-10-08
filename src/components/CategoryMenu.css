@@ -9,7 +9,9 @@
 .category-menu-expand.is-expanded { grid-template-rows: 1fr; opacity: 1; }
 .category-menu-expand > div { overflow: hidden; }
 .category-menu-options { margin: 6px 0 10px 18px; padding-left: 14px; border-left: 1px solid #ddd; }
-.category-menu-options button { display: block; width: 100%; min-height: 42px; text-align: left; padding: 10px; border: 0; border-radius: 6px; background: transparent; }
+.category-menu-options > button { display: block; width: 100%; min-height: 42px; text-align: left; padding: 10px; border: 0; border-radius: 6px; background: transparent; }
+.category-menu .category-menu { min-width: 0; }
+.category-menu .category-menu .category-menu-toggle > span { white-space: normal; }
 .category-menu button:hover { background: #f3f3f3; }
 .category-menu button:focus-visible { outline: 2px solid #555; outline-offset: -2px; }
 @media (prefers-reduced-motion: reduce) { .category-menu-expand, .category-menu-toggle svg { transition: none; } }

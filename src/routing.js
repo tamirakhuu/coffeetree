@@ -30,7 +30,7 @@ export function pathForView(view, brands = []) {
     case "category": return `/category/${view.categoryId}${view.sub != null ? `?sub=${encodeURIComponent(view.sub)}` : ''}`;
     case "brand": {
       const brand = brands.find((b) => b.id === view.brandId);
-      return `/brand/${slugify(brand?.name || "")}`;
+      return `/brand/${slugify(brand?.name || "")}${view.categoryId != null ? `?category=${view.categoryId}&sub=${encodeURIComponent(view.sub || '')}` : ''}`;
     }
     case "product": return `/product/${view.productId}`;
     case "bestseller": return "/bestseller";
