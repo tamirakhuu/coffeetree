@@ -363,7 +363,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
       </div>
       </div>
 
-      {similarProducts.length > 0 && (
+      {productCategory?.name?.trim() !== "Бусад" && similarProducts.length > 0 && (
         <div style={{ marginTop: 54 }}>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Төстэй бүтээгдэхүүн</div>
           <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
