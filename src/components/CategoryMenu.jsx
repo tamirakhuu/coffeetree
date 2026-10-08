@@ -4,9 +4,10 @@ import { CategoryIcon } from './CategoryIcon.jsx';
 import { DataContext } from '../context/DataContext.jsx';
 import './CategoryMenu.css';
 
-export function CategoryMenu({ categories, onSelect }) {
+export function CategoryMenu({ categories, onSelect, products: scopedProducts }) {
   const [expanded, setExpanded] = useState(null);
-  const { products } = useContext(DataContext);
+  const { products: allProducts } = useContext(DataContext);
+  const products = scopedProducts || allProducts;
   return <div className="category-menu">{categories.map(category => {
     const subs = [...new Set([...(category.sub || []), ...products.filter(p => p.categoryId === category.id).map(p => p.sub)]
       .map(s => s?.trim()).filter(Boolean))];

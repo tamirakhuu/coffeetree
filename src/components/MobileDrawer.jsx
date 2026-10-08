@@ -3,6 +3,7 @@ import { X, ChevronDown, ChevronRight, Star, GraduationCap, Info } from "lucide-
 import { CategoryIcon } from "./CategoryIcon.jsx";
 import "./MobileDrawer.css";
 import { CategoryMenu } from "./CategoryMenu.jsx";
+import { BrandMenu } from "./BrandMenu.jsx";
 
 export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBrand, setView }) {
   const [section, setSection] = useState("products");
@@ -61,13 +62,7 @@ export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, 
             Брэнд <ChevronDown size={18} />
           </button>
           <div id="mobile-menu-brands" hidden={section !== "brands"}>
-            <div className="mobile-menu-brands">
-              {brands.map(brand => <button key={brand.id} onClick={() => go(() => onGoBrand(brand.id))}>
-                <span className="mobile-menu-brand-logo">{brand.logo ? <img src={brand.logo} alt="" /> : brand.name?.slice(0, 1)}</span>
-                <span>{brand.name}</span><ChevronRight size={15} />
-              </button>)}
-              {!brands.length && <p>Брэнд алга</p>}
-            </div>
+            <BrandMenu brands={brands} onSelect={(id, categoryId, sub) => go(() => onGoBrand(id, categoryId, sub))} />
           </div>
         </section>
       </nav>

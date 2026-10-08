@@ -1,5 +1,6 @@
 import { MobileDrawer } from "./MobileDrawer.jsx";
 import { CategoryMenu } from "./CategoryMenu.jsx";
+import { BrandMenu } from "./BrandMenu.jsx";
 export { MobileDrawer } from "./MobileDrawer.jsx";
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { T, sideLabel, iconBtnStyle } from "../theme.js";
@@ -36,22 +37,7 @@ export function ProductsMegaMenu({ categories, brands, activeCat, setActiveCat, 
       </div>}
       {section === "brands" && <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
         <div style={sideLabel}>Брэнд</div>
-        <div className="cuppa-megamenu-brands">
-          {brands.map((b) => (
-            <button key={b.id} onClick={() => onGoBrand(b.id)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "transparent", color: T.ink,
-                border: "none", borderRadius: 8, padding: "6px 10px", fontFamily: "'Ubuntu', sans-serif",
-                fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = T.ink; e.currentTarget.style.color = T.cream; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = T.ink; }}
-            >
-              {b.logo && <img src={b.logo} alt="" style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", flexShrink: 0, background: "#fff" }} />}
-              {b.name}
-            </button>
-          ))}
-        </div>
+        <BrandMenu brands={brands} onSelect={onGoBrand} />
         {brands.length === 0 && (
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.inkSoft, opacity: 0.7 }}>Брэнд алга</div>
         )}
@@ -102,7 +88,7 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
   }, [menuOpen]);
 
   const goCategory = (id, sub = '') => { setView({ name: "category", categoryId: id, sub }); setMenuOpen(false); setDrawerOpen(false); };
-  const goBrand = (brandId) => { setView({ name: "brand", brandId }); setMenuOpen(false); setDrawerOpen(false); };
+  const goBrand = (brandId, categoryId, sub) => { setView({ name: "brand", brandId, categoryId, sub }); setMenuOpen(false); setDrawerOpen(false); };
 
   return (
     <>

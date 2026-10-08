@@ -1,7 +1,7 @@
-import React, { useRef, useContext } from "react";
+import React, { useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./CategoryPage.css";
-import { T, subBtn } from "../theme.js";
+import { T } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
@@ -10,19 +10,9 @@ import { displayPrice, groupProductsByBrand, prioritizeTaggedProducts } from "..
 
 export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const subFilter = params.get('sub') || null;
-  const productsRef = useRef(null);
-  const chooseSub = (s) => {
-    setParams(previous => { const next = new URLSearchParams(previous); next.set('sub', s || ''); return next; });
-    if (window.innerWidth <= 720 && productsRef.current) {
-      setTimeout(() => productsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
-    }
-  };
   const category = categories.find((c) => c.id === categoryId);
-  const categoryProducts = products.filter(p => p.categoryId === categoryId);
-  const subcategories = [...new Set([...(category?.sub || []), ...categoryProducts.map(p => p.sub)]
-    .map(s => s?.trim()).filter(Boolean))];
 
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub?.trim() === subFilter);
@@ -42,13 +32,6 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
       <PageHeaderRow onBack={() => setView({ name: "home" })} title={subFilter ? `${category.name} / ${subFilter}` : category.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        <CollapsibleSection label="ТӨРӨЛ">
-          <button onClick={() => chooseSub(null)} style={subBtn(subFilter === null)}>Бүгд</button>
-          {subcategories.map((s) => (
-            <button key={s} onClick={() => chooseSub(s)} style={subBtn(subFilter === s)}>{s}</button>
-          ))}
-        </CollapsibleSection>
-
         <CollapsibleSection label="Брэнд">
           {brandsInCat.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
@@ -61,7 +44,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
         </CollapsibleSection>
       </aside>
 
-      <div ref={productsRef} style={{ flex: 1, minWidth: 280 }}>
+      <div style={{ flex: 1, minWidth: 280 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.inkSoft }}>{items.length} бүтээгдэхүүн</span>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
