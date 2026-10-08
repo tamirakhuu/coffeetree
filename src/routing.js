@@ -27,7 +27,7 @@ export function viewFromLocation(pathname, search) {
 
 export function pathForView(view, brands = []) {
   switch (view?.name) {
-    case "category": return `/category/${view.categoryId}`;
+    case "category": return `/category/${view.categoryId}${view.sub != null ? `?sub=${encodeURIComponent(view.sub)}` : ''}`;
     case "brand": {
       const brand = brands.find((b) => b.id === view.brandId);
       return `/brand/${slugify(brand?.name || "")}`;

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { X, ChevronDown, ChevronRight, Star, GraduationCap, Info } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon.jsx";
 import "./MobileDrawer.css";
+import { CategoryMenu } from "./CategoryMenu.jsx";
 
 export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, onGoBrand, setView }) {
   const [section, setSection] = useState("products");
@@ -52,11 +53,7 @@ export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, 
             Бүтээгдэхүүн <ChevronDown size={18} />
           </button>
           <div id="mobile-menu-products" hidden={section !== "products"}>
-            <div className="mobile-menu-categories">
-              {categories.map(category => <button key={category.id} onClick={() => go(() => onGoCategory(category.id))}>
-                <span className="mobile-menu-icon"><CategoryIcon icon={category.icon} size={20} /></span><span>{category.name}</span>
-              </button>)}
-            </div>
+            <CategoryMenu categories={categories} onSelect={(id, sub) => go(() => onGoCategory(id, sub))} />
           </div>
         </section>
         <section className="mobile-menu-section">

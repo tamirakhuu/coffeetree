@@ -1,23 +1,31 @@
 import React, { useRef, useContext } from "react";
+import { useSearchParams } from "react-router-dom";
+import "./CategoryPage.css";
 import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
 import { CollapsibleSection } from "../components/CollapsibleSection.jsx";
-import { displayPrice, groupProductsByBrand } from "../utils/products.js";
+import { displayPrice, groupProductsByBrand, prioritizeTaggedProducts } from "../utils/products.js";
 
-export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, subFilter, setSubFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
+export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
+  const [params, setParams] = useSearchParams();
+  const subFilter = params.get('sub') || null;
   const productsRef = useRef(null);
   const chooseSub = (s) => {
-    setSubFilter(s);
+    setParams(previous => { const next = new URLSearchParams(previous); next.set('sub', s || ''); return next; });
     if (window.innerWidth <= 720 && productsRef.current) {
-      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+      setTimeout(() => productsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
   const category = categories.find((c) => c.id === categoryId);
+  const categoryProducts = products.filter(p => p.categoryId === categoryId);
+  const subcategories = [...new Set([...(category?.sub || []), ...categoryProducts.map(p => p.sub)]
+    .map(s => s?.trim()).filter(Boolean))];
+
   let items = products.filter((p) => p.categoryId === categoryId);
-  if (subFilter) items = items.filter((p) => p.sub === subFilter);
+  if (subFilter) items = items.filter((p) => p.sub?.trim() === subFilter);
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
   if (sortBy === "default") items = groupProductsByBrand(items, brands);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
@@ -29,13 +37,14 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
 
   if (!category) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Ангилал олдсонгүй.</div>;
 
+
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
-      <PageHeaderRow onBack={() => setView({ name: "home" })} title={category.name} />
+      <PageHeaderRow onBack={() => setView({ name: "home" })} title={subFilter ? `${category.name} / ${subFilter}` : category.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
         <CollapsibleSection label="ТӨРӨЛ">
           <button onClick={() => chooseSub(null)} style={subBtn(subFilter === null)}>Бүгд</button>
-          {category.sub.map((s) => (
+          {subcategories.map((s) => (
             <button key={s} onClick={() => chooseSub(s)} style={subBtn(subFilter === s)}>{s}</button>
           ))}
         </CollapsibleSection>
