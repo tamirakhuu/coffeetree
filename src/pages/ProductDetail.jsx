@@ -116,6 +116,8 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
+  const isOtherCategory = [productCategory?.name, product.sub]
+    .some(name => name?.trim().toLowerCase() === "бусад");
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
   const isColdCup = product.sub === "Хүйтний аяга";
   const bulkPrice = getBulkUnitPrice(product);
@@ -363,7 +365,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
       </div>
       </div>
 
-      {productCategory?.name?.trim() !== "Бусад" && similarProducts.length > 0 && (
+      {!isOtherCategory && similarProducts.length > 0 && (
         <div style={{ marginTop: 54 }}>
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 18 }}>Төстэй бүтээгдэхүүн</div>
           <div className="cuppa-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 18 }}>
