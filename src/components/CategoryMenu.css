@@ -1,0 +1,15 @@
+.category-menu { min-width: 240px; }
+.category-menu button { font: inherit; font-size: 14px; color: #222; cursor: pointer; }
+.category-menu-toggle { box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 20px minmax(0, 1fr) 16px; align-items: center; gap: 10px; min-height: 44px; padding: 12px 10px; border: 0; border-radius: 8px; background: transparent; text-align: left; }
+.category-menu-toggle > span { white-space: nowrap; }
+.category-menu-toggle > :first-child { justify-self: center; }
+.category-menu-toggle[aria-expanded=true] { background: #f1f1f1; }
+.category-menu-toggle svg { flex-shrink: 0; transition: transform .25s ease; }
+.category-menu-expand { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s ease, opacity .28s ease; }
+.category-menu-expand.is-expanded { grid-template-rows: 1fr; opacity: 1; }
+.category-menu-expand > div { overflow: hidden; }
+.category-menu-options { margin: 6px 0 10px 18px; padding-left: 14px; border-left: 1px solid #ddd; }
+.category-menu-options button { display: block; width: 100%; min-height: 42px; text-align: left; padding: 10px; border: 0; border-radius: 6px; background: transparent; }
+.category-menu button:hover { background: #f3f3f3; }
+.category-menu button:focus-visible { outline: 2px solid #555; outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .category-menu-expand, .category-menu-toggle svg { transition: none; } }

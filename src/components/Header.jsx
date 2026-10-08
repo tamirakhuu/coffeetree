@@ -1,4 +1,5 @@
 import { MobileDrawer } from "./MobileDrawer.jsx";
+import { CategoryMenu } from "./CategoryMenu.jsx";
 export { MobileDrawer } from "./MobileDrawer.jsx";
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { T, sideLabel, iconBtnStyle } from "../theme.js";
@@ -31,20 +32,7 @@ export function ProductsMegaMenu({ categories, brands, activeCat, setActiveCat, 
     }}>
       {section === "products" && <div className="cuppa-megamenu-col" style={{ minWidth: 170 }}>
         <div style={sideLabel}>Бүтээгдэхүүн</div>
-        {categories.map((c) => {
-          const active = activeCategory?.id === c.id;
-          return (
-            <button key={c.id} onClick={() => onGoCategory(c.id)} onMouseEnter={() => setActiveCat(c.id)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left",
-                background: active ? T.ink : "transparent", color: active ? T.cream : T.ink,
-                border: "none", borderRadius: 8, padding: "8px 10px", fontFamily: "'Ubuntu', sans-serif",
-                fontSize: 13.5, fontWeight: 500, cursor: "pointer", marginBottom: 2,
-              }}>
-              <CategoryIcon icon={c.icon} size={15} /> {c.name}
-            </button>
-          );
-        })}
+        <CategoryMenu categories={categories} onSelect={onGoCategory} />
       </div>}
       {section === "brands" && <div className="cuppa-megamenu-col" style={{ minWidth: 150 }}>
         <div style={sideLabel}>Брэнд</div>
@@ -113,7 +101,7 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
     }
   }, [menuOpen]);
 
-  const goCategory = (id) => { setView({ name: "category", categoryId: id }); setMenuOpen(false); setDrawerOpen(false); };
+  const goCategory = (id, sub = '') => { setView({ name: "category", categoryId: id, sub }); setMenuOpen(false); setDrawerOpen(false); };
   const goBrand = (brandId) => { setView({ name: "brand", brandId }); setMenuOpen(false); setDrawerOpen(false); };
 
   return (
