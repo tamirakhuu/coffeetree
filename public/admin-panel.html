@@ -1362,6 +1362,16 @@ async function saveProduct(id) {
   const unitEnabled = !coffeeEnabled && document.getElementById('pf-unit-enable').checked;
   const boxEnabled = !coffeeEnabled && document.getElementById('pf-box-enable').checked;
   if (!coffeeEnabled && !unitEnabled && !boxEnabled) { toast('Дор хаяж нэг худалдах хэлбэр (ширхэг эсвэл хайрцаг) сонгоно уу', 'err'); return; }
+  for (const [type, enabled, label] of [['unit', unitEnabled, 'Ширхэгийн'], ['box', boxEnabled, 'Хайрцгийн']]) {
+    if (!enabled) continue;
+    const input = document.getElementById('pf-' + type + '-price');
+    const price = Number(input.value);
+    const invalid = !input.value.trim() || input.validity.badInput || !Number.isFinite(price) || price <= 0;
+    const message = invalid ? `${label} үнийг заавал 0-ээс их тоогоор оруулна уу.` : '';
+    document.getElementById('pf-' + type + '-price-error').textContent = message;
+    input.setAttribute('aria-invalid', String(invalid));
+    if (invalid) { toast(message, 'err'); input.focus(); return; }
+  }
   const coffeeSizes = {};
   if (coffeeEnabled) {
     if (!coffeeSizesEligible()) { toast("Хэмжээний сонголтыг зөвхөн Jack's Coffee брэндийн кофенд ашиглана.", 'err'); return; }
