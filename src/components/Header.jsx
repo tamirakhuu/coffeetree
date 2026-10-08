@@ -140,6 +140,7 @@ export function Header({ setView, cartCount, wishCount, onOpenCart, onSearch }) 
             </NavButton>
             <NavButton onClick={() => { setMenuOpen(false); setView({ name: "bestseller" }); }}>Бестселлэр</NavButton>
             <NavButton onClick={() => { setMenuOpen(false); setView({ name: "training" }); }}>Сургалт</NavButton>
+            <NavButton onClick={() => { setMenuOpen(false); setView({ name: "about" }); }}>Бидний тухай</NavButton>
           </div>
 
           {menuOpen && (
