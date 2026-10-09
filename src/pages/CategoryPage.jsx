@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./CategoryPage.css";
-import { T } from "../theme.js";
+import { T, subBtn } from "../theme.js";
 import { DataContext } from "../context/DataContext.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { PageHeaderRow } from "../components/PageHeaderRow.jsx";
@@ -10,9 +10,18 @@ import { displayPrice, groupProductsByBrand, prioritizeTaggedProducts } from "..
 
 export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, sortBy, setSortBy, onOpen, onQuickAdd, wishlist, onToggleWish, setView }) {
   const { categories, brands, products } = useContext(DataContext);
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const subFilter = params.get('sub') || null;
   const category = categories.find((c) => c.id === categoryId);
+  const subcategories = [...new Set([...(category?.sub || []), ...products.filter(p => p.categoryId === categoryId).map(p => p.sub)]
+    .map(name => name?.trim()).filter(Boolean))];
+  const showTypes = !params.has('sub') || params.get('types') === '1';
+  const chooseType = sub => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    next.set('sub', sub || '');
+    next.set('types', '1');
+    return next;
+  });
 
   let items = products.filter((p) => p.categoryId === categoryId);
   if (subFilter) items = items.filter((p) => p.sub?.trim() === subFilter);
@@ -32,6 +41,10 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
       <PageHeaderRow onBack={() => setView({ name: "home" })} title={subFilter ? `${category.name} / ${subFilter}` : category.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
+        {showTypes && subcategories.length > 0 && <CollapsibleSection label="ТӨРӨЛ">
+          <button onClick={() => chooseType(null)} style={subBtn(!subFilter)}>Бүгд</button>
+          {subcategories.map(sub => <button key={sub} onClick={() => chooseType(sub)} style={subBtn(subFilter === sub)}>{sub}</button>)}
+        </CollapsibleSection>}
         <CollapsibleSection label="Брэнд">
           {brandsInCat.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
