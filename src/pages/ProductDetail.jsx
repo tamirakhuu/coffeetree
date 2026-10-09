@@ -9,7 +9,7 @@ import { DataContext } from "../context/DataContext.jsx";
 import { ProductArt } from "../components/ProductArt.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { BackButton } from "../components/BackButton.jsx";
-import { availableOptionTypes, displayPrice } from "../utils/products.js";
+import { availableOptionTypes, displayPrice, hasFreeSyrupPump } from "../utils/products.js";
 
 const detailImgArrowStyle = {
   position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
@@ -116,6 +116,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const brand = brands.find((b) => b.id === product.brandId);
   const images = product.images && product.images.length ? product.images : null;
   const productCategory = categories.find((c) => c.id === product.categoryId);
+  const freeSyrupPump = hasFreeSyrupPump(product, brands, categories);
   const isOtherCategory = [productCategory?.name, product.sub]
     .some(name => name?.trim().toLowerCase() === "бусад");
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
@@ -123,7 +124,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const bulkPrice = getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
-  const suggestedPump = pumpName
+  const suggestedPump = pumpName && !freeSyrupPump
     ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
     : null;
   const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
@@ -211,6 +212,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           {!product.hasCoffeeSizes && product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
           {product.shelfLife?.trim() && <div style={{ fontSize: 14, color: T.ink, marginBottom: 18, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}><strong>Хадгалах хугацаа:</strong> {product.shelfLife}</div>}
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{product.desc}</p>
+          {freeSyrupPump && <div style={{ padding: '14px 16px', marginBottom: 22, border: '1px solid #ddd', borderRadius: 10, fontSize: 14, lineHeight: 1.5 }}><strong>Syrup pump үнэгүй дагалдана</strong><div>Нэг захиалгад TACO сиропын төрөл бүрд 1 ширхэг. Ширхэг, хайрцаг болон тоо хэмжээнээс үл хамаарна.</div></div>}
 
           {availableTypes.length > 1 && (
           <div style={{ marginBottom: 22 }}>
