@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import { freePumpProducts } from "../utils/products.js";
 import { X, Plus, Minus, ArrowRight, Trash2 } from "lucide-react";
 import { computeLineTotal } from "../api.js";
 import { T, iconBtnStyle, stepBtn } from "../theme.js";
@@ -7,7 +8,8 @@ import { DataContext } from "../context/DataContext.jsx";
 import { availableOptionTypes } from "../utils/products.js";
 
 export function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtotal, onCheckout }) {
-  const { products } = useContext(DataContext);
+  const { products, brands, categories } = useContext(DataContext);
+  const pumpCount = freePumpProducts(cart, products, brands, categories).length;
 
   return (
     <>
@@ -56,6 +58,7 @@ export function CartDrawer({ open, onClose, cart, updateQty, removeItem, subtota
         </div>
         {cart.length > 0 && (
           <div style={{ padding: 20, borderTop: `1px solid ${T.line}` }}>
+            {pumpCount > 0 && <p>Syrup pump: {pumpCount} ширхэг үнэгүй (төрөл бүрд 1)</p>}
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, fontFamily: "'Ubuntu', sans-serif" }}>
               <span style={{ color: T.inkSoft, fontSize: 14 }}>Нийт дүн</span>
               <span style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 17, color: T.ink }}>{money(subtotal)}</span>

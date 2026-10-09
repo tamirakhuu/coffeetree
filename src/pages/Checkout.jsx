@@ -2,6 +2,7 @@ import { T, sideLabel, inputStyle } from "../theme.js";
 import { money } from "../utils/format.js";
 import { DataContext } from "../context/DataContext.jsx";
 import React, { useState, useContext } from "react";
+import { freePumpProducts } from "../utils/products.js";
 import { ChevronLeft } from "lucide-react";
 import { computeLineTotal, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from "../api.js";
 
@@ -15,7 +16,8 @@ function ReviewRow({ label, value }) {
 }
 
 export default function Checkout({ cart, subtotal, onConfirm, onBack }) {
-  const { products } = useContext(DataContext);
+  const { products, brands, categories } = useContext(DataContext);
+  const pumpCount = freePumpProducts(cart, products, brands, categories).length;
   const [form, setForm] = useState({
     name: "", phone: "", address: "",
     receiptType: "", registerNumber: "", deliveryMethod: "",
@@ -114,6 +116,7 @@ export default function Checkout({ cart, subtotal, onConfirm, onBack }) {
             );
           })}
           <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 10, paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+            {pumpCount > 0 && <div>Syrup pump: {pumpCount} ширхэг үнэгүй (төрөл бүрд 1)</div>}
             <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
               <span>Барааны дүн</span>
               <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(subtotal)}</span>

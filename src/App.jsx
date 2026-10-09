@@ -9,7 +9,7 @@ import { DataContext } from "./context/DataContext.jsx";
 import { Toast } from "./components/Toast.jsx";
 import { ScrollToTopButton } from "./components/ScrollToTopButton.jsx";
 import { Header } from "./components/Header.jsx";
-import { availableOptionTypes } from "./utils/products.js";
+import { availableOptionTypes, freePumpProducts } from "./utils/products.js";
 import { CartDrawer } from "./components/CartDrawer.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { lazyPage, PageLoading } from "./components/LazyPage.jsx";
@@ -180,7 +180,13 @@ export default function App() {
   };
   const handleConfirm = async (form) => {
     try {
-      const { orderNumber, subtotal, deliveryFee } = await submitOrder({ form, cart, products: data.products });
+      const pumpIds = new Set(freePumpProducts(cart, data.products, data.brands, data.categories));
+      const orderCart = cart.map(item => {
+        const note = (item.note || '').split(' · ').filter(part => !part.startsWith('Syrup pump')).join(' · ');
+        const gift = pumpIds.delete(item.productId) ? 'Syrup pump үнэгүй: энэ төрлийн нийт захиалгад 1 ширхэг' : '';
+        return { ...item, note: [note, gift].filter(Boolean).join(' · ') };
+      });
+      const { orderNumber, subtotal, deliveryFee } = await submitOrder({ form, cart: orderCart, products: data.products });
       setOrderNumber(orderNumber);
       // Reload authoritative stocks; realtime may already have delivered this sale.
       // Subtracting locally again would count the same order twice.

@@ -1,6 +1,12 @@
 
 
 export const COFFEE_SIZES = { size_1kg: '1кг', size_250g: '250гр' };
+export function freePumpProducts(cart, products, brands, categories) {
+  return [...new Set(cart.filter(item => item.qty > 0 && products.some(p => p.id === item.productId && hasFreeSyrupPump(p, brands, categories))).map(item => item.productId))];
+}
+export const hasFreeSyrupPump = (product, brands, categories) =>
+  brands.find(b => b.id === product.brandId)?.name?.trim().toLowerCase() === 'taco' &&
+  categories.find(c => c.id === product.categoryId)?.name?.trim().toLowerCase() === 'сироп';
 export const availableOptionTypes = (product) =>
   product ? (product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
     .filter((t) => (product[t]?.price || 0) > 0) : [];
