@@ -51,6 +51,7 @@
     subcategory text,
     origin text,
     size text,
+    shelf_life text,
     tag text,
     discount_ends_at timestamptz,
     color text default '#6B4226',
