@@ -209,6 +209,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           <h1 className="cuppa-detail-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
           {product.origin?.trim() && <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>Үйлдвэрлэсэн улс : {product.origin}</div>}
           {!product.hasCoffeeSizes && product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
+          {product.shelfLife?.trim() && <div style={{ fontSize: 14, color: T.ink, marginBottom: 18, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}><strong>Хадгалах хугацаа:</strong> {product.shelfLife}</div>}
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{product.desc}</p>
 
           {availableTypes.length > 1 && (
