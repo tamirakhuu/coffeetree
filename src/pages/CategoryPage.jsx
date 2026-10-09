@@ -41,11 +41,11 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>
       <PageHeaderRow onBack={() => setView({ name: "home" })} title={subFilter ? `${category.name} / ${subFilter}` : category.name} />
       <aside className="cuppa-category-aside" style={{ width: 210, flexShrink: 0 }}>
-        {showTypes && subcategories.length > 0 && <CollapsibleSection label="ТӨРӨЛ">
+        {showTypes && subcategories.length > 0 && <CollapsibleSection key={`types-${categoryId}`} label="ТӨРӨЛ" defaultOpen={false}>
           <button onClick={() => chooseType(null)} style={subBtn(!subFilter)}>Бүгд</button>
           {subcategories.map(sub => <button key={sub} onClick={() => chooseType(sub)} style={subBtn(subFilter === sub)}>{sub}</button>)}
         </CollapsibleSection>}
-        <CollapsibleSection label="Брэнд">
+        <CollapsibleSection key={`brands-${categoryId}`} label="Брэнд" defaultOpen={false}>
           {brandsInCat.map((b) => (
             <label key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.ink, padding: "5px 2px", cursor: "pointer" }}>
               <input type="checkbox" checked={brandFilter.includes(b.id)}
