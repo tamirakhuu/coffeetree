@@ -122,7 +122,7 @@ try {
   await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-desktop.png'), fullPage: true });
   for (const width of [820, 390, 320]) {
     await page.setViewportSize({ width, height: 844 });
-    assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), width > 720 ? 4 : 2);
+    assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), width > 720 ? 4 : 3);
     assert.ok(await page.locator('.home-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Home overflow at ${width}px`);
     if (width === 390) await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-mobile.png'), fullPage: true });
   }

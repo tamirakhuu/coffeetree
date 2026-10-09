@@ -8,12 +8,16 @@ export function PageLoading() {
 class PageErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) {
+    console.error("Page render/load failed:", error, info.componentStack);
+  }
   render() {
     if (!this.state.error) return this.props.children;
+    const assetLoadFailed = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk .* failed|Unable to preload CSS/i.test(this.state.error.message || "");
     return (
       <div role="alert" style={{ padding: 40, textAlign: "center" }}>
         <p>Хуудсыг ачаалж чадсангүй. Холболтоо шалгаад дахин оролдоно уу.</p>
-        <button onClick={this.props.onRetry}>Дахин оролдох</button>
+        <button onClick={assetLoadFailed ? () => window.location.reload() : this.props.onRetry}>Дахин оролдох</button>
       </div>
     );
   }
