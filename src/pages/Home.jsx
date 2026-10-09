@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { DataContext } from "../context/DataContext.jsx";
 import { CategoryIcon } from "../components/CategoryIcon.jsx";
-import { ProductCard } from "../components/ProductCard.jsx";
+import { ProductRail } from "../components/ProductRail.jsx";
 import { availableOptionTypes } from "../utils/products.js";
 import { money, formatCountdown } from "../utils/format.js";
 import "./Home.css";
@@ -71,10 +71,11 @@ export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWi
         })}</div>
       </section>
       {collections.map(collection => {
-        const items = products.filter(p => p.tag === collection.tag).slice(0, 4);
+        const items = products.filter(p => p.tag === collection.tag).sort((a, b) =>
+          ((Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)) || Number(b.id) - Number(a.id));
         return <section className={`home-section${collection.view === "new" ? " home-section-gray" : ""}`} key={collection.view} aria-labelledby={`home-${collection.view}`}>
           <div className="home-section-heading"><div><h2 id={`home-${collection.view}`}>{collection.title}</h2></div><button className="home-text-link" onClick={() => setView({ name: collection.view })}>Бүгдийг үзэх <ArrowRight size={16} /></button></div>
-          <div className="home-products cuppa-product-grid">{items.map(p => <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd} isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />)}</div>
+          <ProductRail items={items} label={collection.title} onOpen={onOpen} onQuickAdd={onQuickAdd} wishlist={wishlist} onToggleWish={onToggleWish} />
           {!items.length && <p className="home-empty">Одоогоор бүтээгдэхүүн нэмэгдээгүй байна.</p>}
         </section>;
       })}

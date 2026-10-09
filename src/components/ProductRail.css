@@ -1,0 +1,6 @@
+.product-rail { display: flex; gap: 20px; overflow-x: auto; padding: 4px 2px 14px; scrollbar-width: thin; scrollbar-color: #ccc transparent; overscroll-behavior-x: contain; }
+.product-rail-card { flex: 0 0 calc((100% - 60px) / 4); min-width: 0; display: flex; }
+.product-rail-card > * { width: 100%; min-width: 0; }
+.product-rail:focus-visible { outline: 2px solid #888; outline-offset: 4px; }
+@media (max-width: 900px) { .product-rail-card { flex-basis: calc((100% - 40px) / 3); } }
+@media (max-width: 720px) { .product-rail { gap: 10px; } .product-rail-card { flex-basis: calc((100% - 10px) / 2); } }
