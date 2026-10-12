@@ -1,5 +1,5 @@
 .home-page{background:#fff;color:#111111;padding:32px 0 64px}
-.home-container{max-width:1180px;margin:auto;padding:0 24px}
+.home-container{max-width:var(--store-content-width,1560px);box-sizing:border-box;margin:auto;padding:0 clamp(24px,3vw,48px)}
 .home-page button{font:inherit;cursor:pointer}
 .home-page button:focus-visible{outline:3px solid #111;outline-offset:4px}
 .home-hero{display:grid;grid-template-columns:1fr 1fr;min-height:360px;background:#fff;border:1px solid #e5e5e5;border-radius:24px;overflow:hidden}
@@ -34,6 +34,7 @@
 .home-category-card:focus-visible{outline:2px solid #555;outline-offset:4px}
 .home-category-image{height:116px;width:100%;max-width:132px;display:flex;align-items:center;justify-content:center;color:#666}
 .home-category-image img{width:100%;height:100%;object-fit:contain;transition:transform .25s ease}
+@media(min-width:1051px){.home-category-image{height:clamp(130px,10vw,166px);max-width:174px}.home-category-card>span{font-size:15px}.home-product-image{height:clamp(280px,22vw,340px)}.home-hero-media{min-height:400px}}
 .home-category-card>span{min-height:40px;margin-top:14px;display:flex;align-items:center;justify-content:center;font-family:'Ubuntu',sans-serif;font-size:14px;font-weight:500;line-height:1.4;color:#111111;text-align:center;text-decoration-color:transparent;text-underline-offset:5px}
 @media(hover:hover){.home-category-card:hover .home-category-image img{transform:scale(1.04)}.home-category-card:hover>span{text-decoration:underline;text-decoration-thickness:1px}}
 .home-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}

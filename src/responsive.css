@@ -2,6 +2,16 @@ html {
   overflow-x: hidden;
 }
 
+:root { --store-content-width: 1560px; }
+@media (min-width: 721px) {
+  .cuppa-header-row, .cuppa-category-layout {
+    max-width: var(--store-content-width) !important;
+    box-sizing: border-box;
+    padding-left: clamp(24px, 3vw, 48px) !important;
+    padding-right: clamp(24px, 3vw, 48px) !important;
+  }
+}
+
 .cuppa-search-input::placeholder {
   color: #5C4E3E;
   opacity: 0.75;
