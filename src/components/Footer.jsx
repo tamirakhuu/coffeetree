@@ -8,7 +8,7 @@ export function Footer({ setView, transparent }) {
   return (
     <footer style={{ position: "relative", background: transparent ? "transparent" : T.paper, color: T.ink, padding: "26px 20px 16px" }}>
       <div style={{
-        maxWidth: 1180, margin: "0 auto 16px", display: "grid",
+        maxWidth: "calc(var(--store-content-width, 1560px) - 96px)", margin: "0 auto 16px", display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18,
       }}>
         <div className="cuppa-footer-logo" style={{ display: "flex", alignItems: "flex-start" }}>
@@ -46,7 +46,7 @@ export function Footer({ setView, transparent }) {
         ))}
       </div>
       <div style={{
-        maxWidth: 1180, margin: "0 auto", display: "flex", flexDirection: "column",
+        maxWidth: "calc(var(--store-content-width, 1560px) - 96px)", margin: "0 auto", display: "flex", flexDirection: "column",
         alignItems: "center", gap: 10, paddingTop: 14, borderTop: `1px solid ${T.line}`, textAlign: "center",
       }}>
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
