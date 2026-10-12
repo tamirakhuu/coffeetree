@@ -29,7 +29,7 @@
 @media(max-width:720px){.home-section-gray{padding:28px 16px;margin-left:-16px;margin-right:-16px}}
 .home-section-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px}
 .home-section h2{font-size:26px;font-weight:500;margin:7px 0 0}.home-section-note{font-size:13px;color:#666}
-.home-category-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:28px 16px}
+.home-category-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:28px 16px}
 .home-category-card{display:flex;flex-direction:column;align-items:center;background:transparent;border:0;border-radius:8px;padding:12px 6px;min-width:0;cursor:pointer}
 .home-category-card:focus-visible{outline:2px solid #555;outline-offset:4px}
 .home-category-image{height:116px;width:100%;max-width:132px;display:flex;align-items:center;justify-content:center;color:#666}
