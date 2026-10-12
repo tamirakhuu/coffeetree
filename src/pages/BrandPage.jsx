@@ -21,9 +21,9 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
     setParams(id == null ? {} : { category: String(id) });
   };
   const chooseSub = (sub) => {
-    setParams({ category: String(categoryFilter), sub: sub || '' });
+    setParams(categoryFilter ? { category: String(categoryFilter), sub: sub || '' } : { sub: sub || '' });
     if (window.innerWidth <= 720 && productsRef.current) {
-      setTimeout(() => productsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+      setTimeout(() => productsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
     }
   };
 
@@ -33,10 +33,10 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
 
   let items = products.filter((p) => p.brandId === brandId);
   if (categoryFilter) items = items.filter((p) => inCategory(p, categoryFilter));
-  const presentSubs = [...new Set(items.flatMap(p => categoryFilter ? categorySubs(p, categoryFilter) : [p.sub?.trim()]).filter(Boolean))];
+  const presentSubs = [...new Set(items.flatMap(p => categoryFilter ? categorySubs(p, categoryFilter) : [p.sub?.trim(), p.extraSub?.trim()]).filter(Boolean))];
   const configuredSubs = categories.find(c => c.id === categoryFilter)?.sub || [];
-  const subcategories = [...new Set([...configuredSubs, ...presentSubs])].filter(sub => presentSubs.includes(sub));
-  if (categoryFilter && subFilter) items = items.filter(p => categorySubs(p, categoryFilter).includes(subFilter));
+  const subcategories = [...new Set([...configuredSubs.map(s => s.trim()), ...presentSubs])].filter(sub => presentSubs.includes(sub));
+  if (subFilter) items = items.filter(p => (categoryFilter ? categorySubs(p, categoryFilter) : [p.sub?.trim(), p.extraSub?.trim()]).includes(subFilter));
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
@@ -53,14 +53,14 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
             <img src={brand.logo} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", border: `1px solid ${T.line}` }} />
           </div>
         )}
-        <CollapsibleSection label="Ангилал">
+        <CollapsibleSection key={`categories-${brandId}`} label="Ангилал" defaultOpen={false}>
           <button onClick={() => chooseCategory(null)} style={subBtn(categoryFilter === null)}>Бүгд</button>
           {categoriesInBrand.map((c) => (
             <button key={c.id} onClick={() => chooseCategory(c.id)} style={subBtn(categoryFilter === c.id)}>{c.name}</button>
           ))}
         </CollapsibleSection>
-        {categoryFilter && subcategories.length > 0 && (
-          <CollapsibleSection key={categoryFilter} label="Дэд ангилал">
+        {subcategories.length > 0 && (
+          <CollapsibleSection key={`types-${brandId}-${categoryFilter}`} label="Дэд ангилал" defaultOpen={false}>
             <button onClick={() => chooseSub(null)} aria-pressed={subFilter === null} style={subBtn(subFilter === null)}>Бүгд</button>
             {subcategories.map(sub => (
               <button key={sub} onClick={() => chooseSub(sub)} aria-pressed={subFilter === sub} style={subBtn(subFilter === sub)}>{sub}</button>
