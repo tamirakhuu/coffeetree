@@ -6,6 +6,7 @@ import { ProductRail } from "../components/ProductRail.jsx";
 import { availableOptionTypes } from "../utils/products.js";
 import { money, formatCountdown } from "../utils/format.js";
 import "./Home.css";
+import { sortHomeCategories } from "../utils/homeCategories.js";
 
 export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWish }) {
   const { categories, products } = useContext(DataContext);
@@ -65,7 +66,7 @@ export default function Home({ setView, onOpen, onQuickAdd, wishlist, onToggleWi
       </section>}
       <section className="home-section home-section-gray" id="home-categories" aria-labelledby="home-categories-title">
         <div className="home-section-heading"><div><h2 id="home-categories-title">Барааны ангилал</h2></div></div>
-        <div className="home-category-grid">{categories.map(c => {
+        <div className="home-category-grid">{sortHomeCategories(categories).map(c => {
           const img = c.tileImage || products.find(p => p.categoryId === c.id && p.images?.length)?.images[0];
           return <button key={c.id} className="home-category-card" onClick={() => setView({ name: "category", categoryId: c.id })}><div className="home-category-image">{img ? <img src={img} alt="" loading="lazy" /> : <CategoryIcon icon={c.icon} size={44} />}</div><span>{c.name}</span></button>;
         })}</div>
