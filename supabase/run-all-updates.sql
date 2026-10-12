@@ -223,6 +223,8 @@ end $$;
 
 alter table public.products add column if not exists size text;
 alter table public.products add column if not exists shelf_life text;
+alter table public.products add column if not exists extra_category_id bigint references public.categories(id) on delete set null;
+alter table public.products add column if not exists extra_subcategory text;
 alter table public.products add column if not exists bulk_unit_price numeric
   check (bulk_unit_price is null or bulk_unit_price > 0);
 alter table public.products add column if not exists discount_ends_at timestamptz;

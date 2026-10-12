@@ -52,6 +52,8 @@
     origin text,
     size text,
     shelf_life text,
+    extra_category_id bigint references categories(id) on delete set null,
+    extra_subcategory text,
     tag text,
     discount_ends_at timestamptz,
     color text default '#6B4226',
