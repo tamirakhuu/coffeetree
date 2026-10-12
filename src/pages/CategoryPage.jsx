@@ -1,3 +1,4 @@
+import { inCategory, categorySubs } from "../utils/products.js";
 import React, { useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./CategoryPage.css";
@@ -13,7 +14,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
   const [params, setParams] = useSearchParams();
   const subFilter = params.get('sub') || null;
   const category = categories.find((c) => c.id === categoryId);
-  const subcategories = [...new Set([...(category?.sub || []), ...products.filter(p => p.categoryId === categoryId).map(p => p.sub)]
+  const subcategories = [...new Set([...(category?.sub || []), ...products.filter(p => inCategory(p, categoryId)).flatMap(p => categorySubs(p, categoryId))]
     .map(name => name?.trim()).filter(Boolean))];
   const showTypes = !params.has('sub') || params.get('types') === '1';
   const chooseType = sub => setParams(previous => {
@@ -23,8 +24,8 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
     return next;
   });
 
-  let items = products.filter((p) => p.categoryId === categoryId);
-  if (subFilter) items = items.filter((p) => p.sub?.trim() === subFilter);
+  let items = products.filter((p) => inCategory(p, categoryId));
+  if (subFilter) items = items.filter((p) => categorySubs(p, categoryId).includes(subFilter));
   if (brandFilter.length) items = items.filter((p) => brandFilter.includes(p.brandId));
   if (sortBy === "default") items = groupProductsByBrand(items, brands);
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
@@ -32,7 +33,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
   items = prioritizeTaggedProducts(items);
 
-  const brandsInCat = brands.filter((b) => products.some((p) => p.categoryId === categoryId && p.brandId === b.id));
+  const brandsInCat = brands.filter((b) => products.some((p) => inCategory(p, categoryId) && p.brandId === b.id));
 
   if (!category) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Ангилал олдсонгүй.</div>;
 

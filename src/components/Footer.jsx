@@ -51,7 +51,7 @@ export function Footer({ setView, transparent }) {
       }}>
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button onClick={() => setView({ name: "about" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Бидний тухай</button>
-          <button onClick={() => setView({ name: "order-status" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Захиалга хянах</button>
+          <button className="footer-order-tracking" onClick={() => setView({ name: "order-status" })} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Захиалга хянах</button>
           <Link to="/terms" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Үйлчилгээний нөхцөл</Link>
           <Link to="/privacy" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.ink, opacity: 0.7, textDecoration: "none" }}>Нууцлалын бодлого</Link>
         </div>

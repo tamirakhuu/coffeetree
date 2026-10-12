@@ -16,6 +16,7 @@ html {
 }
 
 @media (max-width: 720px) {
+  .footer-order-tracking { display: none; }
   /* headers busad tomruulah */
   main, footer {
     zoom: 1.08;

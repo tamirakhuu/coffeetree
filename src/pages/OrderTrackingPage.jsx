@@ -50,7 +50,7 @@ export default function OrderTrackingPage({ setView }) {
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "50px 20px 90px" }}>
       <BackButton onClick={() => setView({ name: "home" })} />
       <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 26, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Захиалгаа хянах</h1>
-      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, marginBottom: 22 }}>Захиалга хийхдээ ашигласан утасны дугаараа оруулж, төлөвөө шалгаарай.</p>
+      <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, marginBottom: 22 }}>Захиалга хийхдээ ашигласан утасны дугаараа оруулж захиалгын төлөвөө шалгаарай. Хүргэгдсэн захиалга харагдахгүй болохыг анхаарна уу.</p>
       <form onSubmit={handleSearch} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 26 }}>
         <input placeholder="Утасны дугаар" inputMode="numeric" value={phone}
           onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))} style={inputStyle} />

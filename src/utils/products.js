@@ -1,6 +1,8 @@
 
 
 export const COFFEE_SIZES = { size_1kg: '1кг', size_250g: '250гр' };
+export const inCategory = (p, id) => p.categoryId === id || p.extraCategoryId === id;
+export const categorySubs = (p, id) => [p.categoryId === id ? p.sub : null, p.extraCategoryId === id ? p.extraSub : null].filter(Boolean).map(s => s.trim());
 export function freePumpProducts(cart, products, brands, categories) {
   return [...new Set(cart.filter(item => item.qty > 0 && products.some(p => p.id === item.productId && hasFreeSyrupPump(p, brands, categories))).map(item => item.productId))];
 }

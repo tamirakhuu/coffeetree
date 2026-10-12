@@ -1,3 +1,4 @@
+import { inCategory, categorySubs } from "../utils/products.js";
 import React, { useContext, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { CategoryIcon } from './CategoryIcon.jsx';
@@ -9,7 +10,7 @@ export function CategoryMenu({ categories, onSelect, products: scopedProducts })
   const { products: allProducts } = useContext(DataContext);
   const products = scopedProducts || allProducts;
   return <div className="category-menu">{categories.map(category => {
-    const subs = [...new Set([...(category.sub || []), ...products.filter(p => p.categoryId === category.id).map(p => p.sub)]
+    const subs = [...new Set([...(category.sub || []), ...products.filter(p => inCategory(p, category.id)).flatMap(p => categorySubs(p, category.id))]
       .map(s => s?.trim()).filter(Boolean))];
     const open = expanded === category.id;
     return <div key={category.id}>

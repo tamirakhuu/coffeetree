@@ -1,3 +1,4 @@
+import { inCategory, categorySubs } from "../utils/products.js";
 import { prioritizeTaggedProducts } from "../utils/products.js";
 import { useSearchParams } from "react-router-dom";
 import React, { useState, useEffect, useRef, useContext } from "react";
@@ -31,17 +32,17 @@ export default function BrandPage({ brandId, onOpen, onQuickAdd, wishlist, onTog
   if (!brand) return <div style={{ padding: 60, textAlign: "center", color: T.inkSoft }}>Брэнд олдсонгүй.</div>;
 
   let items = products.filter((p) => p.brandId === brandId);
-  if (categoryFilter) items = items.filter((p) => p.categoryId === categoryFilter);
-  const presentSubs = [...new Set(items.map(p => p.sub?.trim()).filter(Boolean))];
+  if (categoryFilter) items = items.filter((p) => inCategory(p, categoryFilter));
+  const presentSubs = [...new Set(items.flatMap(p => categoryFilter ? categorySubs(p, categoryFilter) : [p.sub?.trim()]).filter(Boolean))];
   const configuredSubs = categories.find(c => c.id === categoryFilter)?.sub || [];
   const subcategories = [...new Set([...configuredSubs, ...presentSubs])].filter(sub => presentSubs.includes(sub));
-  if (categoryFilter && subFilter) items = items.filter(p => p.sub?.trim() === subFilter);
+  if (categoryFilter && subFilter) items = items.filter(p => categorySubs(p, categoryFilter).includes(subFilter));
   if (sortBy === "price_asc") items = [...items].sort((a, b) => displayPrice(a) - displayPrice(b));
   if (sortBy === "price_desc") items = [...items].sort((a, b) => displayPrice(b) - displayPrice(a));
   if (sortBy === "new") items = [...items].sort((a, b) => (b.tag === "шинэ") - (a.tag === "шинэ"));
   items = prioritizeTaggedProducts(items);
 
-  const categoriesInBrand = categories.filter((c) => products.some((p) => p.brandId === brandId && p.categoryId === c.id));
+  const categoriesInBrand = categories.filter((c) => products.some((p) => p.brandId === brandId && inCategory(p, c.id)));
 
   return (
     <div className="cuppa-category-layout" style={{ maxWidth: 1180, margin: "0 auto", padding: "36px 20px 80px", display: "flex", gap: 32, flexWrap: "wrap" }}>

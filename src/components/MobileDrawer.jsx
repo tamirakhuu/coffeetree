@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, ChevronDown, ChevronRight, Star, GraduationCap, Info } from "lucide-react";
+import { ScanBox } from './ScanBox.jsx';
 import { CategoryIcon } from "./CategoryIcon.jsx";
 import "./MobileDrawer.css";
 import { CategoryMenu } from "./CategoryMenu.jsx";
@@ -47,6 +48,7 @@ export function MobileDrawer({ open, onClose, categories, brands, onGoCategory, 
         <div className="mobile-menu-shortcuts">
           <button onClick={() => go(() => setView({ name: "bestseller" }))}><Star size={19} /><span>Бестселлэр</span><ChevronRight size={16} /></button>
           <button onClick={() => go(() => setView({ name: "training" }))}><GraduationCap size={19} /><span>Сургалт</span><ChevronRight size={16} /></button>
+          <button onClick={() => go(() => setView({ name: "order-status" }))}><ScanBox size={19} /><span>Захиалга хянах</span><ChevronRight size={16} /></button>
           <button onClick={() => go(() => setView({ name: "about" }))}><Info size={19} /><span>Бидний тухай</span><ChevronRight size={16} /></button>
         </div>
         <section className="mobile-menu-section">
