@@ -16,7 +16,7 @@ export default function CategoryPage({ categoryId, brandFilter, setBrandFilter, 
   const category = categories.find((c) => c.id === categoryId);
   const subcategories = [...new Set([...(category?.sub || []), ...products.filter(p => inCategory(p, categoryId)).flatMap(p => categorySubs(p, categoryId))]
     .map(name => name?.trim()).filter(Boolean))];
-  const showTypes = !params.has('sub') || params.get('types') === '1';
+  const showTypes = subcategories.length > 0;
   const chooseType = sub => setParams(previous => {
     const next = new URLSearchParams(previous);
     next.set('sub', sub || '');
