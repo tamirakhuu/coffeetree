@@ -26,7 +26,6 @@ export function LegalLayout({ children }) {
   const toHome = () => navigate("/");
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
   const goToView = (view) => navigate(pathForView(view, data.brands));
-  useEffect(() => { window.scrollTo(0, 0); }, []);
   useEffect(() => { fetchBootstrap().then(setData).catch(() => {}); }, []);
   return (
     <DataContext.Provider value={data}>

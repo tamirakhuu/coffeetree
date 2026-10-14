@@ -42,7 +42,6 @@ export default function App() {
   const navigate = useNavigate();
   const view = viewFromLocation(location.pathname, location.search);
   const setView = (v) => navigate(pathForView(v, data.brands));
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname, location.search]);
   const [cart, setCart] = useState(() => {
     try { const raw = localStorage.getItem("cuppa:cart:guest"); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
   });
@@ -262,7 +261,7 @@ export default function App() {
   } else if (view.name === "wishlist") {
     body = <WishlistPage wishlist={wishlist} onOpen={openProduct} onQuickAdd={quickAdd} onToggleWish={toggleWish} setView={setView} />;
   } else if (view.name === "checkout") {
-    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => setView({ name: "home" })} />;
+    body = <Checkout cart={cart} subtotal={subtotal} onConfirm={handleConfirm} onBack={() => window.history.state?.idx > 0 ? navigate(-1) : setView({ name: "home" })} />;
   } else if (view.name === "payment") {
     body = <QpayPayment orderNumber={orderNumber} subtotal={orderTotal} invoice={qpayInvoice} onPaid={handlePaid} />;
   } else if (view.name === "confirmation") {
