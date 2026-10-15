@@ -124,7 +124,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const bulkPrice = getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
-  const suggestedPump = pumpName && !freeSyrupPump
+  const suggestedPump = pumpName
     ? products.find((p) =>
       p.id !== product.id &&
       p.name.trim().toLowerCase() === pumpName.toLowerCase() &&
