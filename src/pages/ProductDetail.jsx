@@ -125,7 +125,10 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   const suggestedPump = pumpName && !freeSyrupPump
-    ? products.find((p) => p.id !== product.id && p.name.trim().toLowerCase() === pumpName.toLowerCase())
+    ? products.find((p) =>
+      p.id !== product.id &&
+      p.name.trim().toLowerCase() === pumpName.toLowerCase() &&
+      (pumpName !== "Syrup pump" || (product.brandId != null && p.brandId === product.brandId)))
     : null;
   const cupSuggestions = cupAccessorySuggestions(product, productCategory?.name, products);
   const suggestions = prioritizeTaggedProducts(suggestedPump ? [suggestedPump, ...cupSuggestions] : cupSuggestions);
