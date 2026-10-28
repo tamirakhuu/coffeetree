@@ -1,0 +1,79 @@
+/* Shared visual language with the TIMEKEEP attendance app. Screen only so
+   receipt typography and print layout remain independent. */
+:root {
+  --ink:#18253c; --ink-soft:#64738b; --paper:#f7f9fc; --card:#fff;
+  --line:#e7ebf2; --cherry:#2365e5; --cherry-dark:#1254d2;
+  --cream:#f7f9fc; --green-light:#e6f8ef;
+  --sh:0 2px 10px #1c376008; --radius:12px;
+}
+body { font-family:Inter,Arial,sans-serif; }
+button,input,select,textarea,.mono,.btn,.badge,th,.stat-val,
+.page-header h1,.card-title,.modal-title,.form-section-title,
+.order-num-btn,.order-phone,.notif-badge,.login-card input,
+.login-logo,.login-sub,.sidebar-logo .b,.mobile-topbar .b {
+  font-family:Inter,Arial,sans-serif;
+}
+.sidebar { width:250px; background:#fff; color:var(--ink); border-right:1px solid var(--line); padding:15px 14px; }
+.sidebar-logo { padding:14px 13px 28px; border-bottom:1px solid #edf0f5; }
+.sidebar-logo img,.mobile-topbar img { filter:brightness(0); }
+.sidebar-logo .b,.mobile-topbar .b { color:#8896a9; letter-spacing:1.3px; margin-top:7px; }
+.sidebar-body { padding:12px 0; overflow-y:auto; }
+.sidebar-foot { padding:14px 0 0; border-color:#edf0f5; }
+.notif-bell { padding:14px 0 0; }
+.nav-item { padding:14px 15px; gap:13px; margin-bottom:6px; color:#64738b; opacity:1; font-size:13px; font-weight:600; border-radius:9px; }
+.nav-item:hover { background:#f2f6fd; }
+.nav-item.active { background:#edf4ff; color:#2465df; }
+.nav-icon { width:19px; height:19px; }
+.nav-item .badge,.notif-badge { background:#e9f1ff; color:#2768df; }
+.main { margin-left:250px; min-width:0; padding:35px 38px; }
+.page { max-width:1700px; margin:0 auto; }
+.page-header { margin-bottom:29px; gap:18px; }
+.page-header h1 { font-size:27px; letter-spacing:-.6px; font-weight:800; }
+.page-header p { color:#8896a9; font-size:12px; margin-top:9px; line-height:1.6; }
+.card { overflow:hidden; }
+.card-head { padding:20px 24px; }
+.card-title { font-size:16px; }
+.stat-grid { gap:17px; }
+.stat-card { padding:24px; }
+.stat-val { font-size:29px; font-weight:800; letter-spacing:-1px; }
+.stat-label { color:#7b8b9f; margin-top:8px; }
+th { background:#f8fafd; color:#75869c; padding:15px 14px; letter-spacing:.02em; }
+td { color:#4b5b71; border-bottom-color:#f0f2f6; padding:13px 14px; }
+tr:hover td { background:#fafcff; }
+.btn { border-radius:8px; padding:11px 15px; font-size:12px; gap:9px; }
+.btn-sm { padding:7px 12px; }
+.btn-outline { color:#485b76; border-color:#e2e8f0; }
+.btn-outline:hover { background:#f5f8fd; }
+.badge { border-radius:6px; letter-spacing:0; }
+.badge.done,.badge.handed_over { color:#168356; }
+.chip { border-radius:6px; background:#f8fafd; color:#64738b; }
+.product-group-row td { background:#f1f6ff; color:#2f5186; }
+.product-category-tabs button[aria-pressed="true"] { background:#edf4ff; color:#2465df; border-color:#cbdfff; }
+.modal { background:white; box-shadow:0 20px 60px #18253c26; }
+.modal-head,.modal-foot { background:#f8fafd; }
+.form-section { background:#f8fafd; }
+input:not([type=checkbox]):not([type=radio]),select,textarea { border-color:#e1e7ef; border-radius:8px; color:#33455b; }
+:focus-visible { outline:2px solid #2365e5; outline-offset:3px; }
+.notif-item.unread { background:#edf4ff; }
+.login-screen { background:#f7f9fc; }
+.login-card { background:#fff; border:1px solid var(--line); box-shadow:0 12px 40px #1c37600d; }
+.login-btn { background:#2365e5; border-radius:8px; }
+.login-btn:hover { background:#1254d2; }
+@media (max-width:1100px) and (min-width:861px) {
+  .main { padding:30px 22px; }
+}
+@media (max-width:860px) {
+  .main { margin-left:0; padding:22px 14px; }
+  .mobile-topbar { background:white; color:var(--ink); border-bottom:1px solid var(--line); }
+  .mobile-topbar .hamburger { color:#42577b; }
+  .sidebar { padding-top:76px; box-shadow:0 10px 40px #192a4514; }
+  .sidebar-logo { padding-bottom:16px; }
+  .page-header h1 { font-size:23px; }
+  .stat-card { padding:16px; }
+  .stat-val { font-size:23px; }
+  .stat-grid { gap:10px; }
+  .product-group-row td,.table-wrap table:not(.orders-table) .product-group-row { background:#f1f6ff; }
+}
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; }
+}
