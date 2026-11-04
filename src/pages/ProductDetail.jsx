@@ -220,7 +220,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{product.desc}</p>
           {freeSyrupPump && <div style={{ padding: '14px 16px', marginBottom: 22, border: '1px solid #ddd', borderRadius: 10, fontSize: 14, lineHeight: 1.5 }}><strong>Syrup pump үнэгүй дагалдана</strong><div>Нэг захиалгад TACO сиропын төрөл бүрд 1 ширхэг. Ширхэг, хайрцаг болон тоо хэмжээнээс үл хамаарна.</div></div>}
 
-          {availableTypes.length > 1 && (
+          {(availableTypes.length > 1 || product.hasPowderSizes) && (
           <div style={{ marginBottom: 22 }}>
             <div style={sideLabel}>{(product.hasCoffeeSizes || product.hasPowderSizes) ? 'Хэмжээ сонгох' : 'Савлагаа сонгох'}</div>
             <div style={{ display: "flex", gap: 10 }}>

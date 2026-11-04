@@ -11,7 +11,7 @@ export const hasFreeSyrupPump = (product, brands, categories) =>
   brands.find(b => b.id === product.brandId)?.name?.trim().toLowerCase() === 'taco' &&
   categories.find(c => c.id === product.categoryId)?.name?.trim().toLowerCase() === 'сироп';
 export const availableOptionTypes = (product) =>
-  product ? (product.hasPowderSizes ? Object.keys(POWDER_SIZES) : product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
+  product ? (product.hasPowderSizes ? product.sizeKeys || Object.keys(POWDER_SIZES) : product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
     .filter((t) => (product[t]?.price || 0) > 0) : [];
 
 export const displayPrice = (product) => {

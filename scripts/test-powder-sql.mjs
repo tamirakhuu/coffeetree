@@ -35,6 +35,22 @@ export async function testPowderSQL(db) {
   await db.exec('savepoint invalid_price');
   await assert.rejects(() => db.exec("update products set powder_sizes=jsonb_set(powder_sizes,'{powder_l,price}','0') where id=98001"));
   await db.exec('rollback to invalid_price');
+  await db.query('insert into products(id,name,powder_sizes) values (98002,$1,$2::jsonb)', ['Custom sizes', JSON.stringify({
+    variant_small: {label:'300 ml',price:8000,stock:7,bulk_qty:null,bulk_price:null},
+    variant_large: {label:'750 ml',price:12000,stock:8,bulk_qty:5,bulk_price:10000},
+  })]);
+  for (const [key,qty,total,label] of [['variant_small',5,40000,'300 ml'],['variant_large',5,50000,'750 ml']]) {
+    await db.query("select submit_order('Test','99112233','','personal','','pickup',$1::jsonb)",
+      [JSON.stringify([{product_id:98002,option_type:key,qty}])]);
+    const item = (await db.query('select option_label,line_total from order_items where product_id=98002 and option_type=$1',[key])).rows[0];
+    assert.equal(item.option_label,label);
+    assert.equal(Number(item.line_total),total);
+    await db.query('select restore_stock(98002,$1,$2)',[key,qty]);
+  }
+  const restored = (await db.query('select powder_sizes from products where id=98002')).rows[0].powder_sizes;
+  assert.equal(restored.variant_small.stock,7);
+  assert.equal(restored.variant_large.stock,8);
+  console.log('PASS custom size names, optional bulk prices, order labels and stock restoration');
   await db.exec('rollback');
   console.log('PASS powder L/M/S pricing at 4/5 units, separate stock, restore, overselling and invalid prices');
 }

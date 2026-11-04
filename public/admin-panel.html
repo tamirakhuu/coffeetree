@@ -1076,8 +1076,8 @@ function renderProducts() {
       <td data-th="Бараа"><div style="display:flex;align-items:center;gap:10px">${thumb}<div><div style="font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--ink-soft)">${p.subcategory||''}</div></div></div></td>
       <td data-th="Брэнд">${brand?.name||'-'}</td>
       <td data-th="Ангилал">${cat?.name||'-'}</td>
-      <td data-th="Ширхэг үнэ" class="mono">${p.powder_sizes ? Object.entries(p.powder_sizes).map(([key,v]) => `<div>${key.slice(-1).toUpperCase()}: ${fmt(v.price)} / ${v.stock}</div>`).join('') : p.coffee_sizes ? `1кг: ${fmt(p.coffee_sizes.size_1kg.price)}<div>Нөөц: ${p.coffee_sizes.size_1kg.stock} ш</div>` : `${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.unit_label)}</div>`}</td>
-      <td data-th="Хайрцаг үнэ" class="mono">${p.powder_sizes ? Object.entries(p.powder_sizes).map(([key,v]) => `<div>${key.slice(-1).toUpperCase()}: ${v.bulk_qty}+ / ${fmt(v.bulk_price)}</div>`).join('') : p.coffee_sizes ? `250гр: ${fmt(p.coffee_sizes.size_250g.price)}<div>Нөөц: ${p.coffee_sizes.size_250g.stock} ш</div>` : `${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.box_label)}</div>`}</td>
+      <td data-th="Ширхэг үнэ" class="mono">${p.powder_sizes ? Object.entries(p.powder_sizes).map(([key,v]) => `<div>${escapeHtml(v.label || key.slice(-1).toUpperCase())}: ${fmt(v.price)} / ${v.stock}</div>`).join('') : p.coffee_sizes ? `1кг: ${fmt(p.coffee_sizes.size_1kg.price)}<div>Нөөц: ${p.coffee_sizes.size_1kg.stock} ш</div>` : `${fmt(p.unit_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.unit_label)}</div>`}</td>
+      <td data-th="Хайрцаг үнэ" class="mono">${p.powder_sizes ? Object.entries(p.powder_sizes).map(([key,v]) => `<div>${escapeHtml(v.label || key.slice(-1).toUpperCase())}: ${v.bulk_qty ? v.bulk_qty + '+ / ' + fmt(v.bulk_price) : '-'}</div>`).join('') : p.coffee_sizes ? `250гр: ${fmt(p.coffee_sizes.size_250g.price)}<div>Нөөц: ${p.coffee_sizes.size_250g.stock} ш</div>` : `${fmt(p.box_price)}<div style="font-size:10.5px;color:var(--ink-soft)">${unitWord(p.box_label)}</div>`}</td>
       <td data-th="Үйлдэл"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openEditProduct(${p.id})">Засах</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${p.id})">Устгах</button></div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="6" class="empty">${(query || brandFilter || categoryFilter) ? 'Тохирох бараа алга' : 'Одоогоор бараа алга'}</td></tr>`;
@@ -1189,13 +1189,11 @@ function productFormHtml(p) {
       </div>
     </div>
     <div class="form-section">
-      <label id="pf-powder-label"><input type="checkbox" id="pf-powder-enable" ${p.powder_sizes ? 'checked disabled' : ''} onchange="toggleCoffeeSizes()"> Powder сав — L / M / S</label>
+      <label id="pf-powder-label"><input type="checkbox" id="pf-powder-enable" ${p.powder_sizes ? 'checked disabled' : ''} onchange="toggleCoffeeSizes()"> Хэмжээ нэмэх</label>
       <div id="pf-powder-fields" style="display:${p.powder_sizes ? '' : 'none'}">
-        <p class="form-hint">Хэмжээ тус бүрийн нөөц тусдаа. Бөөний тоо тухайн хэмжээнд үйлчилнэ.</p>
-        ${[['powder_l','L',11500,11000],['powder_m','M',9500,9000],['powder_s','S',7500,7000]].map(([key,label,price,bulk]) => `
-          <div class="form-grid form-grid-2">
-            ${[['price','Ширхэгийн үнэ',price],['bulk_qty','Бөөний тоо',5],['bulk_price','Бөөний нэгж үнэ',bulk],['stock','Нөөц',5]].map(([field,title,value]) => `<div class="fg"><label>${label} — ${title}</label><input type="number" min="${field==='stock'?0:1}" step="1" id="pf-${key}-${field}" value="${p.powder_sizes?.[key]?.[field] ?? value}"></div>`).join('')}
-          </div>`).join('')}
+        <p class="form-hint">Хэмжээний нэр, үнэ, нөөцийг оруулна уу. Бөөний тоо болон үнийг шаардлагатай бол бөглөнө.</p>
+        <div id="pf-size-rows">${Object.entries(p.powder_sizes || { ['variant_' + crypto.randomUUID().replaceAll('-','')]: {} }).map(([key,value]) => sizeRowHtml(key,value,!!p.powder_sizes)).join('')}</div>
+        <button type="button" class="btn btn-outline" onclick="addSizeRow()">+ Хэмжээ нэмэх</button>
       </div>
     </div>
     <div id="pf-legacy-pricing" style="display:${p.coffee_sizes || p.powder_sizes ? 'none' : ''}">
@@ -1259,9 +1257,17 @@ function coffeeSizesEligible() {
   const category = document.getElementById('pf-category').selectedOptions[0]?.textContent || '';
   return /^jack['’]s\s+coffee$/i.test(brand.trim()) && category.includes('Кофе');
 }
-function powderSizesEligible() {
-  const name = document.getElementById('pf-name').value.trim();
-  return !!productFormHtml.powderSnapshot || /^powder\s+(?:сав|container|canister|jar)(?:\s+[lms])?$/i.test(name);
+function sizeRowHtml(key, value = {}, saved = false) {
+  const label = value.label || ({powder_l:'L',powder_m:'M',powder_s:'S'})[key] || '';
+  return `<div class="form-section size-row" data-size-key="${key}">
+    <div class="form-grid form-grid-2">
+      <div class="fg"><label>Хэмжээний нэр</label><input id="pf-${key}-label" maxlength="80" placeholder="Жишээ: L, 500мл, 1кг" value="${escapeHtml(label)}"></div>
+      ${[['price','Үнэ (₮)'],['stock','Нөөц (ш)'],['bulk_qty','Бөөний тоо (заавал биш)'],['bulk_price','Бөөний нэгж үнэ (заавал биш)']].map(([field,title]) => `<div class="fg"><label>${title}</label><input type="number" min="${field==='stock'?0:1}" step="1" id="pf-${key}-${field}" value="${value[field] ?? (field==='stock'?0:'')}"></div>`).join('')}
+    </div>${saved ? '' : '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.size-row\').remove()">Хасах</button>'}
+  </div>`;
+}
+function addSizeRow() {
+  document.getElementById('pf-size-rows').insertAdjacentHTML('beforeend', sizeRowHtml('variant_' + crypto.randomUUID().replaceAll('-','')));
 }
 function toggleCoffeeSizes() {
   const eligible = coffeeSizesEligible();
@@ -1270,7 +1276,7 @@ function toggleCoffeeSizes() {
   if (!eligible && !productFormHtml.coffeeSnapshot) input.checked = false;
   document.getElementById('pf-coffee-fields').style.display = input.checked ? '' : 'none';
   const powderInput = document.getElementById('pf-powder-enable');
-  const powderEligible = powderSizesEligible();
+  const powderEligible = !input.checked;
   document.getElementById('pf-powder-label').parentElement.style.display = powderEligible ? '' : 'none';
   if (!powderEligible) powderInput.checked = false;
   const powder = powderInput.checked;
@@ -1385,24 +1391,32 @@ async function saveProduct(id) {
   if (!name) { toast('Барааны нэр оруулна уу', 'err'); return; }
   const coffeeEnabled = document.getElementById('pf-coffee-enable').checked;
   const powderEnabled = document.getElementById('pf-powder-enable').checked;
-  if (powderEnabled && !powderSizesEligible()) { toast('L / M / S сонголтыг зөвхөн Powder саванд ашиглана.', 'err'); return; }
   if (coffeeEnabled && powderEnabled) { toast('Кофе болон Powder савны хэмжээг зэрэг сонгох боломжгүй.', 'err'); return; }
   const powderSizes = {};
   if (powderEnabled) {
-    for (const key of ['powder_l','powder_m','powder_s']) {
-      const values = {};
+    const rows = [...document.querySelectorAll('#pf-size-rows .size-row')];
+    if (!rows.length) { toast('Дор хаяж нэг хэмжээ нэмнэ үү.', 'err'); return; }
+    const labels = new Set();
+    for (const row of rows) {
+      const key = row.dataset.sizeKey;
+      const label = document.getElementById(`pf-${key}-label`).value.trim();
+      if (!label || labels.has(label.toLowerCase())) { toast('Давхцахгүй хэмжээний нэр оруулна уу.', 'err'); return; }
+      labels.add(label.toLowerCase());
+      const values = {label};
       for (const field of ['price','bulk_qty','bulk_price','stock']) {
         const input = document.getElementById(`pf-${key}-${field}`);
+        if (field.startsWith('bulk_') && !input.value.trim()) { values[field] = null; continue; }
         const value = Number(input.value);
         if (!input.value.trim() || !Number.isFinite(value) || value < (field === 'stock' ? 0 : 1) || !Number.isInteger(value) || value > 2147483647) {
           toast('Хэмжээ тус бүрийн үнэ, бөөний тоо, нөөцийг зөв оруулна уу.', 'err'); input.focus(); return;
         }
         values[field] = value;
       }
+      if ((values.bulk_qty == null) !== (values.bulk_price == null)) { toast('Бөөний тоо болон үнийг хоёуланг нь бөглөнө үү.', 'err'); return; }
       if (values.bulk_price > values.price) { toast('Бөөний үнэ ширхэгийн үнээс их байж болохгүй.', 'err'); return; }
       powderSizes[key] = values;
     }
-    if (document.getElementById('pf-tag').value === 'хямдралтай') { toast('Powder саванд бөөний үнэ үйлчилнэ. Хямдралтай шошгыг салгана уу.', 'err'); return; }
+    if (document.getElementById('pf-tag').value === 'хямдралтай') { toast('Хэмжээгээр зарах үед хямдралтай шошгыг салгана уу. Бөөний үнэ оруулах боломжтой.', 'err'); return; }
   }
   const unitEnabled = !coffeeEnabled && !powderEnabled && document.getElementById('pf-unit-enable').checked;
   const boxEnabled = !coffeeEnabled && !powderEnabled && document.getElementById('pf-box-enable').checked;
