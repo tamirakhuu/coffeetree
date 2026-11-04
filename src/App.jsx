@@ -151,7 +151,7 @@ export default function App() {
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
-  const quickAdd = (product) => product.hasCoffeeSizes ? openProduct(product) : addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
+  const quickAdd = (product) => (product.hasCoffeeSizes || product.hasPowderSizes) ? openProduct(product) : addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
   const updateQty = (productId, optionType, note, qty) =>
     setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
   const removeItem = (productId, optionType, note) =>

@@ -84,7 +84,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
     setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType("Хавтгай"); setZoomed(false);
-  }, [product?.id, product?.hasCoffeeSizes]);
+  }, [product?.id, product?.hasCoffeeSizes, product?.hasPowderSizes]);
   useEffect(() => {
     const el = zoomWrapRef.current;
     if (!el) return;
@@ -121,8 +121,8 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
     .some(name => name?.trim().toLowerCase() === "бусад");
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
   const isColdCup = product.sub === "Хүйтний аяга";
-  const bulkPrice = getBulkUnitPrice(product);
-  const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
+  const bulkPrice = product.hasPowderSizes ? option.bulkUnitPrice : getBulkUnitPrice(product);
+  const bulkBoxQty = bulkPrice > 0 ? (product.hasPowderSizes ? option.bulkQty : product.bulkQty) : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
   // The small squeeze bottle does not fit a sauce pump.
   const incompatibleSaucePump = pumpName === "Sauce pump" &&
@@ -215,14 +215,14 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
           <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.moss, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{brand?.name} · {product.sub}</div>
           <h1 className="cuppa-detail-title" style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 32, fontWeight: 700, color: T.ink, margin: "0 0 8px", lineHeight: 1.15 }}>{product.name}</h1>
           {product.origin?.trim() && <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, color: T.inkSoft, marginBottom: 18 }}>Үйлдвэрлэсэн улс : {product.origin}</div>}
-          {!product.hasCoffeeSizes && product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
+          {!(product.hasCoffeeSizes || product.hasPowderSizes) && product.size?.trim() && <div className="cuppa-product-size" style={{ fontSize: 14, color: T.ink, marginBottom: 18, overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}><strong>Хэмжээ:</strong> {product.size}</div>}
           {product.shelfLife?.trim() && <div style={{ fontSize: 14, color: T.ink, marginBottom: 18, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}><strong>Хадгалах хугацаа:</strong> {product.shelfLife}</div>}
           <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 15, color: T.ink, lineHeight: 1.6, marginBottom: 26, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{product.desc}</p>
           {freeSyrupPump && <div style={{ padding: '14px 16px', marginBottom: 22, border: '1px solid #ddd', borderRadius: 10, fontSize: 14, lineHeight: 1.5 }}><strong>Syrup pump үнэгүй дагалдана</strong><div>Нэг захиалгад TACO сиропын төрөл бүрд 1 ширхэг. Ширхэг, хайрцаг болон тоо хэмжээнээс үл хамаарна.</div></div>}
 
           {availableTypes.length > 1 && (
           <div style={{ marginBottom: 22 }}>
-            <div style={sideLabel}>{product.hasCoffeeSizes ? 'Хэмжээ сонгох' : 'Савлагаа сонгох'}</div>
+            <div style={sideLabel}>{(product.hasCoffeeSizes || product.hasPowderSizes) ? 'Хэмжээ сонгох' : 'Савлагаа сонгох'}</div>
             <div style={{ display: "flex", gap: 10 }}>
               {availableTypes.map((t) => (
                 <button key={t} onClick={() => { setOptionType(t); setQty(1); }} style={{
@@ -232,7 +232,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
                   position: "relative", boxShadow: optionType === t ? `0 0 0 3px ${T.ink}22` : "none",
                 }}>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.ink, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
-                    {product.hasCoffeeSizes ? product[t].label : t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
+                    {(product.hasCoffeeSizes || product.hasPowderSizes) ? product[t].label : t === "unit" ? "Ширхэгээр" : "Хайрцгаар"}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <span style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 14, fontWeight: 600, color: T.cherry }}>{money(product[t].price)}</span>
@@ -251,7 +251,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
             Нөөцөд: <b style={{ color: T.ink }}>{option.stock}</b> {optionType === "box" ? "хайрцаг" : "ширхэг"} байна.
             {optionType === "box" && <>  1 хайрцагт <b style={{ color: T.ink }}>{product.box.perBox}</b> ширхэг</>}
           </div>
-          {optionType === "unit" && bulkBoxQty && (
+          {(optionType === "unit" || product.hasPowderSizes) && bulkBoxQty && (
             <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12.5, color: T.moss, marginBottom: 20 }}>
               {qty >= bulkBoxQty
                 ? ` ${bulkBoxQty}+ ширхэгт бөөний үнээр тооцогдож байна`
