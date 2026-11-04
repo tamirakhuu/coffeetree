@@ -1161,7 +1161,7 @@ function productFormHtml(p) {
   const hasUnit = !p.id || !!p.unit_price;
   return `
     <div class="form-grid form-grid-2">
-      <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}"></div>
+      <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}" oninput="toggleCoffeeSizes()"></div>
       <div class="fg"><label>Брэнд</label><select id="pf-brand" onchange="toggleCoffeeSizes()">${brandOptions(p.brand_id)}</select></div>
       <div class="fg"><label>Ангилал</label><select id="pf-category" onchange="refreshSubDatalist();toggleCoffeeSizes()">${categoryOptions(p.category_id)}</select></div>
       <div class="fg"><label>Дэд ангилал</label><input id="pf-subcategory" list="sub-dl" value="${p.subcategory||''}"><datalist id="sub-dl">${subOptionsDatalist(p.category_id)}</datalist></div>
@@ -1189,7 +1189,7 @@ function productFormHtml(p) {
       </div>
     </div>
     <div class="form-section">
-      <label><input type="checkbox" id="pf-powder-enable" ${p.powder_sizes ? 'checked disabled' : ''} onchange="toggleCoffeeSizes()"> Powder сав — L / M / S</label>
+      <label id="pf-powder-label"><input type="checkbox" id="pf-powder-enable" ${p.powder_sizes ? 'checked disabled' : ''} onchange="toggleCoffeeSizes()"> Powder сав — L / M / S</label>
       <div id="pf-powder-fields" style="display:${p.powder_sizes ? '' : 'none'}">
         <p class="form-hint">Хэмжээ тус бүрийн нөөц тусдаа. Бөөний тоо тухайн хэмжээнд үйлчилнэ.</p>
         ${[['powder_l','L',11500,11000],['powder_m','M',9500,9000],['powder_s','S',7500,7000]].map(([key,label,price,bulk]) => `
@@ -1259,13 +1259,21 @@ function coffeeSizesEligible() {
   const category = document.getElementById('pf-category').selectedOptions[0]?.textContent || '';
   return /^jack['’]s\s+coffee$/i.test(brand.trim()) && category.includes('Кофе');
 }
+function powderSizesEligible() {
+  const name = document.getElementById('pf-name').value.trim();
+  return !!productFormHtml.powderSnapshot || /^powder\s+(?:сав|container|canister|jar)(?:\s+[lms])?$/i.test(name);
+}
 function toggleCoffeeSizes() {
   const eligible = coffeeSizesEligible();
   const input = document.getElementById('pf-coffee-enable');
   document.getElementById('pf-coffee-section').style.display = eligible || productFormHtml.coffeeSnapshot ? '' : 'none';
   if (!eligible && !productFormHtml.coffeeSnapshot) input.checked = false;
   document.getElementById('pf-coffee-fields').style.display = input.checked ? '' : 'none';
-  const powder = document.getElementById('pf-powder-enable').checked;
+  const powderInput = document.getElementById('pf-powder-enable');
+  const powderEligible = powderSizesEligible();
+  document.getElementById('pf-powder-label').parentElement.style.display = powderEligible ? '' : 'none';
+  if (!powderEligible) powderInput.checked = false;
+  const powder = powderInput.checked;
   document.getElementById('pf-powder-fields').style.display = powder ? '' : 'none';
   document.getElementById('pf-legacy-pricing').style.display = input.checked || powder ? 'none' : '';
   document.getElementById('pf-size').disabled = input.checked || powder;
@@ -1377,6 +1385,7 @@ async function saveProduct(id) {
   if (!name) { toast('Барааны нэр оруулна уу', 'err'); return; }
   const coffeeEnabled = document.getElementById('pf-coffee-enable').checked;
   const powderEnabled = document.getElementById('pf-powder-enable').checked;
+  if (powderEnabled && !powderSizesEligible()) { toast('L / M / S сонголтыг зөвхөн Powder саванд ашиглана.', 'err'); return; }
   if (coffeeEnabled && powderEnabled) { toast('Кофе болон Powder савны хэмжээг зэрэг сонгох боломжгүй.', 'err'); return; }
   const powderSizes = {};
   if (powderEnabled) {
