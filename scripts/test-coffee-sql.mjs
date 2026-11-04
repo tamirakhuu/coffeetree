@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import { testTrainingSQL } from './test-training-sql.mjs';
+import { testPowderSQL } from './test-powder-sql.mjs';
 const { PGlite } = await import(pathToFileURL(resolve(process.argv[2], 'dist/index.js')).href);
 const db = new PGlite();
 try {
@@ -72,6 +73,7 @@ try {
   assert.equal((await db.query("select has_function_privilege('anon', 'restore_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
   await db.exec(await readFile('supabase/tests/coffee_sizes.sql', 'utf8'));
   await testTrainingSQL(db);
+  await testPowderSQL(db);
   await db.exec('begin');
   await db.exec(`
     delete from stock_topup_audit; delete from stock_topup_runs;

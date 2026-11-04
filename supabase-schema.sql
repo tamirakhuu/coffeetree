@@ -148,6 +148,44 @@
   -- ЭНЭ ФУНКЦИЙГ anon/authenticated РОЛЬД ШУУД ГРАНТ ХИЙХГҮЙ ШҮҮ — доорх
   -- submit_order функц дотроос л дуудагдана, эс тэгвэл хэн ч захиалга
   -- үүсгэлгүйгээр дурын барааны нөөцийг хий хоосон хасаж/нэмж чадна.
+alter table public.products add column if not exists powder_sizes jsonb;
+
+create or replace function public.validate_powder_sizes() returns trigger
+language plpgsql set search_path = public as $$
+declare k text; v jsonb; f text; n numeric;
+begin
+  if tg_op = 'UPDATE' then
+    if old.powder_sizes is not null and new.powder_sizes is null then raise exception 'Powder sizes cannot be removed'; end if;
+  end if;
+  if new.powder_sizes is null then return new; end if;
+  if new.coffee_sizes is not null then raise exception 'Choose one size type'; end if;
+  if jsonb_typeof(new.powder_sizes) <> 'object'
+    or not (new.powder_sizes ?& array['powder_l','powder_m','powder_s'])
+    or (new.powder_sizes - 'powder_l' - 'powder_m' - 'powder_s') <> '{}'::jsonb then
+    raise exception 'All three powder sizes are required';
+  end if;
+  foreach k in array array['powder_l','powder_m','powder_s'] loop
+    v := new.powder_sizes->k;
+    if jsonb_typeof(v) <> 'object' then raise exception 'Invalid powder size'; end if;
+    foreach f in array array['price','bulk_qty','bulk_price','stock'] loop
+      if jsonb_typeof(v->f) is distinct from 'number' then raise exception 'Invalid powder size value'; end if;
+      n := (v->>f)::numeric;
+      if n <> trunc(n) or n > 2147483647 or n < (case when f='stock' then 0 else 1 end) then
+        raise exception 'Invalid powder price, quantity or stock';
+      end if;
+    end loop;
+    if (v->>'bulk_price')::numeric > (v->>'price')::numeric then raise exception 'Bulk price exceeds unit price'; end if;
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists validate_powder_sizes on public.products;
+create trigger validate_powder_sizes before insert or update on public.products
+for each row execute function public.validate_powder_sizes();
+revoke all on function public.validate_powder_sizes() from public, anon, authenticated;
+
+
+
   create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns boolean as $
   declare
@@ -156,6 +194,12 @@
     v_new_unit int;
   begin
     if p_qty is null or p_qty <= 0 then return false; end if;
+    if p_option_type in ('powder_l','powder_m','powder_s') then
+      update public.products set powder_sizes = jsonb_set(powder_sizes, array[p_option_type,'stock'],
+        to_jsonb((powder_sizes->p_option_type->>'stock')::int - p_qty))
+      where id = p_product_id and (powder_sizes->p_option_type->>'stock')::int >= p_qty;
+      return found;
+    end if;
     if p_option_type in ('size_1kg', 'size_250g') then
       update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
         to_jsonb((coffee_sizes->p_option_type->>'stock')::int - p_qty))
@@ -204,6 +248,13 @@
     v_new_unit int;
   begin
     if p_qty is null or p_qty <= 0 then raise exception 'Invalid stock quantity'; end if;
+    if p_option_type in ('powder_l','powder_m','powder_s') then
+      update public.products set powder_sizes = jsonb_set(powder_sizes, array[p_option_type,'stock'],
+        to_jsonb((powder_sizes->p_option_type->>'stock')::int + p_qty))
+      where id = p_product_id and powder_sizes ? p_option_type;
+      if not found then raise exception 'Powder size not found'; end if;
+      return;
+    end if;
     if p_option_type in ('size_1kg', 'size_250g') then
       update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
         to_jsonb((coffee_sizes->p_option_type->>'stock')::int + p_qty))
@@ -273,7 +324,7 @@
       v_option_type := v_item->>'option_type';
       v_qty := (v_item->>'qty')::int;
       v_note := v_item->>'note';
-      if v_option_type is null or v_option_type not in ('unit','box','size_1kg','size_250g') or v_qty is null or v_qty <= 0 or v_qty > 1000 then
+      if v_option_type is null or v_option_type not in ('unit','box','size_1kg','size_250g','powder_l','powder_m','powder_s') or v_qty is null or v_qty <= 0 or v_qty > 1000 then
         raise exception 'Буруу барааны мэдээлэл.';
       end if;
 
@@ -282,7 +333,9 @@
         raise exception 'Бараа олдсонгүй.';
       end if;
 
-      if v_product.coffee_sizes is not null then
+      if v_product.powder_sizes is not null then
+        if v_option_type not in ('powder_l','powder_m','powder_s') then raise exception 'Select a powder container size'; end if;
+      elsif v_product.coffee_sizes is not null then
         if v_option_type not in ('size_1kg', 'size_250g') or not exists (
           select 1 from brands b join categories c on c.id = v_product.category_id
           where b.id = v_product.brand_id and lower(replace(trim(b.name), '’', '''')) = 'jack''s coffee' and c.name = 'Кофе'
@@ -294,7 +347,11 @@
       v_discount_expired := v_product.tag = 'хямдралтай' and v_product.discount_ends_at is not null and v_product.discount_ends_at <= now();
       v_box_price := case when v_discount_expired then coalesce(v_product.box_original_price, v_product.box_price) else v_product.box_price end;
 
-      if v_option_type in ('size_1kg', 'size_250g') then
+      if v_option_type in ('powder_l','powder_m','powder_s') then
+        v_current_price := case when v_qty >= (v_product.powder_sizes->v_option_type->>'bulk_qty')::int
+          then (v_product.powder_sizes->v_option_type->>'bulk_price')::numeric
+          else (v_product.powder_sizes->v_option_type->>'price')::numeric end;
+      elsif v_option_type in ('size_1kg', 'size_250g') then
         v_current_price := case when v_discount_expired then
           coalesce((v_product.coffee_sizes->v_option_type->>'original_price')::numeric,
             (v_product.coffee_sizes->v_option_type->>'price')::numeric)
@@ -322,7 +379,7 @@
       end if;
 
       v_subtotal := v_subtotal + v_line_total;
-      v_label := case v_option_type when 'size_1kg' then '1кг' when 'size_250g' then '250гр' when 'unit' then v_product.unit_label else v_product.box_label end;
+      v_label := case v_option_type when 'powder_l' then 'L' when 'powder_m' then 'M' when 'powder_s' then 'S' when 'size_1kg' then '1кг' when 'size_250g' then '250гр' when 'unit' then v_product.unit_label else v_product.box_label end;
       if v_note is not null and length(v_note) > 0 then
         v_label := v_label || ' · ' || v_note;
       end if;

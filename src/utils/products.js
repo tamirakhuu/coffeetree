@@ -1,6 +1,7 @@
 
 
 export const COFFEE_SIZES = { size_1kg: '1кг', size_250g: '250гр' };
+export const POWDER_SIZES = { powder_l: 'L', powder_m: 'M', powder_s: 'S' };
 export const inCategory = (p, id) => p.categoryId === id || p.extraCategoryId === id;
 export const categorySubs = (p, id) => [p.categoryId === id ? p.sub : null, p.extraCategoryId === id ? p.extraSub : null].filter(Boolean).map(s => s.trim());
 export function freePumpProducts(cart, products, brands, categories) {
@@ -10,7 +11,7 @@ export const hasFreeSyrupPump = (product, brands, categories) =>
   brands.find(b => b.id === product.brandId)?.name?.trim().toLowerCase() === 'taco' &&
   categories.find(c => c.id === product.categoryId)?.name?.trim().toLowerCase() === 'сироп';
 export const availableOptionTypes = (product) =>
-  product ? (product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
+  product ? (product.hasPowderSizes ? Object.keys(POWDER_SIZES) : product.hasCoffeeSizes ? Object.keys(COFFEE_SIZES) : ["unit", "box"])
     .filter((t) => (product[t]?.price || 0) > 0) : [];
 
 export const displayPrice = (product) => {

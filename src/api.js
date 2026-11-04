@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { compareProductNames, COFFEE_SIZES, availableOptionTypes } from "./utils/products.js";
+import { compareProductNames, COFFEE_SIZES, POWDER_SIZES, availableOptionTypes } from "./utils/products.js";
 
 export const DELIVERY_FEE = 15000;
 export const FREE_DELIVERY_THRESHOLD = 500000;
@@ -27,6 +27,11 @@ export function revertExpiredDiscount(p) {
 
 export function shapeProduct(r) {
   return revertExpiredDiscount({
+    hasPowderSizes: !!r.powder_sizes,
+    ...Object.fromEntries(Object.entries(POWDER_SIZES).filter(([key]) => r.powder_sizes?.[key]).map(([key, label]) => [key, {
+      label, price: Number(r.powder_sizes[key].price), stock: Number(r.powder_sizes[key].stock),
+      bulkQty: Number(r.powder_sizes[key].bulk_qty), bulkUnitPrice: Number(r.powder_sizes[key].bulk_price),
+    }])),
     hasCoffeeSizes: !!r.coffee_sizes,
     ...Object.fromEntries(Object.entries(COFFEE_SIZES).filter(([key]) => r.coffee_sizes?.[key]).map(([key, label]) => [key, {
       label, price: Number(r.coffee_sizes[key].price), stock: Number(r.coffee_sizes[key].stock),
@@ -55,6 +60,10 @@ export function getBulkUnitPrice(product) {
   return null;
 }
 export function computeLineTotal(product, optionType, qty) {
+  if (product.hasPowderSizes && POWDER_SIZES[optionType]) {
+    const option = product[optionType];
+    return Math.round((qty >= option.bulkQty ? option.bulkUnitPrice : option.price) * qty);
+  }
   if (optionType === "unit") {
     const boxQty = product.bulkQty;
     const bulkUnitPrice = getBulkUnitPrice(product);
