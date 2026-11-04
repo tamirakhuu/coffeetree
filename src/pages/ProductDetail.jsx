@@ -124,7 +124,10 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const bulkPrice = getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? product.bulkQty : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
-  const suggestedPump = pumpName
+  // The small squeeze bottle does not fit a sauce pump.
+  const incompatibleSaucePump = pumpName === "Sauce pump" &&
+    product.name.trim().replace(/\s+/g, " ").toLowerCase() === "caramel sauce s";
+  const suggestedPump = pumpName && !incompatibleSaucePump
     ? products.find((p) =>
       p.id !== product.id &&
       p.name.trim().toLowerCase() === pumpName.toLowerCase() &&
