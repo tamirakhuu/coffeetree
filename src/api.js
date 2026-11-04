@@ -28,8 +28,9 @@ export function revertExpiredDiscount(p) {
 export function shapeProduct(r) {
   return revertExpiredDiscount({
     hasPowderSizes: !!r.powder_sizes,
-    ...Object.fromEntries(Object.entries(POWDER_SIZES).filter(([key]) => r.powder_sizes?.[key]).map(([key, label]) => [key, {
-      label, price: Number(r.powder_sizes[key].price), stock: Number(r.powder_sizes[key].stock),
+    sizeKeys: Object.keys(r.powder_sizes || {}),
+    ...Object.fromEntries(Object.entries(r.powder_sizes || {}).map(([key, value]) => [key, {
+      label: value.label || POWDER_SIZES[key], price: Number(r.powder_sizes[key].price), stock: Number(r.powder_sizes[key].stock),
       bulkQty: Number(r.powder_sizes[key].bulk_qty), bulkUnitPrice: Number(r.powder_sizes[key].bulk_price),
     }])),
     hasCoffeeSizes: !!r.coffee_sizes,
@@ -60,9 +61,9 @@ export function getBulkUnitPrice(product) {
   return null;
 }
 export function computeLineTotal(product, optionType, qty) {
-  if (product.hasPowderSizes && POWDER_SIZES[optionType]) {
+  if (product.hasPowderSizes && availableOptionTypes(product).includes(optionType)) {
     const option = product[optionType];
-    return Math.round((qty >= option.bulkQty ? option.bulkUnitPrice : option.price) * qty);
+    return Math.round((option.bulkQty > 0 && option.bulkUnitPrice > 0 && qty >= option.bulkQty ? option.bulkUnitPrice : option.price) * qty);
   }
   if (optionType === "unit") {
     const boxQty = product.bulkQty;
