@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 export async function testStoreRequests(db){
   await db.exec('begin');
   try {
@@ -18,11 +19,11 @@ export async function testStoreRequests(db){
     const stock=async()=>{await db.exec('reset role');return (await db.query('select warehouse_unit_stock from products where id=99001')).rows[0].warehouse_unit_stock;};
     await as('sar@test.local',1);
     await submit(id,items);await submit(id,items);
-    assert.equal(await stock(),6,'Retry must not reserve twice');
+    assert.equal(await stock(),10,'Submission and retry do not deduct stock');
     await as('sar@test.local',1);
-    await fail(()=>submit('20000000-0000-0000-0000-000000000002',[{...items[0],qty:7}]));
+    await fail(()=>submit('20000000-0000-0000-0000-000000000002',[{...items[0],qty:11}]));
     await fail(()=>submit('20000000-0000-0000-0000-000000000002',[{...items[0],qty:2},{product_id:99002,option_type:'unit',qty:1}]));
-    assert.equal(await stock(),6,'Multi-item failure rolls back');
+    assert.equal(await stock(),10,'Multi-item failure does not change stock');
     await as('sar@test.local',1);
     await fail(()=>db.query("update store_requests set status='sent' where id=$1",[id]));
     await fail(()=>db.query("select change_store_request($1,'sent')",[id]));
@@ -32,25 +33,54 @@ export async function testStoreRequests(db){
     await fail(()=>db.query("select change_store_request($1,'cancelled')",[id]));
     await as('warehouse@test.local',3);
     assert.equal((await db.query('select * from store_requests')).rows.length,1);
+    await db.query('select prepare_store_request($1,$2::jsonb)',[id,JSON.stringify(items)]);
+    await db.query('select prepare_store_request($1,$2::jsonb)',[id,JSON.stringify(items)]);
+    assert.equal(await stock(),6,'Approval deducts once');
+    await as('warehouse@test.local',3);
     await db.query("select change_store_request($1,'rejected')",[id]);
     await db.query("select change_store_request($1,'rejected')",[id]);
     assert.equal(await stock(),10,'Reject restores once');
     await as('sar@test.local',1);
     const second='20000000-0000-0000-0000-000000000003';
-    await submit(second,[{product_id:99001,option_type:'box',qty:1}]);
-    assert.equal(await stock(),4,'Shared box inventory reserves units');
+    await submit(second,[{product_id:99001,option_type:'box',qty:1},...items]);
+    assert.equal(await stock(),10,'Pending box request does not reserve units');
     await as('warehouse@test.local',3);
     await fail(()=>db.query("select change_store_request($1,'received')",[second]));
-    await db.query("select change_store_request($1,'preparing')",[second]);
+    await db.query('select prepare_store_request($1,$2::jsonb)',[second,JSON.stringify([{product_id:99001,option_type:'box'}])]);
+    assert.equal(await stock(),4,'Only selected box is deducted, unit row excluded');
+    await as('warehouse@test.local',3);
     await db.query("select change_store_request($1,'sent')",[second]);
     await as('sar@test.local',1);
     await db.query("select change_store_request($1,'received')",[second]);
     assert.equal(await stock(),4,'Dispatch and receipt must not deduct again');
+    await as('sar@test.local',1);
+    const third='20000000-0000-0000-0000-000000000005';
+    await submit(third,items);
+    await db.exec('reset role; update products set warehouse_unit_stock=2 where id=99001');
+    await as('warehouse@test.local',3);
+    await fail(()=>db.query('select prepare_store_request($1,$2::jsonb)',[third,JSON.stringify(items)]));
+    assert.equal(await stock(),2,'Approval checks current stock and rolls back');
+    await as('sar@test.local',1);
+    await db.query("select change_store_request($1,'cancelled')",[third]);
+    assert.equal(await stock(),2,'Cancelling pending request does not add stock');
     await as('outsider@test.local',2);
     await fail(()=>submit('20000000-0000-0000-0000-000000000004',items));
     await db.exec('reset role; set local role anon');
     await fail(()=>db.query('select * from store_requests'));
     await fail(()=>submit(id,items));
+    await db.exec(`reset role;
+      insert into store_requests(id,requested_by,store_name) values ('20000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000001','Саруул зах');
+      insert into store_request_items(request_id,product_id,option_type,product_name,option_label,qty)
+        values ('20000000-0000-0000-0000-000000000006',99001,'unit','Legacy','Unit',1);
+      update products set warehouse_unit_stock=1 where id=99001;
+      alter table store_requests drop column stock_reserved;
+    `);
+    const sql=await readFile('supabase/run-all-updates.sql','utf8');
+    const upgrade=sql.slice(sql.indexOf('-- Upgrade old reservations once;'),sql.indexOf('create or replace function public.submit_store_request'));
+    await db.exec(upgrade);
+    assert.equal(await stock(),2,'Old pending reservation restored during upgrade');
+    await db.exec(upgrade);
+    assert.equal(await stock(),2,'Upgrade is idempotent');
     console.log('PASS store requests: idempotency, sold-out, atomic rollback, shared stock, role isolation, restore-once and dispatch');
   } finally {await db.exec('rollback');}
 }

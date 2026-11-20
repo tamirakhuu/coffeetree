@@ -577,7 +577,7 @@ drop trigger if exists validate_coffee_sizes on public.products;
 create trigger validate_coffee_sizes before insert or update of coffee_sizes, brand_id, category_id, tag
 on public.products for each row execute function public.validate_coffee_sizes();
 
--- BEGIN employee store requests. Stock is reserved atomically at submission.
+-- BEGIN employee store requests. Stock is deducted only on warehouse approval.
 create table if not exists public.store_staff (
   email text primary key check (email = lower(trim(email))),
   store_name text not null check (store_name in ('Саруул зах','Яармаг'))
@@ -629,10 +629,24 @@ using(exists(select 1 from public.store_requests r where r.id=request_id));
 revoke all on public.store_requests, public.store_request_items from anon, authenticated;
 grant select on public.store_requests,public.store_request_items to authenticated;
 create index if not exists store_requests_created on public.store_requests(created_at desc);
+alter table public.store_request_items add column if not exists approved boolean not null default false;
+-- Upgrade old reservations once; rerunning must not restore stock again.
+do $$ declare r record; i record; begin
+  if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='store_requests' and column_name='stock_reserved') then
+    alter table public.store_requests add column stock_reserved boolean not null default false;
+    for r in select * from public.store_requests where status='pending' order by id for update loop
+      for i in select * from public.store_request_items where request_id=r.id order by product_id,option_type loop
+        perform public.restore_stock(i.product_id,i.option_type,i.qty);
+      end loop;
+    end loop;
+    update public.store_requests set stock_reserved=true where status in ('preparing','sent','received');
+    update public.store_request_items set approved=true where request_id in (select id from public.store_requests where stock_reserved);
+  end if;
+end $$;
 
 create or replace function public.submit_store_request(p_id uuid,p_items jsonb,p_note text default '') returns uuid
 language plpgsql security definer set search_path=public as $$
-declare branch text; r public.store_requests; item jsonb; p public.products; opt text; amount int; label text;
+declare branch text; r public.store_requests; item jsonb; p public.products; opt text; amount int; label text; available int;
 begin
   branch:=public.request_store();
   if auth.uid() is null or branch is null then raise exception 'Ажилтны эрх байхгүй байна.'; end if;
@@ -660,11 +674,38 @@ begin
       if opt not in ('unit','box') or (opt='unit' and coalesce(p.unit_price,0)<=0) or (opt='box' and coalesce(p.box_price,0)<=0) then raise exception 'Савлагаа буруу.'; end if;
       label:=case opt when 'unit' then p.unit_label else p.box_label end;
     end if;
-    if not public.decrement_stock(p.id,opt,amount) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Жагсаалтаа шинэчилнэ үү.',p.name; end if;
-    insert into public.store_request_items values(p_id,p.id,opt,p.name,coalesce(label,opt),amount);
+    available:=case when p.powder_sizes is not null then (p.powder_sizes->opt->>'stock')::int
+      when p.coffee_sizes is not null then (p.coffee_sizes->opt->>'stock')::int
+      when opt='box' then p.warehouse_box_stock else p.warehouse_unit_stock end;
+    if coalesce(available,0)<amount then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Жагсаалтаа шинэчилнэ үү.',p.name; end if;
+    insert into public.store_request_items(request_id,product_id,option_type,product_name,option_label,qty) values(p_id,p.id,opt,p.name,coalesce(label,opt),amount);
   end loop;
   return p_id;
 end $$;
+
+create or replace function public.prepare_store_request(p_id uuid,p_items jsonb) returns void
+language plpgsql security definer set search_path=public as $$
+declare r public.store_requests; item public.store_request_items; selected_count int;
+begin
+  if auth.uid() is null or not public.is_request_manager() then raise exception 'Агуулахын эрх шаардлагатай.'; end if;
+  select * into r from public.store_requests where id=p_id for update;
+  if not found then raise exception 'Хүсэлт олдсонгүй.'; end if;
+  if r.status='preparing' then return; end if;
+  if r.status<>'pending' then raise exception 'Энэ хүсэлтийг бэлтгэх боломжгүй.'; end if;
+  if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items)=0 then raise exception 'Бэлдэх бараагаа сонгоно уу.'; end if;
+  select count(*) into selected_count from public.store_request_items i where request_id=p_id and exists
+    (select 1 from jsonb_array_elements(p_items) s where (s->>'product_id')::bigint=i.product_id and s->>'option_type'=i.option_type);
+  if selected_count<>jsonb_array_length(p_items) then raise exception 'Сонгосон бараа буруу эсвэл давхардсан.'; end if;
+  for item in select * from public.store_request_items i where request_id=p_id and exists
+    (select 1 from jsonb_array_elements(p_items) s where (s->>'product_id')::bigint=i.product_id and s->>'option_type'=i.option_type)
+    order by product_id,option_type loop
+    if not public.decrement_stock(item.product_id,item.option_type,item.qty) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Сонголтоо шинэчилнэ үү.',item.product_name; end if;
+    update public.store_request_items set approved=true where request_id=p_id and product_id=item.product_id and option_type=item.option_type;
+  end loop;
+  update public.store_requests set status='preparing',stock_reserved=true,updated_at=now() where id=p_id;
+end $$;
+revoke all on function public.prepare_store_request(uuid,jsonb) from public,anon;
+grant execute on function public.prepare_store_request(uuid,jsonb) to authenticated;
 
 create or replace function public.change_store_request(p_id uuid,p_status text) returns void
 language plpgsql security definer set search_path=public as $$
@@ -677,18 +718,17 @@ begin
   if not manager and (public.request_store() is null or public.request_store()<>r.store_name) then raise exception 'Хандах эрхгүй.'; end if;
   if r.status=p_status then return; end if;
   if not coalesce((
-    (manager and r.status='pending' and p_status='preparing') or
     (manager and r.status='preparing' and p_status='sent') or
     (manager and r.status in ('pending','preparing') and p_status='rejected') or
     (r.requested_by=auth.uid() and r.status='pending' and p_status='cancelled') or
     (public.request_store()=r.store_name and r.status='sent' and p_status='received')
   ),false) then raise exception 'Төлөвийн шилжилт зөвшөөрөгдөхгүй.'; end if;
-  if p_status in ('rejected','cancelled') then
-    for item in select * from public.store_request_items where request_id=p_id order by product_id,option_type loop
+  if p_status in ('rejected','cancelled') and r.stock_reserved then
+    for item in select * from public.store_request_items where request_id=p_id and approved order by product_id,option_type loop
       perform public.restore_stock(item.product_id,item.option_type,item.qty);
     end loop;
   end if;
-  update public.store_requests set status=p_status,updated_at=now() where id=p_id;
+  update public.store_requests set status=p_status,stock_reserved=case when p_status in ('rejected','cancelled') then false else stock_reserved end,updated_at=now() where id=p_id;
 end $$;
 revoke all on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) from public,anon;
 grant execute on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) to authenticated;

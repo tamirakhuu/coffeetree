@@ -7,7 +7,8 @@ export function stockOptions(p){
 }
 export async function mountRequests(root,sb,mode='staff'){
   root.classList.add('sr');
-  let products=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0;
+  let products=[],brands=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0;
+  const excluded=new Set();
   root.innerHTML='<p>Түр хүлээнэ үү…</p>';
   const session=await sb.auth.getUser(); user=session.data?.user;
   if(!user){root.innerHTML='<p>Эхлээд нэвтэрнэ үү.</p>';return;}
@@ -17,12 +18,24 @@ export async function mountRequests(root,sb,mode='staff'){
   root.innerHTML=`<header><div><h1>${mode==='staff'?'Дэлгүүрийн бараа захиалга':'Дэлгүүрүүдийн захиалга'}</h1><p>${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
     ${mode==='staff'?'<p class="muted">Илгээсэн тоог агуулахын боломжит үлдэгдлээс түр хасна. Цуцлах эсвэл татгалзахад буцааж нэмнэ.</p><div class="sr-grid"><section><input data-search placeholder="Барааны нэрээр хайх" aria-label="Бараа хайх"><div data-products></div></section><section><h2>Захиалах бараа</h2><div data-draft></div><textarea data-note maxlength="500" placeholder="Тайлбар (заавал биш)" aria-label="Тайлбар"></textarea><button data-submit style="margin-top:12px">Захиалга илгээх</button></section></div>':''}<h2>Захиалгын түүх</h2><div data-requests></div>`;
   const $=q=>root.querySelector(q);
+  if(mode==='staff') $('.sr-grid').previousElementSibling.textContent='Хүсэлт илгээхэд нөөц хасагдахгүй. Агуулах барааг сонгож “Бэлтгэж байна” гэж баталсны дараа нөөц хасагдана.';
   if(mode==='warehouse'){
     const hint=document.createElement('p');hint.className='muted';
-    hint.textContent='Эдгээр хүсэлтийн нөөц захиалах үед түгжигдсэн. Энд “Илгээсэн” болгосон барааг “Илгээх” цэсээр дахин шилжүүлэхгүй. Дэлгүүр бодитоор авсны дараа “Хүлээн авсан” болгоно.';
+    hint.textContent='Бэлдэх бараануудаа сонгоод “Бэлтгэж байна” гэж батлахад сонгосон барааны нөөц хасагдана. Сонгоогүй барааг энэ хүсэлтээр илгээхгүй. “Илгээх” цэсээр давхар шилжүүлэхгүй.';
     root.querySelector('header').after(hint);
   }
   function message(t,error=false){$('[data-message]').textContent=t;$('[data-message]').className=error?'error':'success';}
+  function requestItem(item,request){
+    const product=products.find(p=>p.id===item.product_id);
+    const brand=brands.find(b=>b.id===product?.brand_id)?.name;
+    const image=product?.images?.[0];
+    const key=request.id+':'+item.product_id+':'+item.option_type;
+    const select=mode==='warehouse'&&request.status==='pending';
+    return `<div class="sr-request-item">${select?`<input type="checkbox" data-select-item="${escape(key)}" aria-label="${escape(item.product_name+' '+item.option_label)} бэлдэх" ${excluded.has(key)?'':'checked'} ${busy?'disabled':''}>`:''}<div class="sr-request-image">${image?`<img src="${escape(image)}" alt="${escape(item.product_name)}" loading="lazy">`:''}<span ${image?'hidden':''}>Зураггүй</span></div><div class="sr-request-info"><div class="muted">${escape(brand||'Брэнд оруулаагүй')}</div><strong>${escape(item.product_name)}</strong><div>${escape(item.option_label)} × <b>${item.qty}</b></div>${request.status!=='pending'?`<div class="muted">${item.approved?'Бэлдэхээр сонгосон':'Бэлдэхээр сонгоогүй'}</div>`:''}</div></div>`;
+  }
+  root.addEventListener('error',e=>{
+    if(e.target.matches?.('.sr-request-image img')){e.target.hidden=true;e.target.nextElementSibling.hidden=false;}
+  },true);
   function render(){
     if(mode==='staff'){
       $('[data-products]').innerHTML=products.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())).map(p=>`<div class="sr-product"><div class="sr-row">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="">`:''}<strong>${escape(p.name)}</strong></div><div class="sr-choices">${stockOptions(p).map(o=>`<div class="sr-choice"><span>${escape(o.label)} · Үлдэгдэл: <b>${o.stock}</b></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'Нэмэх':'Дууссан'}</button></div>`).join('')}</div></div>`).join('')||'<p>Бараа олдсонгүй.</p>';
@@ -33,15 +46,15 @@ export async function mountRequests(root,sb,mode='staff'){
     }
     $('[data-requests]').innerHTML=requests.map(r=>{
       const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
-      return `<article class="sr-card"><div class="sr-row"><strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b></div><p class="muted">${escape(new Date(r.created_at).toLocaleString('mn-MN'))}</p>${(r.store_request_items||[]).map(i=>`<div>${escape(i.product_name)} · ${escape(i.option_label)} × <b>${i.qty}</b></div>`).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${labels[a]}</button>`).join('')}</div></article>`;
+      return `<article class="sr-card"><div class="sr-row"><strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b></div><p class="muted">${escape(new Date(r.created_at).toLocaleString('mn-MN'))}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${labels[a]}</button>`).join('')}</div></article>`;
     }).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
   async function refresh(){
     const seq=++loadId;
-    const [p,r]=await Promise.all([sb.from('products').select('*').order('name'),sb.from('store_requests').select('*,store_request_items(*)').order('created_at',{ascending:false}).limit(200)]);
+    const [p,r,b]=await Promise.all([sb.from('products').select('*').order('name'),sb.from('store_requests').select('*,store_request_items(*)').order('created_at',{ascending:false}).limit(200),sb.from('brands').select('id,name')]);
     if(closed||seq!==loadId)return;
-    if(p.error||r.error){message((p.error||r.error).message,true);return;}
-    products=p.data;requests=r.data;
+    if(p.error||r.error||b.error){message((p.error||r.error||b.error).message,true);return;}
+    products=p.data;requests=r.data;brands=b.data;
     if(mode==='staff'&&retry&&requests.some(r=>r.id===retry&&r.requested_by===user.id)){
       draft=[];retry=null;$('[data-note]').value='';message('Захиалга агуулахад бүртгэгдсэн байна.');
     }
@@ -52,6 +65,7 @@ export async function mountRequests(root,sb,mode='staff'){
     if(e.target.matches('[data-note]'))retry=null;
   });
   root.addEventListener('change',e=>{if(e.target.matches('[data-qty]')&&!busy){draft[Number(e.target.dataset.qty)].qty=Number(e.target.value);retry=null;}});
+  root.addEventListener('change',e=>{if(e.target.matches('[data-select-item]')){if(e.target.checked)excluded.delete(e.target.dataset.selectItem);else excluded.add(e.target.dataset.selectItem);}});
   root.addEventListener('click',async e=>{
     const b=e.target.closest('button');if(!b||busy)return;
     if(b.hasAttribute('data-refresh'))return refresh();
@@ -72,9 +86,12 @@ export async function mountRequests(root,sb,mode='staff'){
       }catch(e){message(e.message||'Холболт тасарлаа. Дахин оролдоно уу.',true);}finally{busy=false;await refresh();render();}return;
     }
     if(b.dataset.action){
+      const request=requests.find(r=>r.id===b.dataset.id);
+      const chosen=(request?.store_request_items||[]).filter(i=>!excluded.has(request.id+':'+i.product_id+':'+i.option_type)).map(i=>({product_id:i.product_id,option_type:i.option_type}));
+      if(b.dataset.action==='preparing'&&!chosen.length)return message('Бэлдэх бараагаа сонгоно уу.',true);
       if(!confirm(`${labels[b.dataset.action]} төлөвт шилжүүлэх үү?`))return;
       busy=true;render();
-      try{const {error}=await sb.rpc('change_store_request',{p_id:b.dataset.id,p_status:b.dataset.action});if(error)throw error;message('Төлөв шинэчлэгдлээ.');}
+      try{const {error}=await (b.dataset.action==='preparing'?sb.rpc('prepare_store_request',{p_id:b.dataset.id,p_items:chosen}):sb.rpc('change_store_request',{p_id:b.dataset.id,p_status:b.dataset.action}));if(error)throw error;message('Төлөв шинэчлэгдлээ.');}
       catch(e){message(e.message,true);}finally{busy=false;await refresh();render();}
     }
   });
