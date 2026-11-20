@@ -465,12 +465,15 @@ async function checkAuth(){
   $('#w-name').textContent = worker.email;
   $('#w-phone').textContent = 'Агуулахын ажилтан';
   await loadAll();
+  const { mountRequests } = await import('./store-requests.js');
+  await mountRequests(document.getElementById('store-requests-root'), sb, 'warehouse');
   subscribeTransfers();
 }
 
 
 function subscribeTransfers(){
   sb.channel('stock-transfers-notify')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, () => loadAll())
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'stock_transfers' }, (payload) => {
       const updated = payload.new;
       const idx = stockTransfers.findIndex(t => t.id === updated.id);
@@ -499,8 +502,13 @@ async function loadAll(){
   render();
 }
 
-const TABS = [['home','Нүүр'],['add','Нэмэх'],['send','Илгээх'],['stock','Үлдэгдэл'],['history','Түүх']];
+const requestStyle = document.createElement('link'); requestStyle.rel='stylesheet'; requestStyle.href='store-requests.css'; document.head.append(requestStyle);
+const requestScreen=document.createElement('section'); requestScreen.id='s-requests'; requestScreen.hidden=true;
+requestScreen.innerHTML='<div id="store-requests-root"></div>';
+document.getElementById('s-history').parentElement.append(requestScreen);
+const TABS = [['home','Нүүр'],['requests','Захиалга'],['add','Нэмэх'],['send','Илгээх'],['stock','Үлдэгдэл'],['history','Түүх']];
 const TAB_ICONS = {
+  requests: '<path d="M5 3h10v14H5zM7 7h6M7 10h6M7 13h4"/>',
   home: '<path d="M3 10.5 10 4l7 6.5"/><path d="M5 9v7.5a1 1 0 0 0 1 1h2.5v-4h3v4H14a1 1 0 0 0 1-1V9"/>',
   add: '<circle cx="10" cy="10" r="7.2"/><path d="M10 6.8v6.4M6.8 10h6.4"/>',
   send: '<line x1="17" y1="3" x2="8.5" y2="11.5"/><path d="M17 3 11.5 17l-3-6.5L2 8.5 17 3Z"/>',

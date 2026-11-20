@@ -1,0 +1,11 @@
+<!doctype html><html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CuppA — Ажилтны захиалга</title><link rel="stylesheet" href="store-requests.css"><style>body{margin:0;background:#f7f9fc}[hidden]{display:none!important}#login{max-width:440px;margin:10vh auto}#login input{width:100%;margin:8px 0}</style></head><body>
+<form id="login" class="sr sr-card"><h1>CuppA · Ажилтан</h1><p>Дэлгүүрийн бараа захиалга</p><input id="email" type="email" autocomplete="username" placeholder="Имэйл" required aria-label="Имэйл"><input id="password" type="password" autocomplete="current-password" placeholder="Нууц үг" required aria-label="Нууц үг"><button>Нэвтрэх</button><p id="error" class="error" role="alert"></p></form>
+<div id="workspace" hidden><div class="sr sr-row"><span>CuppA · Дотоод захиалга</span><button id="logout" class="secondary">Гарах</button></div><main id="requests"></main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="store-client.js"></script>
+<script type="module">
+import {mountRequests} from './store-requests.js';
+const sb=window.storeClient;
+async function enter(){const {data:{session}}=await sb.auth.getSession();if(!session)return;document.querySelector('#login').hidden=true;document.querySelector('#workspace').hidden=false;await mountRequests(document.querySelector('#requests'),sb);}
+document.querySelector('#login').addEventListener('submit',async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:document.querySelector('#email').value.trim(),password:document.querySelector('#password').value});if(error)throw error;document.querySelector('#password').value='';await enter();}catch(e){document.querySelector('#error').textContent=e.message;}finally{b.disabled=false;}});
+document.querySelector('#logout').onclick=async()=>{await sb.auth.signOut();location.reload();};enter();
+</script></body></html>

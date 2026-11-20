@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import { testTrainingSQL } from './test-training-sql.mjs';
 import { testPowderSQL } from './test-powder-sql.mjs';
+import { testStoreRequests } from './test-store-requests.mjs';
 const { PGlite } = await import(pathToFileURL(resolve(process.argv[2], 'dist/index.js')).href);
 const db = new PGlite();
 try {
@@ -68,12 +69,13 @@ try {
   assert.equal((await db.query('select icon from categories where id = 90001')).rows[0].icon, 'https://example.test/custom.svg');
   assert.deepEqual((await db.query('select tag, warehouse_unit_stock from products where id = 90001')).rows[0], { tag: 'бестселлэр', warehouse_unit_stock: 17 });
   assert.equal(Number((await db.query("select subtotal from orders where order_number = 'KEEP-ORDER'")).rows[0].subtotal), 12345);
-  assert.equal((await db.query("select count(*)::int as n from pg_publication_tables where pubname = 'supabase_realtime'")).rows[0].n, 2);
+  assert.equal((await db.query("select count(*)::int as n from pg_publication_tables where pubname = 'supabase_realtime'")).rows[0].n, 3);
   assert.equal((await db.query("select has_function_privilege('anon', 'decrement_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
   assert.equal((await db.query("select has_function_privilege('anon', 'restore_stock(bigint,text,int)', 'execute') as allowed")).rows[0].allowed, false);
   await db.exec(await readFile('supabase/tests/coffee_sizes.sql', 'utf8'));
   await testTrainingSQL(db);
   await testPowderSQL(db);
+  await testStoreRequests(db);
   await db.exec('begin');
   await db.exec(`
     delete from stock_topup_audit; delete from stock_topup_runs;

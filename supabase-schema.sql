@@ -577,6 +577,128 @@ drop trigger if exists validate_coffee_sizes on public.products;
 create trigger validate_coffee_sizes before insert or update of coffee_sizes, brand_id, category_id, tag
 on public.products for each row execute function public.validate_coffee_sizes();
 
+-- BEGIN employee store requests. Stock is reserved atomically at submission.
+create table if not exists public.store_staff (
+  email text primary key check (email = lower(trim(email))),
+  store_name text not null check (store_name in ('Саруул зах','Яармаг'))
+);
+alter table public.store_staff enable row level security;
+create or replace function public.request_store() returns text language sql stable security definer set search_path=public
+as $$ select store_name from public.store_staff where email=lower(auth.email()) $$;
+create or replace function public.is_request_manager() returns boolean language plpgsql stable security definer set search_path=public as $$
+declare allowed boolean := false;
+begin
+  if public.is_admin() then return true; end if;
+  if to_regprocedure('public.is_warehouse_staff()') is not null then
+    execute 'select public.is_warehouse_staff()' into allowed;
+  end if;
+  return coalesce(allowed,false);
+end $$;
+revoke all on function public.request_store(), public.is_request_manager() from public, anon;
+grant execute on function public.request_store(), public.is_request_manager() to authenticated;
+drop policy if exists "manage store staff" on public.store_staff;
+create policy "manage store staff" on public.store_staff for all to authenticated using(public.is_admin()) with check(public.is_admin());
+grant select,insert,update,delete on public.store_staff to authenticated;
+
+create table if not exists public.store_requests (
+  id uuid primary key,
+  requested_by uuid not null references auth.users(id),
+  store_name text not null,
+  note text not null default '' check(length(note)<=500),
+  status text not null default 'pending' check(status in ('pending','preparing','sent','received','rejected','cancelled')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.store_request_items (
+  request_id uuid not null references public.store_requests(id),
+  product_id bigint not null references public.products(id),
+  option_type text not null,
+  product_name text not null,
+  option_label text not null,
+  qty int not null check(qty>0 and qty<=1000),
+  primary key(request_id,product_id,option_type)
+);
+alter table public.store_requests enable row level security;
+alter table public.store_request_items enable row level security;
+drop policy if exists "read store requests" on public.store_requests;
+create policy "read store requests" on public.store_requests for select to authenticated
+using(public.is_request_manager() or store_name=public.request_store());
+drop policy if exists "read store request items" on public.store_request_items;
+create policy "read store request items" on public.store_request_items for select to authenticated
+using(exists(select 1 from public.store_requests r where r.id=request_id));
+revoke all on public.store_requests, public.store_request_items from anon, authenticated;
+grant select on public.store_requests,public.store_request_items to authenticated;
+create index if not exists store_requests_created on public.store_requests(created_at desc);
+
+create or replace function public.submit_store_request(p_id uuid,p_items jsonb,p_note text default '') returns uuid
+language plpgsql security definer set search_path=public as $$
+declare branch text; r public.store_requests; item jsonb; p public.products; opt text; amount int; label text;
+begin
+  branch:=public.request_store();
+  if auth.uid() is null or branch is null then raise exception 'Ажилтны эрх байхгүй байна.'; end if;
+  if p_id is null then raise exception 'Хүсэлтийн дугаар шаардлагатай.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(p_id::text,0));
+  select * into r from public.store_requests where id=p_id;
+  if found then
+    if r.requested_by<>auth.uid() then raise exception 'Хандах эрхгүй.'; end if;
+    return r.id;
+  end if;
+  if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items) not between 1 and 100 then raise exception '1–100 мөр бараа сонгоно уу.'; end if;
+  insert into public.store_requests(id,requested_by,store_name,note) values(p_id,auth.uid(),branch,coalesce(p_note,''));
+  for item in select value from jsonb_array_elements(p_items) order by (value->>'product_id')::bigint,value->>'option_type' loop
+    amount:=(item->>'qty')::int; opt:=item->>'option_type';
+    if amount is null or amount<=0 or amount>1000 or opt is null then raise exception 'Барааны тоо буруу.'; end if;
+    select * into p from public.products where id=(item->>'product_id')::bigint for update;
+    if not found then raise exception 'Бараа олдсонгүй.'; end if;
+    if p.powder_sizes is not null then
+      if not(p.powder_sizes ? opt) then raise exception 'Хэмжээ буруу.'; end if;
+      label:=coalesce(p.powder_sizes->opt->>'label',upper(right(opt,1)));
+    elsif p.coffee_sizes is not null then
+      if not(p.coffee_sizes ? opt) then raise exception 'Хэмжээ буруу.'; end if;
+      label:=case opt when 'size_1kg' then '1кг' else '250гр' end;
+    else
+      if opt not in ('unit','box') or (opt='unit' and coalesce(p.unit_price,0)<=0) or (opt='box' and coalesce(p.box_price,0)<=0) then raise exception 'Савлагаа буруу.'; end if;
+      label:=case opt when 'unit' then p.unit_label else p.box_label end;
+    end if;
+    if not public.decrement_stock(p.id,opt,amount) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Жагсаалтаа шинэчилнэ үү.',p.name; end if;
+    insert into public.store_request_items values(p_id,p.id,opt,p.name,coalesce(label,opt),amount);
+  end loop;
+  return p_id;
+end $$;
+
+create or replace function public.change_store_request(p_id uuid,p_status text) returns void
+language plpgsql security definer set search_path=public as $$
+declare r public.store_requests; item public.store_request_items; manager boolean;
+begin
+  if auth.uid() is null then raise exception 'Нэвтэрнэ үү.'; end if;
+  select * into r from public.store_requests where id=p_id for update;
+  if not found then raise exception 'Хүсэлт олдсонгүй.'; end if;
+  manager:=public.is_request_manager();
+  if not manager and (public.request_store() is null or public.request_store()<>r.store_name) then raise exception 'Хандах эрхгүй.'; end if;
+  if r.status=p_status then return; end if;
+  if not coalesce((
+    (manager and r.status='pending' and p_status='preparing') or
+    (manager and r.status='preparing' and p_status='sent') or
+    (manager and r.status in ('pending','preparing') and p_status='rejected') or
+    (r.requested_by=auth.uid() and r.status='pending' and p_status='cancelled') or
+    (public.request_store()=r.store_name and r.status='sent' and p_status='received')
+  ),false) then raise exception 'Төлөвийн шилжилт зөвшөөрөгдөхгүй.'; end if;
+  if p_status in ('rejected','cancelled') then
+    for item in select * from public.store_request_items where request_id=p_id order by product_id,option_type loop
+      perform public.restore_stock(item.product_id,item.option_type,item.qty);
+    end loop;
+  end if;
+  update public.store_requests set status=p_status,updated_at=now() where id=p_id;
+end $$;
+revoke all on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) from public,anon;
+grant execute on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) to authenticated;
+do $$ begin
+  if exists(select 1 from pg_publication where pubname='supabase_realtime') and not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='store_requests') then
+    alter publication supabase_realtime add table public.store_requests;
+  end if;
+end $$;
+-- END employee store requests.
+
 -- Admin-managed weekend training dates. Existing registrations are preserved.
 create table if not exists public.training_registrations (
   id bigint generated by default as identity primary key,
