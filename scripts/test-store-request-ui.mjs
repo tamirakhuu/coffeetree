@@ -14,7 +14,7 @@ try{
  let requests=[];window.calls=[];
  window.supabase={createClient:()=>({
  auth:{getUser:async()=>({data:{user:{id:'employee'}}}),getSession:async()=>({data:{session:{user:{id:'employee'}}}})},
- rpc:async(name,args)=>{window.calls.push({name,args});if(name==='request_store')return {data:'Store A'};if(name==='is_request_manager')return {data:true};if(name==='submit_store_request'){requests=[{id:args.p_id,requested_by:'employee',store_name:'Store A',status:'pending',created_at:new Date().toISOString(),note:args.p_note,store_request_items:args.p_items.map(i=>({...i,product_name:'Available product',option_label:'Unit'}))}];return {data:args.p_id};}if(name==='prepare_store_request'){requests[0].status='preparing';return {data:null}}if(name==='change_store_request'){requests[0].status=args.p_status;return {data:null}}},
+ rpc:async(name,args)=>{window.calls.push({name,args});if(name==='request_store')return {data:'Store A'};if(name==='is_request_manager')return {data:true};if(name==='submit_store_request'){requests=[{id:args.p_id,requested_by:'employee',store_name:'Store A',status:'pending',created_at:new Date().toISOString(),note:args.p_note,store_request_items:args.p_items.map(i=>({...i,product_name:'Available product',option_label:'Unit'}))}];return {data:args.p_id};}if(name==='prepare_store_request'){requests[0].status='sent';requests[0].store_request_items=requests[0].store_request_items.map(i=>({...i,approved:true}));return {data:null}}if(name==='change_store_request'){requests[0].status=args.p_status;return {data:null}}},
  from:table=>{const result={data:table==='products'?sample:table==='brands'?[{id:7,name:'Test Brand'}]:requests};return {select(){return this},order(){return this},limit(){return this},then(resolve){resolve(result)}}},
  channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){}
  })};` }));
@@ -52,7 +52,8 @@ try{
  await page.evaluate(async()=>{const {mountRequests}=await import('/store-requests.js');const root=document.createElement('div');root.id='warehouse-test';document.body.append(root);await mountRequests(root,window.storeClient,'warehouse');});
  page.on('dialog',d=>d.accept());
  await page.locator('#warehouse-test [data-action="preparing"]').click();
- await page.locator('#warehouse-test [data-action="sent"]').waitFor();
+ await page.locator('#warehouse-test [data-print]').waitFor();
+ assert.equal(await page.locator('#warehouse-test [data-action="sent"]').count(),0);
  assert.deepEqual(errors,[]);
  console.log('PASS mobile employee page, sold-out guard, quantity validation, submit/history and warehouse preparation');
 }finally{await browser.close();server.close();}

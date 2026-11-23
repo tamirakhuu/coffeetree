@@ -654,7 +654,7 @@ begin
   if auth.uid() is null or not public.is_request_manager() then raise exception 'Агуулахын эрх шаардлагатай.'; end if;
   select * into r from public.store_requests where id=p_id for update;
   if not found then raise exception 'Хүсэлт олдсонгүй.'; end if;
-  if r.status='preparing' then return; end if;
+  if r.status in ('preparing','sent') then return; end if;
   if r.status<>'pending' then raise exception 'Энэ хүсэлтийг бэлтгэх боломжгүй.'; end if;
   if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items)=0 then raise exception 'Бэлдэх бараагаа сонгоно уу.'; end if;
   select count(*) into selected_count from public.store_request_items i where request_id=p_id and exists
@@ -666,7 +666,9 @@ begin
     if not public.decrement_stock(item.product_id,item.option_type,item.qty) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Сонголтоо шинэчилнэ үү.',item.product_name; end if;
     update public.store_request_items set approved=true where request_id=p_id and product_id=item.product_id and option_type=item.option_type;
   end loop;
-  update public.store_requests set status='preparing',stock_reserved=true,updated_at=now() where id=p_id;
+  -- "Бэлдсэн" дарахад шууд дэлгүүрт хүлээн авах боломжтой ('sent') төлөвт шилжинэ —
+  -- агуулахаас тусад нь "Илгээсэн" гэж дахин товшиж баталгаажуулах шаардлагагүй.
+  update public.store_requests set status='sent',stock_reserved=true,updated_at=now() where id=p_id;
 end $$;
 revoke all on function public.prepare_store_request(uuid,jsonb) from public,anon;
 grant execute on function public.prepare_store_request(uuid,jsonb) to authenticated;

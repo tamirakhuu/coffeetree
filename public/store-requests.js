@@ -1,6 +1,18 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
 const actionLabels={cancelled:'Цуцлах'}; // товчны бичвэр — статусын нэрнээс ялгаатайгаар "хийх үйлдэл" гэдгийг тодруулна
+// toLocaleString('mn-MN') зарим төхөөрөмжид (бүрэн ICU локал дата байхгүй үед) буруу
+// харагддаг тул гараар, тогтвортой форматаар он-сар-өдөр цаг-минутыг бичнэ.
+function formatDateTime(iso){
+  const d=new Date(iso);
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function ensurePrintSlip(){
+  let el=document.getElementById('sr-print-slip');
+  if(!el){el=document.createElement('div');el.id='sr-print-slip';document.body.appendChild(el);}
+  return el;
+}
 export function stockOptions(p){
   if(p.powder_sizes) return Object.entries(p.powder_sizes).map(([key,v])=>({key,label:v.label||key.slice(-1).toUpperCase(),stock:v.stock}));
   if(p.coffee_sizes) return Object.entries(p.coffee_sizes).map(([key,v])=>({key,label:key==='size_1kg'?'1кг':'250гр',stock:v.stock}));
@@ -27,6 +39,19 @@ export async function mountRequests(root,sb,mode='staff'){
     root.querySelector('header').after(hint);
   }
   function message(t,error=false){$('[data-message]').textContent=t;$('[data-message]').className=error?'error':'success';}
+  function printRequest(r){
+    const items=(r.store_request_items||[]).filter(i=>i.approved);
+    const rows=items.map(i=>{
+      const product=products.find(p=>p.id===i.product_id);
+      const brandName=brands.find(b=>b.id===product?.brand_id)?.name||'';
+      return `<tr><td>${escape(brandName)}</td><td>${escape(i.product_name)} (${escape(i.option_label)})</td><td>${i.qty}</td></tr>`;
+    }).join('');
+    ensurePrintSlip().innerHTML=`<h1>CUPPA · Бэлдсэн барааны баримт</h1><p>${escape(r.store_name)} · ${formatDateTime(r.created_at)}</p><table><thead><tr><th>Брэнд</th><th>Бараа</th><th>Тоо</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const cleanup=()=>{document.body.classList.remove('sr-printing');window.removeEventListener('afterprint',cleanup);};
+    window.addEventListener('afterprint',cleanup);
+    document.body.classList.add('sr-printing');
+    window.print();
+  }
   function requestItem(item,request){
     const product=products.find(p=>p.id===item.product_id);
     const brand=brands.find(b=>b.id===product?.brand_id)?.name;
@@ -54,7 +79,9 @@ export async function mountRequests(root,sb,mode='staff'){
     }
     $('[data-requests]').innerHTML=requests.map(r=>{
       const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
-      return `<article class="sr-card"><div class="sr-row"><strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b></div><p class="muted">${escape(new Date(r.created_at).toLocaleString('mn-MN'))}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}</div></article>`;
+      const header=mode==='warehouse'?`<strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b>`:`<b>${labels[r.status]}</b>`;
+      const canPrint=mode==='warehouse'&&['preparing','sent','received'].includes(r.status);
+      return `<article class="sr-card"><div class="sr-row">${header}</div><p class="muted">${formatDateTime(r.created_at)}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}${canPrint?`<button data-print="${r.id}" class="secondary">Хэвлэх</button>`:''}</div></article>`;
     }).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
   async function refresh(){
@@ -82,6 +109,7 @@ export async function mountRequests(root,sb,mode='staff'){
   root.addEventListener('click',async e=>{
     const b=e.target.closest('button');if(!b||busy)return;
     if(b.hasAttribute('data-refresh'))return refresh();
+    if(b.dataset.print){const r=requests.find(x=>x.id===b.dataset.print);if(r)printRequest(r);return;}
     if(b.hasAttribute('data-add')){
       const p=products.find(p=>p.id===Number(b.dataset.add));const o=stockOptions(p).find(o=>o.key===b.dataset.option);
       const d=draft.find(d=>d.product_id===p.id&&d.option_type===o.key);
