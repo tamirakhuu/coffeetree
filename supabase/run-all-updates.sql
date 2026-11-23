@@ -1234,6 +1234,11 @@ begin
 end;
 $$;
 grant execute on function public.lookup_training_by_phone(text) to anon, authenticated;
+
+-- Хуучин сургалтын систем (admin-ээс гараар өдөр нэмдэг training_sessions
+-- болохоос өмнөх хувилбар) — ямар ч клиент код дуудахгүй болсон тул устгав.
+drop function if exists public.register_training(text, text, date);
+drop function if exists public.training_slots(date[]);
 -- END 2026-11-23 audit consolidation.
 
 notify pgrst, 'reload schema';
