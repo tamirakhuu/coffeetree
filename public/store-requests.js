@@ -1,5 +1,5 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const labels={pending:'Хүлээгдэж байна',preparing:'Бэлтгэж байна',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
+const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
 export function stockOptions(p){
   if(p.powder_sizes) return Object.entries(p.powder_sizes).map(([key,v])=>({key,label:v.label||key.slice(-1).toUpperCase(),stock:v.stock}));
   if(p.coffee_sizes) return Object.entries(p.coffee_sizes).map(([key,v])=>({key,label:key==='size_1kg'?'1кг':'250гр',stock:v.stock}));
@@ -18,11 +18,11 @@ export async function mountRequests(root,sb,mode='staff'){
   if(access.error||!access.data){root.innerHTML='<p class="error">Хандах эрхгүй эсвэл SQL шинэчлэлт хийгдээгүй байна.</p>';return;}
   branch=mode==='staff'?access.data:null;
   root.innerHTML=`<header><div><h1>${mode==='staff'?'Дэлгүүрийн бараа захиалга':'Дэлгүүрүүдийн захиалга'}</h1><p>${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
-    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлтгэж байна” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-grid"><section aria-label="Агуулахын бараа"><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div></section><section class="sr-cart"><h2>Сонгосон бараа</h2><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea><button data-submit>Захиалга илгээх</button></section></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2>Захиалгын түүх</h2><div data-requests></div>'}`;
+    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлдсэн” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-grid"><section aria-label="Агуулахын бараа"><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div></section><section class="sr-cart"><h2>Сонгосон бараа</h2><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea><button data-submit>Захиалга илгээх</button></section></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2>Захиалгын түүх</h2><div data-requests></div>'}`;
   const $=q=>root.querySelector(q);
   if(mode==='warehouse'){
     const hint=document.createElement('p');hint.className='muted';
-    hint.textContent='Бэлдэх бараануудаа сонгоод “Бэлтгэж байна” гэж батлахад сонгосон барааны нөөц хасагдана. Сонгоогүй барааг энэ хүсэлтээр илгээхгүй. “Илгээх” цэсээр давхар шилжүүлэхгүй.';
+    hint.textContent='Бэлдэх бараануудаа сонгоод “Бэлдсэн” гэж батлахад сонгосон барааны нөөц хасагдана. Сонгоогүй барааг энэ хүсэлтээр илгээхгүй. “Илгээх” цэсээр давхар шилжүүлэхгүй.';
     root.querySelector('header').after(hint);
   }
   function message(t,error=false){$('[data-message]').textContent=t;$('[data-message]').className=error?'error':'success';}
