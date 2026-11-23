@@ -9,7 +9,7 @@ export async function testStoreRequests(db){
       insert into auth.users(id) values ('10000000-0000-0000-0000-000000000001'),('10000000-0000-0000-0000-000000000002'),('10000000-0000-0000-0000-000000000003');
       insert into store_staff(email,store_name) values ('sar@test.local','Саруул зах'),('yar@test.local','Яармаг');
       insert into products(id,name,unit_price,warehouse_unit_stock,box_price,box_per_box,unified_stock,warehouse_box_stock)
-        values (99001,'Request test',100,10,600,6,true,1),(99002,'Sold out',100,0,0,null,false,0);
+        values (99001,'Request test',100,10,0,6,true,1),(99002,'Sold out',100,0,0,null,false,0);
     `);
     const as=async(email,id)=>{await db.exec('reset role');await db.query("select set_config('test.email',$1,true),set_config('test.uid',$2,true)",[email,`10000000-0000-0000-0000-00000000000${id}`]);await db.exec('set local role authenticated');};
     const fail=async fn=>{await db.exec('savepoint failure');await assert.rejects(fn);await db.exec('rollback to failure');};
@@ -42,7 +42,10 @@ export async function testStoreRequests(db){
     assert.equal(await stock(),10,'Reject restores once');
     await as('sar@test.local',1);
     const second='20000000-0000-0000-0000-000000000003';
-    await submit(second,[{product_id:99001,option_type:'box',qty:1},...items]);
+    await db.exec('reset role; update products set box_price=600 where id=99001');
+    await as('sar@test.local',1);
+    await fail(()=>submit(second,items));
+    await submit(second,[{product_id:99001,option_type:'box',qty:1}]);
     assert.equal(await stock(),10,'Pending box request does not reserve units');
     await as('warehouse@test.local',3);
     await fail(()=>db.query("select change_store_request($1,'received')",[second]));
@@ -55,6 +58,8 @@ export async function testStoreRequests(db){
     assert.equal(await stock(),4,'Dispatch and receipt must not deduct again');
     await as('sar@test.local',1);
     const third='20000000-0000-0000-0000-000000000005';
+    await db.exec('reset role; update products set box_price=0 where id=99001');
+    await as('sar@test.local',1);
     await submit(third,items);
     await db.exec('reset role; update products set warehouse_unit_stock=2 where id=99001');
     await as('warehouse@test.local',3);

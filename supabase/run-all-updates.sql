@@ -633,6 +633,7 @@ begin
       if not(p.coffee_sizes ? opt) then raise exception 'Хэмжээ буруу.'; end if;
       label:=case opt when 'size_1kg' then '1кг' else '250гр' end;
     else
+      if opt='unit' and coalesce(p.box_price,0)>0 then raise exception 'Энэ барааг зөвхөн хайрцгаар захиална.'; end if;
       if opt not in ('unit','box') or (opt='unit' and coalesce(p.unit_price,0)<=0) or (opt='box' and coalesce(p.box_price,0)<=0) then raise exception 'Савлагаа буруу.'; end if;
       label:=case opt when 'unit' then p.unit_label else p.box_label end;
     end if;

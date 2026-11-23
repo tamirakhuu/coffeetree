@@ -209,6 +209,7 @@ export default function App() {
     } catch (err) {
       flash("Захиалга үүсгэхэд алдаа гарлаа: " + err.message);
     }
+    
   };
   const handlePaid = () => setView({ name: "confirmation" });
 
