@@ -271,6 +271,7 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
     <section class="screen" id="s-send" hidden>
       <div class="head"><h2>Дэлгүүрт илгээх</h2><p>Хүсэлт админ руу явж, дэлгүүр хүлээн авснаа баталгаажуулна.</p></div>
       <div class="chips" id="stores"></div>
+      <div id="send-request-note" class="muted" style="font-size:12.5px;margin:-4px 0 6px"></div>
       <div class="row">
         <input class="input" id="send-q" placeholder="Барааны нэр / брэндээр хайх" />
       </div>
@@ -335,6 +336,7 @@ let worker = null;                 // { email }
 let products = [], brands = [];
 let stockTransfers = [];
 let storeRequests = []; // зөвхөн status='pending' мөрүүд — tab badge, toast, sound-д зориулав
+const excludedRequestItems = new Set(); // "Илгээх" жагсаалтаас ажилтны гараар хассан захиалгын мөрүүд (key: requestId:productId:optionType)
 let screen = 'home', store = STORES[0];
 let addMode = 'add'; // 'add' | 'remove' — Нэмэх/Хасах хэсгийн идэвхтэй горим
 let addDraft = [], sendDraft = [], nextK = 1;
@@ -466,8 +468,6 @@ async function checkAuth(){
   $('#w-name').textContent = worker.email;
   $('#w-phone').textContent = 'Агуулахын ажилтан';
   await loadAll();
-  const { mountRequests } = await import('./store-requests.js');
-  await mountRequests(document.getElementById('store-requests-root'), sb, 'warehouse');
   subscribeTransfers();
 }
 
@@ -489,19 +489,11 @@ function subscribeTransfers(){
       render();
     })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'store_requests' }, (payload) => {
-      const added = payload.new;
-      if (added.status === 'pending') storeRequests.unshift(added);
       playNotifSound();
-      toast(`"${added.store_name}" дэлгүүрээс шинэ захиалга ирлээ`);
-      render();
+      toast(`"${payload.new.store_name}" дэлгүүрээс шинэ захиалга ирлээ · Илгээх хэсэгт харагдана`);
+      loadAll();
     })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'store_requests' }, (payload) => {
-      const updated = payload.new;
-      storeRequests = updated.status === 'pending'
-        ? storeRequests.map(r => r.id === updated.id ? updated : r)
-        : storeRequests.filter(r => r.id !== updated.id);
-      render();
-    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'store_requests' }, () => loadAll())
     .subscribe();
 }
 
@@ -510,7 +502,7 @@ async function loadAll(){
     sb.from('products').select('*').order('name'),
     sb.from('brands').select('*').order('id'),
     sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
-    sb.from('store_requests').select('id,store_name,status,created_at').eq('status', 'pending').order('created_at', { ascending: false }),
+    sb.from('store_requests').select('*,store_request_items(*)').eq('status', 'pending').order('created_at', { ascending: false }),
   ]);
   products = p.data || [];
   brands = b.data || [];
@@ -519,13 +511,8 @@ async function loadAll(){
   render();
 }
 
-const requestStyle = document.createElement('link'); requestStyle.rel='stylesheet'; requestStyle.href='store-requests.css'; document.head.append(requestStyle);
-const requestScreen=document.createElement('section'); requestScreen.id='s-requests'; requestScreen.hidden=true;
-requestScreen.innerHTML='<div id="store-requests-root"></div>';
-document.getElementById('s-history').parentElement.append(requestScreen);
-const TABS = [['home','Нүүр'],['requests','Захиалга'],['add','Нэмэх'],['send','Илгээх'],['stock','Үлдэгдэл'],['history','Түүх']];
+const TABS = [['home','Нүүр'],['add','Нэмэх'],['send','Илгээх'],['stock','Үлдэгдэл'],['history','Түүх']];
 const TAB_ICONS = {
-  requests: '<path d="M5 3h10v14H5zM7 7h6M7 10h6M7 13h4"/>',
   home: '<path d="M3 10.5 10 4l7 6.5"/><path d="M5 9v7.5a1 1 0 0 0 1 1h2.5v-4h3v4H14a1 1 0 0 0 1-1V9"/>',
   add: '<circle cx="10" cy="10" r="7.2"/><path d="M10 6.8v6.4M6.8 10h6.4"/>',
   send: '<line x1="17" y1="3" x2="8.5" y2="11.5"/><path d="M17 3 11.5 17l-3-6.5L2 8.5 17 3Z"/>',
@@ -536,7 +523,7 @@ function renderTabs(){
   const unreadCount = stockTransfers.filter(t => !seen.has(t.id) && !dismissedNotifs.has(t.id)).length;
   const unreadRequests = storeRequests.filter(r => !seen.has(r.id)).length;
   $('#tabs').innerHTML = TABS.map(([id,label]) => {
-    const unread = id === 'home' ? unreadCount : id === 'requests' ? unreadRequests : 0;
+    const unread = id === 'home' ? unreadCount : id === 'send' ? unreadRequests : 0;
     const icon = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg>`;
     return `<button class="tab" data-goto="${id}" ${screen===id?'aria-current="page"':''}>${icon}${label}${unread?`<b>${unread}</b>`:''}</button>`;
   }).join('');
@@ -546,7 +533,7 @@ document.addEventListener('click', e => {
 });
 function go(s){
   screen = s;
-  if (s === 'requests' && storeRequests.length) {
+  if (s === 'send' && storeRequests.length) {
     storeRequests.forEach(r => seen.add(r.id));
     localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
   }
@@ -563,6 +550,20 @@ function draftRow(r){
     ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block">`
     : '';
   const thumb = p ? `<div class="item-thumb" style="background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))">${thumbImg}</div>` : '';
+  if (r.locked) {
+    const qtyText = r.cases > 0 ? `${r.cases} ${unitWord(p?.box_label, 'хайрцаг')}` : `${r.extra} ${unitWord(p?.unit_label, 'ширхэг')}`;
+    return `<div class="item" data-k="${r.k}">
+      <button class="x" data-f="del" title="Хасах (энэ барааг энэ удаад илгээхгүй)">✕</button>
+      <div class="item-body">
+        ${thumb}
+        <div class="item-info">
+          <div class="name">${esc(r.name)} <span class="muted" style="font-size:11px">· Захиалгаас</span></div>
+          <div class="meta">${esc(meta)}</div>
+          <div class="step"><span class="u">${esc(qtyText)}</span></div>
+        </div>
+      </div>
+    </div>`;
+  }
   return `<div class="item" data-k="${r.k}">
     <button class="x" data-f="del" title="Устгах">✕</button>
     <div class="item-body">
@@ -593,7 +594,10 @@ function bindDraft(container, listOf){
     const b = e.target.closest('[data-f]'); if (!b || b.tagName === 'INPUT') return;
     const k = +e.target.closest('.item').dataset.k, list = listOf(), r = list.find(x => x.k === k); if (!r) return;
     const f = b.dataset.f;
-    if (f === 'del') { const idx = list.indexOf(r); list.splice(idx, 1); }
+    if (f === 'del') {
+      if (r.locked) excludedRequestItems.add(r.fromRequestId + ':' + r.productId + ':' + (r.cases > 0 ? 'box' : 'unit'));
+      const idx = list.indexOf(r); list.splice(idx, 1);
+    }
     if (f === 'inc-case')  r.cases = (Number(r.cases)||0) + 1;
     if (f === 'dec-case')  r.cases = Math.max(0, (Number(r.cases)||0) - 1);
     if (f === 'inc-extra') r.extra = (Number(r.extra)||0) + 1;
@@ -636,10 +640,36 @@ $('#stock-q').addEventListener('input', () => render());
 function addToDraft(mode, product){
   if (!product) return;
   const list = mode === 'add' ? addDraft : sendDraft;
-  const hit = list.find(r => r.productId === product.id);
+  const hit = list.find(r => r.productId === product.id && !r.locked);
   if (hit) { if (hasBox(product)) hit.cases++; else hit.extra++; return; }
   list.push({ k: nextK++, productId: product.id, name: product.name,
     cases: hasBox(product) ? 1 : 0, extra: hasBox(product) ? 0 : 1 });
+}
+
+// "Илгээх" дэх сонгосон дэлгүүрт хамаарах хүлээгдэж буй захиалгуудыг
+// жагсаалтад автоматаар бөглөнө (locked мөр) — агуулахын ажилтан эдгээр
+// дээр нэмж өөр бараа оруулах боломжтой, харин locked мөрийн тоог солихгүй
+// (prepare_store_request нь захиалгын эх тооноос хэтрэхгүй тул).
+function syncRequestRows(){
+  sendDraft = sendDraft.filter(r => !r.locked);
+  const matches = storeRequests.filter(r => r.store_name === store);
+  const skipped = [];
+  const lockedRows = [];
+  matches.forEach(req => {
+    (req.store_request_items || []).forEach(item => {
+      const key = req.id + ':' + item.product_id + ':' + item.option_type;
+      if (excludedRequestItems.has(key)) return;
+      if (item.option_type === 'box') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: item.qty, extra: 0, locked: true, fromRequestId: req.id });
+      else if (item.option_type === 'unit') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: 0, extra: item.qty, locked: true, fromRequestId: req.id });
+      else skipped.push(`${item.product_name} (${item.option_label})`);
+    });
+  });
+  sendDraft = [...lockedRows, ...sendDraft];
+  const note = $('#send-request-note');
+  if (!note) return;
+  note.textContent = matches.length
+    ? `${store}-ийн захиалга (${matches.length}) жагсаалтад орлоо.${skipped.length ? ' Эдгээрийг энд нэмэх боломжгүй тул гараар зохицуулна уу: ' + skipped.join(', ') : ''}`
+    : '';
 }
 
 /* ── ХАДГАЛАХ ҮЙЛДЛҮҮД ───────────────────────────────────── */
@@ -672,15 +702,22 @@ $('#send-commit').addEventListener('click', async () => {
   const btn = $('#send-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
   const batchId = (crypto.randomUUID ? crypto.randomUUID() : 'b' + Date.now() + Math.random().toString(36).slice(2));
   const calls = [];
+  const byRequest = new Map();
   rows.forEach(r => {
+    if (r.locked && r.fromRequestId) {
+      if (!byRequest.has(r.fromRequestId)) byRequest.set(r.fromRequestId, []);
+      byRequest.get(r.fromRequestId).push({ product_id: r.productId, option_type: r.cases > 0 ? 'box' : 'unit' });
+      return;
+    }
     if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
     if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
   });
+  byRequest.forEach((items, requestId) => calls.push(sb.rpc('prepare_store_request', { p_id: requestId, p_items: items })));
   const results = await Promise.all(calls);
   btn.disabled = false; btn.textContent = 'Илгээх';
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message); return; }
-  sendDraft = []; screen = 'history'; await loadAll();
+  sendDraft = []; excludedRequestItems.clear(); screen = 'history'; await loadAll();
   toast('Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
 });
 
@@ -755,6 +792,7 @@ function render(){
     || `<div class="empty">Хайж сонгоно уу.</div>`;
 
   /* Илгээх */
+  syncRequestRows();
   $('#stores').innerHTML = STORES.map(s => `<button class="chip" data-store="${esc(s)}" aria-pressed="${store===s}">${esc(s)}</button>`).join('');
   $('#send-store').textContent = store;
   const sq = $('#send-q').value, sr = results(sq, 'send');
@@ -806,7 +844,7 @@ function render(){
   syncTabbarHeight();
 }
 document.addEventListener('click', e => {
-  const s = e.target.closest('[data-store]'); if (s) { store = s.dataset.store; render(); }
+  const s = e.target.closest('[data-store]'); if (s) { store = s.dataset.store; excludedRequestItems.clear(); render(); }
   const n = e.target.closest('[data-notif]');
   if (n) {
     const id = +n.dataset.notif;
