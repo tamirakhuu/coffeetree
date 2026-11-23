@@ -1,5 +1,6 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
+const actionLabels={cancelled:'Цуцлах'}; // товчны бичвэр — статусын нэрнээс ялгаатайгаар "хийх үйлдэл" гэдгийг тодруулна
 export function stockOptions(p){
   if(p.powder_sizes) return Object.entries(p.powder_sizes).map(([key,v])=>({key,label:v.label||key.slice(-1).toUpperCase(),stock:v.stock}));
   if(p.coffee_sizes) return Object.entries(p.coffee_sizes).map(([key,v])=>({key,label:key==='size_1kg'?'1кг':'250гр',stock:v.stock}));
@@ -53,7 +54,7 @@ export async function mountRequests(root,sb,mode='staff'){
     }
     $('[data-requests]').innerHTML=requests.map(r=>{
       const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
-      return `<article class="sr-card"><div class="sr-row"><strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b></div><p class="muted">${escape(new Date(r.created_at).toLocaleString('mn-MN'))}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${labels[a]}</button>`).join('')}</div></article>`;
+      return `<article class="sr-card"><div class="sr-row"><strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b></div><p class="muted">${escape(new Date(r.created_at).toLocaleString('mn-MN'))}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}</div></article>`;
     }).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
   async function refresh(){
