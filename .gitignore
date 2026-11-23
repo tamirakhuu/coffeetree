@@ -7,3 +7,6 @@ supabase/.temp
 __pycache__/
 *.pyc
 .coverage
+.codex/
+store-request-desktop.png
+store-request-mobile.png

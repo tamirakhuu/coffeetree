@@ -433,6 +433,7 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
     v_item_rows jsonb := '[]'::jsonb;
     v_attempts int := 0;
   begin
+    perform expire_stale_orders();
     if p_items is null or jsonb_array_length(p_items) = 0 then
       raise exception 'Сагс хоосон байна.';
     end if;
@@ -883,6 +884,357 @@ begin
   update public.stock_topup_runs set changed_products=changed where operation='approved-even-topup-2026-10-06';
 end $$;
 -- END approved stock top-up 2026-10-06.
+
+-- ---------------------------------------------------------------------
+-- 16) Өмнө нь зөвхөн Supabase SQL Editor дээр шууд бичигдэж, энэ файлд
+-- хэзээ ч тэмдэглэгдээгүй байсан объектуудыг нэгтгэв (2026-11-23 аудит).
+-- Эдгээр нь production дээр аль хэдийн ажиллаж байгаа тул үйлдэл өөрчлөгдөхгүй,
+-- зөвхөн DB-г дахин сэргээх боломжтой болгож байна.
+-- ---------------------------------------------------------------------
+
+-- Агуулахын ажилтны эрх (аguulah.html-ийн нэвтрэлтийн гарц).
+create table if not exists public.warehouse_staff (
+  email text primary key
+);
+alter table public.warehouse_staff enable row level security;
+drop policy if exists "admin manage warehouse staff" on public.warehouse_staff;
+create policy "admin manage warehouse staff" on public.warehouse_staff for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+create or replace function public.is_warehouse_staff() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from warehouse_staff where lower(email) = lower(auth.email()));
+$$;
+grant execute on function public.is_warehouse_staff() to anon, authenticated;
+
+-- Агуулах ⇄ дэлгүүрийн шилжилтийн төлөв (admin-panel.html, aguulah.html).
+alter table public.stock_transfers add column if not exists status text not null default 'pending';
+alter table public.stock_transfers add column if not exists received_at timestamptz;
+alter table public.stock_transfers add column if not exists received_by text;
+alter table public.stock_transfers add column if not exists store_name text;
+alter table public.stock_transfers add column if not exists batch_id text;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'stock_transfers_direction_check') then
+    alter table public.stock_transfers add constraint stock_transfers_direction_check
+      check (direction in ('to_store','to_warehouse','restock','writeoff'));
+  end if;
+end $$;
+drop policy if exists "warehouse staff read stock_transfers" on public.stock_transfers;
+create policy "warehouse staff read stock_transfers" on public.stock_transfers for select
+  using (public.is_warehouse_staff());
+
+create or replace function public.warehouse_create_transfer(
+  p_product_id bigint, p_option_type text, p_qty integer, p_direction text,
+  p_store_name text default null, p_batch_id text default null
+) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare
+  v_product_name text;
+  v_warehouse_unit int;
+  v_warehouse_box int;
+  v_unified boolean;
+  v_per_box int;
+  v_need_unit int;
+  v_new_id bigint;
+begin
+  if not is_warehouse_staff() then
+    raise exception 'Зөвхөн агуулахын ажилтан энэ үйлдлийг хийх эрхтэй';
+  end if;
+  if p_qty is null or p_qty <= 0 then
+    raise exception 'Тоо буруу байна';
+  end if;
+  if p_direction not in ('to_store', 'to_warehouse', 'restock', 'writeoff') then
+    raise exception 'Чиглэл буруу байна';
+  end if;
+
+  select name, warehouse_unit_stock, warehouse_box_stock, unified_stock, box_per_box
+    into v_product_name, v_warehouse_unit, v_warehouse_box, v_unified, v_per_box
+    from products where id = p_product_id;
+  if v_product_name is null then
+    raise exception 'Бараа олдсонгүй';
+  end if;
+  v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
+
+  if p_direction = 'to_store' or p_direction = 'writeoff' then
+    if v_unified then
+      v_need_unit := case when p_option_type = 'box' then p_qty * v_per_box else p_qty end;
+      if coalesce(v_warehouse_unit, 0) < v_need_unit then
+        raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
+      end if;
+    else
+      if p_option_type = 'box' then
+        if coalesce(v_warehouse_box, 0) < p_qty then
+          raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
+        end if;
+      else
+        if coalesce(v_warehouse_unit, 0) < p_qty then
+          raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
+        end if;
+      end if;
+    end if;
+  end if;
+
+  insert into stock_transfers (product_id, product_name, option_type, direction, qty, admin_email, status, store_name, batch_id)
+    values (p_product_id, v_product_name, p_option_type, p_direction, p_qty, auth.email(), 'pending', p_store_name, p_batch_id)
+    returning id into v_new_id;
+
+  return v_new_id;
+end;
+$$;
+revoke all on function public.warehouse_create_transfer(bigint,text,integer,text,text,text) from public, anon;
+grant execute on function public.warehouse_create_transfer(bigint,text,integer,text,text,text) to authenticated;
+
+create or replace function public.admin_receive_transfer(p_transfer_id bigint) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_transfer record;
+  v_unified boolean;
+  v_per_box int;
+  v_need_unit int;
+  v_cur_unit int;
+  v_new_unit int;
+begin
+  if not is_admin() then
+    raise exception 'Зөвхөн админ энэ үйлдлийг хийх эрхтэй';
+  end if;
+
+  select * into v_transfer from stock_transfers where id = p_transfer_id for update;
+  if v_transfer is null then
+    raise exception 'Шилжилт олдсонгүй';
+  end if;
+  if v_transfer.status <> 'pending' then
+    raise exception 'Энэ шилжилт аль хэдийн хүлээн авагдсан байна';
+  end if;
+
+  select unified_stock, box_per_box into v_unified, v_per_box
+    from products where id = v_transfer.product_id for update;
+  v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
+
+  if v_transfer.direction = 'to_store' then
+    if v_unified then
+      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
+      select warehouse_unit_stock into v_cur_unit from products where id = v_transfer.product_id;
+      if coalesce(v_cur_unit, 0) < v_need_unit then
+        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
+      end if;
+      update products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
+        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_box_stock = warehouse_box_stock - v_transfer.qty
+          where id = v_transfer.product_id and warehouse_box_stock >= v_transfer.qty;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock - v_transfer.qty
+          where id = v_transfer.product_id and warehouse_unit_stock >= v_transfer.qty;
+      end if;
+      if not found then
+        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
+      end if;
+    end if;
+
+    if v_unified then
+      if v_transfer.option_type = 'box' then
+        update products set unit_stock = coalesce(unit_stock, 0) + (v_transfer.qty * v_per_box)
+          where id = v_transfer.product_id returning unit_stock into v_new_unit;
+      else
+        update products set unit_stock = coalesce(unit_stock, 0) + v_transfer.qty
+          where id = v_transfer.product_id returning unit_stock into v_new_unit;
+      end if;
+      update products set box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set box_stock = coalesce(box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      else
+        update products set unit_stock = coalesce(unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      end if;
+    end if;
+
+  elsif v_transfer.direction = 'to_warehouse' then
+    if v_unified then
+      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
+      select unit_stock into v_cur_unit from products where id = v_transfer.product_id;
+      if coalesce(v_cur_unit, 0) < v_need_unit then
+        raise exception 'Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна';
+      end if;
+      update products set unit_stock = unit_stock - v_need_unit
+        where id = v_transfer.product_id returning unit_stock into v_new_unit;
+      update products set box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set box_stock = box_stock - v_transfer.qty
+          where id = v_transfer.product_id and box_stock >= v_transfer.qty;
+      else
+        update products set unit_stock = unit_stock - v_transfer.qty
+          where id = v_transfer.product_id and unit_stock >= v_transfer.qty;
+      end if;
+      if not found then
+        raise exception 'Дэлгүүрийн нөөцөөс их тоо буцаах гэж байна';
+      end if;
+    end if;
+
+    if v_unified then
+      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
+      update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_need_unit
+        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      else
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      end if;
+    end if;
+
+  elsif v_transfer.direction = 'restock' then
+    if v_unified then
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + (v_transfer.qty * v_per_box)
+          where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      else
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty
+          where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      end if;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      else
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      end if;
+    end if;
+
+  elsif v_transfer.direction = 'writeoff' then
+    if v_unified then
+      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
+      select warehouse_unit_stock into v_cur_unit from products where id = v_transfer.product_id;
+      if coalesce(v_cur_unit, 0) < v_need_unit then
+        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
+      end if;
+      update products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
+        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_box_stock = warehouse_box_stock - v_transfer.qty
+          where id = v_transfer.product_id and warehouse_box_stock >= v_transfer.qty;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock - v_transfer.qty
+          where id = v_transfer.product_id and warehouse_unit_stock >= v_transfer.qty;
+      end if;
+      if not found then
+        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
+      end if;
+    end if;
+  end if;
+
+  update stock_transfers
+    set status = 'received', received_at = now(), received_by = auth.email()
+    where id = p_transfer_id;
+
+  return true;
+end;
+$$;
+
+create or replace function public.admin_reject_transfer(p_transfer_id bigint) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_transfer record;
+begin
+  if not is_admin() then
+    raise exception 'Зөвхөн админ энэ үйлдлийг хийх эрхтэй';
+  end if;
+
+  select * into v_transfer from stock_transfers where id = p_transfer_id for update;
+  if v_transfer is null then
+    raise exception 'Шилжилт олдсонгүй';
+  end if;
+  if v_transfer.status <> 'pending' then
+    raise exception 'Энэ шилжилт аль хэдийн хүлээн авагдсан/цуцлагдсан байна';
+  end if;
+
+  update stock_transfers
+    set status = 'rejected', received_at = now(), received_by = auth.email()
+    where id = p_transfer_id;
+
+  return true;
+end;
+$$;
+-- Эдгээр хоёр нь зөвхөн is_admin()-ийг амжилттай давсан authenticated админд л
+-- бодитоор ажилладаг ч, өмнө нь EXECUTE эрх анон/public-д ч нээлттэй үлдсэн
+-- байсныг (2026-11-23 аудитаар олдсон) энд цэгцэлж байна.
+revoke all on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) from public, anon;
+grant execute on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) to authenticated;
+
+-- Захиалга/сургалтын бүртгэлийг утасны дугаараар шалгах, хугацаа хэтэрсэн
+-- төлбөргүй захиалгыг чөлөөлөх (admin-panel.html-ийн "Сонсох" бус харин
+-- OrderTrackingPage/TrainingStatusPage-ээс дуудагддаг нийтийн функцууд).
+create or replace function public.expire_stale_orders() returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_order record;
+  v_item record;
+begin
+  for v_order in
+    select order_number from orders
+    where payment_status = 'unpaid' and status = 'pending'
+      and created_at < now() - interval '30 minutes'
+    for update skip locked
+  loop
+    for v_item in select product_id, option_type, qty from order_items where order_number = v_order.order_number loop
+      perform restore_stock(v_item.product_id, v_item.option_type, v_item.qty);
+    end loop;
+    update orders set status = 'cancelled' where order_number = v_order.order_number;
+  end loop;
+end;
+$$;
+revoke all on function public.expire_stale_orders() from public, anon;
+grant execute on function public.expire_stale_orders() to authenticated;
+
+create or replace function public.lookup_orders_by_phone(p_phone text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare result jsonb;
+begin
+  perform expire_stale_orders();
+  select coalesce(jsonb_agg(order_json order by created_at desc), '[]'::jsonb) into result from (
+    select o.created_at, jsonb_build_object(
+      'orderNumber', o.order_number, 'status', o.status, 'subtotal', o.subtotal,
+      'deliveryMethod', o.delivery_method, 'deliveryFee', o.delivery_fee,
+      'receiptType', o.receipt_type, 'registerNumber', o.register_number,
+      'boxCount', o.box_count, 'createdAt', o.created_at,
+      'items', coalesce((
+        select jsonb_agg(jsonb_build_object(
+          'productName', i.product_name, 'optionLabel', i.option_label, 'qty', i.qty, 'lineTotal', i.line_total
+        )) from order_items i where i.order_number = o.order_number
+      ), '[]'::jsonb)
+    ) as order_json
+    from orders o
+    where o.phone = p_phone and o.status not in ('handed_over', 'done')
+  ) sub;
+  return result;
+end;
+$$;
+grant execute on function public.lookup_orders_by_phone(text) to anon, authenticated;
+
+create or replace function public.lookup_training_by_phone(p_phone text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare result jsonb;
+begin
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', r.id,
+    'name', r.name,
+    'trainingDate', r.training_date,
+    'paymentStatus', r.payment_status,
+    'createdAt', r.created_at
+  ) order by r.training_date desc), '[]'::jsonb)
+  into result
+  from training_registrations r
+  where r.phone = trim(p_phone);
+  return result;
+end;
+$$;
+grant execute on function public.lookup_training_by_phone(text) to anon, authenticated;
+-- END 2026-11-23 audit consolidation.
 
 notify pgrst, 'reload schema';
 commit;

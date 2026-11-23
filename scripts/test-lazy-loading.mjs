@@ -110,7 +110,7 @@ try {
   await page.goto(base);
   await page.locator('.home-hero h1').waitFor();
   assert.equal(await page.locator('.home-category-card').count(), 14);
-  assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 7);
+  assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), 6);
   await page.getByRole('button', { name: 'Дараах бараа', exact: true }).click();
   assert.equal(await page.locator('.home-hero h1').innerText(), 'CUPPA Coffee');
   await page.getByRole('button', { name: 'Өмнөх бараа', exact: true }).click();
@@ -122,7 +122,7 @@ try {
   await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-desktop.png'), fullPage: true });
   for (const width of [820, 390, 320]) {
     await page.setViewportSize({ width, height: 844 });
-    assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), width > 720 ? 4 : 3);
+    assert.equal(await page.locator('.home-category-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), width > 720 ? 4 : 2);
     assert.ok(await page.locator('.home-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Home overflow at ${width}px`);
     if (width === 390) await page.screenshot({ path: resolve(tmpdir(), 'cuppa-home-mobile.png'), fullPage: true });
   }
@@ -138,7 +138,7 @@ try {
   await page.waitForURL('**/category/1');
   await page.goBack();
   assert.deepEqual(errors, []);
-  console.log('PASS homepage slides, 7/4/2-column layouts, mobile overflow and navigation');
+  console.log('PASS homepage slides, 6/4/2-column layouts, mobile overflow and navigation');
   const coffeeSizes = {
     size_1kg: { price: 100000, stock: 2 },
     size_250g: { price: 34000, stock: 5 },

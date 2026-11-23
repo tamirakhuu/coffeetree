@@ -2,6 +2,8 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { resolve } from 'node:path';
 const server=createServer(async(req,res)=>{try{const name=req.url.split('?')[0];if(!/^\/[a-z-]+\.(html|css|js)$/.test(name))throw Error();res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'text/html');res.end(await readFile('public'+name));}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true});
@@ -43,10 +45,10 @@ try{
  assert.equal(await page.locator('[data-requests] .sr-request-info .muted').textContent(),'Test Brand');
  assert.equal(await page.locator('[data-requests] .sr-request-image img').getAttribute('src'),'/favicon.png');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- await page.screenshot({path:'store-request-mobile.png',fullPage:true});
+ await page.screenshot({path:resolve(tmpdir(),'store-request-mobile.png'),fullPage:true});
  await page.setViewportSize({width:1440,height:1000});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- await page.screenshot({path:'store-request-desktop.png',fullPage:true});
+ await page.screenshot({path:resolve(tmpdir(),'store-request-desktop.png'),fullPage:true});
  await page.evaluate(async()=>{const {mountRequests}=await import('/store-requests.js');const root=document.createElement('div');root.id='warehouse-test';document.body.append(root);await mountRequests(root,window.storeClient,'warehouse');});
  page.on('dialog',d=>d.accept());
  await page.locator('#warehouse-test [data-action="preparing"]').click();
