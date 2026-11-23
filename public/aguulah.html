@@ -354,6 +354,9 @@ const prod = (id) => products.find(p => p.id === id);
 const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
 const hasUnit = (p) => !p.coffee_sizes && !!(p.unit_price || p.warehouse_unit_stock);
 const hasBox = (p) => !p.coffee_sizes && !!(p.box_price || p.warehouse_box_stock);
+// Дэлгүүрт илгээх хэсэгт агуулахад үлдэгдэлгүй (дууссан) барааг сонгох боломжгүй —
+// хайрцаг эсвэл ширхэгийн аль нэгээр нь нөөцтэй байхад л илгээх боломжтой.
+const canSend = (p) => (hasUnit(p) && (p.warehouse_unit_stock||0) > 0) || (hasBox(p) && (p.warehouse_box_stock||0) > 0);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
 // unit_label/box_label нь "1 ширхэг", "1 хайрцаг", зарим бараанд "100 ширхэг",
 // "500 ширхэг" гэх мэт (боодлоор зарагддаг бараа) худалдан авах нэгжийн бүтэн
@@ -618,7 +621,8 @@ function bindDraft(container, listOf){
 function results(q, mode){
   const s = q.trim().toLowerCase();
   if (!s) return '';
-  const hits = products.filter(p => !p.coffee_sizes && (p.name + ' ' + brandName(p)).toLowerCase().includes(s)).slice(0,6);
+  const hits = products.filter(p => !p.coffee_sizes && (p.name + ' ' + brandName(p)).toLowerCase().includes(s))
+    .filter(p => mode !== 'send' || canSend(p)).slice(0,6);
   if (!hits.length) return `<div style="padding:14px;font-size:13.5px" class="muted">Бараа олдсонгүй.</div>`;
   return hits.map(p => `<button class="pick" data-pick="${p.id}" data-mode="${mode}">
     ${productThumb(p, 36)}
@@ -712,7 +716,7 @@ $('#send-commit').addEventListener('click', async () => {
     if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
     if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
   });
-  byRequest.forEach((items, requestId) => calls.push(sb.rpc('prepare_store_request', { p_id: requestId, p_items: items })));
+  byRequest.forEach((items, requestId) => calls.push(sb.rpc('prepare_store_request', { p_id: requestId, p_items: items, p_batch_id: batchId })));
   const results = await Promise.all(calls);
   btn.disabled = false; btn.textContent = 'Илгээх';
   const failed = results.find(r => r.error);

@@ -593,6 +593,10 @@ revoke all on public.store_requests, public.store_request_items from anon, authe
 grant select on public.store_requests,public.store_request_items to authenticated;
 create index if not exists store_requests_created on public.store_requests(created_at desc);
 alter table public.store_request_items add column if not exists approved boolean not null default false;
+-- Агуулахын ажилтан захиалгыг "Илгээх"-ээр бэлдэхдээ нэмж өөр бараа оруулсан бол
+-- тэр нэмэлт бараа warehouse_create_transfer-ээр ижил batch_id-тай явна; энэ баганаар
+-- adminpanel дээр захиалгын мөрүүд болон нэмэлт бараанууд хоорондоо холбогдож харагдана.
+alter table public.store_requests add column if not exists batch_id text;
 -- Upgrade old reservations once; rerunning must not restore stock again.
 do $$ declare r record; i record; begin
   if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='store_requests' and column_name='stock_reserved') then
@@ -647,7 +651,8 @@ begin
   return p_id;
 end $$;
 
-create or replace function public.prepare_store_request(p_id uuid,p_items jsonb) returns void
+drop function if exists public.prepare_store_request(uuid,jsonb);
+create or replace function public.prepare_store_request(p_id uuid,p_items jsonb,p_batch_id text default null) returns void
 language plpgsql security definer set search_path=public as $$
 declare r public.store_requests; item public.store_request_items; selected_count int;
 begin
@@ -668,10 +673,12 @@ begin
   end loop;
   -- "Бэлдсэн" дарахад шууд дэлгүүрт хүлээн авах боломжтой ('sent') төлөвт шилжинэ —
   -- агуулахаас тусад нь "Илгээсэн" гэж дахин товшиж баталгаажуулах шаардлагагүй.
-  update public.store_requests set status='sent',stock_reserved=true,updated_at=now() where id=p_id;
+  -- p_batch_id нь зэрэгцэж нэмсэн (warehouse_create_transfer-ээр илгээсэн) нэмэлт
+  -- бараатай adminpanel дээр холбогдож харагдах зориулалттай, нөөцийн тооцоололд нөлөөгүй.
+  update public.store_requests set status='sent',stock_reserved=true,updated_at=now(),batch_id=coalesce(p_batch_id,batch_id) where id=p_id;
 end $$;
-revoke all on function public.prepare_store_request(uuid,jsonb) from public,anon;
-grant execute on function public.prepare_store_request(uuid,jsonb) to authenticated;
+revoke all on function public.prepare_store_request(uuid,jsonb,text) from public,anon;
+grant execute on function public.prepare_store_request(uuid,jsonb,text) to authenticated;
 
 create or replace function public.change_store_request(p_id uuid,p_status text) returns void
 language plpgsql security definer set search_path=public as $$

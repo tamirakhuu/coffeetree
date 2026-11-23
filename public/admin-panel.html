@@ -899,18 +899,33 @@ function renderSentStoreRequests() {
   });
   rows.sort((a, b) => new Date(b.request.created_at) - new Date(a.request.created_at));
   if (!rows.length) { tb.innerHTML = `<tr><td colspan="6" class="empty">Илгээсэн захиалга алга байна</td></tr>`; return; }
-  tb.innerHTML = rows.map(({ request, item }) => {
-    const p = products.find(x => x.id === item.product_id);
-    const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+  // Нэг захиалгын мөрүүдийг цувралаар нэг доор нь бүлэглэж, тухайн илгээлттэй
+  // (batch_id-гаар) цуг явсан агуулахын ажилтны нэмэлт барааг доор нь тэмдэглэнэ.
+  const groups = [];
+  rows.forEach(({ request, item }) => {
+    const g = groups[groups.length - 1];
+    if (g && g.request.id === request.id) g.items.push(item);
+    else groups.push({ request, items: [item] });
+  });
+  tb.innerHTML = groups.map(({ request, items }) => {
     const received = request.status === 'received';
-    return `<tr>
-      <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(request.created_at).toLocaleString('mn-MN')}</td>
-      <td data-th="Дэлгүүр">${request.store_name}</td>
-      <td data-th="Бараа">${item.product_name} <span style="color:var(--ink-soft);font-size:11px">(${item.option_label})</span></td>
-      <td data-th="Брэнд">${brandName}</td>
-      <td class="mono" data-th="Тоо">${item.qty}</td>
-      <td data-th="Төлөв"><span class="badge" style="background:${received ? 'var(--green-light)' : 'var(--gold)'};color:${received ? '#2F4A22' : '#fff'}">${received ? 'Хүлээн авсан' : 'Илгээсэн'}</span></td>
-    </tr>`;
+    const itemRows = items.map(item => {
+      const p = products.find(x => x.id === item.product_id);
+      const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+      return `<tr>
+        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(request.created_at).toLocaleString('mn-MN')}</td>
+        <td data-th="Дэлгүүр">${request.store_name}</td>
+        <td data-th="Бараа">${item.product_name} <span style="color:var(--ink-soft);font-size:11px">(${item.option_label})</span></td>
+        <td data-th="Брэнд">${brandName}</td>
+        <td class="mono" data-th="Тоо">${item.qty}</td>
+        <td data-th="Төлөв"><span class="badge" style="background:${received ? 'var(--green-light)' : 'var(--gold)'};color:${received ? '#2F4A22' : '#fff'}">${received ? 'Хүлээн авсан' : 'Илгээсэн'}</span></td>
+      </tr>`;
+    }).join('');
+    const extras = request.batch_id ? stockTransfers.filter(t => t.direction === 'to_store' && t.batch_id === request.batch_id) : [];
+    const extraRow = extras.length ? `<tr><td colspan="6" style="font-size:11.5px;color:var(--ink-soft);padding:4px 12px 10px;background:var(--paper)">
+      + Агуулахын ажилтны нэмж илгээсэн: ${extras.map(t => `${t.product_name} ×${t.qty} (${t.status === 'received' ? 'Хүлээн авсан' : 'Хүлээгдэж буй'})`).join(', ')}
+    </td></tr>` : '';
+    return itemRows + extraRow;
   }).join('');
 }
 
@@ -2233,8 +2248,10 @@ function renderPendingTransfers() {
 
   tb.innerHTML = groups.map(g => {
     const first = g.items[0];
+    const linkedRequests = first.batch_id ? sentStoreRequests.filter(r => r.batch_id === first.batch_id) : [];
+    const linkNote = linkedRequests.length ? ` · Дэлгүүрийн захиалгатай хамт (${linkedRequests.map(r => r.store_name).join(', ')})` : '';
     const header = `<tr class="pt-batch-header"><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
-      📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа
+      📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа${linkNote}
     </td></tr>`;
     const rows = g.items.map(t => {
       const p = products.find(x => x.id === t.product_id);
