@@ -2197,7 +2197,7 @@ function renderPendingTransfers() {
       const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
       const dirBadge = directionBadge(t.direction);
       return `<tr>
-        <td data-th="Хүлээн авах уу?"><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
+        <td data-th="${t.direction === 'writeoff' ? 'Устгах уу?' : 'Хүлээн авах уу?'}"><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
         <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
         <td data-th="Бараа">${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
         <td data-th="Брэнд">${brandName}</td>
