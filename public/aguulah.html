@@ -334,6 +334,7 @@ const DISMISSED_KEY = 'cuppamn_aguulah_dismissed_v1';
 let worker = null;                 // { email }
 let products = [], brands = [];
 let stockTransfers = [];
+let storeRequests = []; // зөвхөн status='pending' мөрүүд — tab badge, toast, sound-д зориулав
 let screen = 'home', store = STORES[0];
 let addMode = 'add'; // 'add' | 'remove' — Нэмэх/Хасах хэсгийн идэвхтэй горим
 let addDraft = [], sendDraft = [], nextK = 1;
@@ -487,18 +488,34 @@ function subscribeTransfers(){
       }
       render();
     })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'store_requests' }, (payload) => {
+      const added = payload.new;
+      if (added.status === 'pending') storeRequests.unshift(added);
+      playNotifSound();
+      toast(`"${added.store_name}" дэлгүүрээс шинэ захиалга ирлээ`);
+      render();
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'store_requests' }, (payload) => {
+      const updated = payload.new;
+      storeRequests = updated.status === 'pending'
+        ? storeRequests.map(r => r.id === updated.id ? updated : r)
+        : storeRequests.filter(r => r.id !== updated.id);
+      render();
+    })
     .subscribe();
 }
 
 async function loadAll(){
-  const [p, b, st] = await Promise.all([
+  const [p, b, st, sr] = await Promise.all([
     sb.from('products').select('*').order('name'),
     sb.from('brands').select('*').order('id'),
     sb.from('stock_transfers').select('*').order('created_at', { ascending: false }),
+    sb.from('store_requests').select('id,store_name,status,created_at').eq('status', 'pending').order('created_at', { ascending: false }),
   ]);
   products = p.data || [];
   brands = b.data || [];
   stockTransfers = st.data || [];
+  storeRequests = sr.data || [];
   render();
 }
 
@@ -517,8 +534,9 @@ const TAB_ICONS = {
 };
 function renderTabs(){
   const unreadCount = stockTransfers.filter(t => !seen.has(t.id) && !dismissedNotifs.has(t.id)).length;
+  const unreadRequests = storeRequests.filter(r => !seen.has(r.id)).length;
   $('#tabs').innerHTML = TABS.map(([id,label]) => {
-    const unread = id === 'home' ? unreadCount : 0;
+    const unread = id === 'home' ? unreadCount : id === 'requests' ? unreadRequests : 0;
     const icon = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TAB_ICONS[id]}</svg>`;
     return `<button class="tab" data-goto="${id}" ${screen===id?'aria-current="page"':''}>${icon}${label}${unread?`<b>${unread}</b>`:''}</button>`;
   }).join('');
@@ -526,7 +544,14 @@ function renderTabs(){
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (g) go(g.dataset.goto);
 });
-function go(s){ screen = s; render(); window.scrollTo({top:0}); }
+function go(s){
+  screen = s;
+  if (s === 'requests' && storeRequests.length) {
+    storeRequests.forEach(r => seen.add(r.id));
+    localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
+  }
+  render(); window.scrollTo({top:0});
+}
 
 /* ── ЖАГСААЛТЫН МӨР (нийтлэг) ────────────────────────────── */
 function draftRow(r){
