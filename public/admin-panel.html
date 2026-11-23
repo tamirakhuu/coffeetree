@@ -2267,7 +2267,23 @@ function renderPendingTransfers() {
         <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
       </tr>`;
     }).join('');
-    return header + rows;
+    // Ижил batch_id-гаар дэлгүүрийн захиалгаас шууд бэлдэгдсэн (prepare_store_request,
+    // аль хэдийн нөөц нь хасагдсан тул дахин checkbox/баталгаажуулалт шаардахгүй) бараа —
+    // энд мэдээллийн чанартай мөр болгон цуг харуулна.
+    const linkedRows = linkedRequests.flatMap(r => (r.store_request_items || []).filter(i => i.approved).map(i => {
+      const p = products.find(x => x.id === i.product_id);
+      const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+      return `<tr style="background:var(--paper)">
+        <td data-th="Захиалгаас"><span class="badge" style="background:var(--gold);color:#fff;font-size:10.5px">Захиалгаас</span></td>
+        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
+        <td data-th="Бараа">${i.product_name} <span style="color:var(--ink-soft);font-size:11px">(${i.option_label})</span></td>
+        <td data-th="Брэнд">${brandName}</td>
+        <td data-th="Чиглэл">${directionBadge('to_store')}</td>
+        <td class="mono" data-th="Тоо">${i.qty}</td>
+        <td style="font-size:12px" data-th="Илгээсэн">${r.store_name}</td>
+      </tr>`;
+    })).join('');
+    return header + rows + linkedRows;
   }).join('');
 }
 
