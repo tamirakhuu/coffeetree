@@ -1250,6 +1250,26 @@ drop function if exists public.register_training(text, text, date);
 drop function if exists public.training_slots(date[]);
 -- END 2026-11-23 audit consolidation.
 
+-- ---------------------------------------------------------------------
+-- 17) unified_stock бараанд box_per_box-ийг дараа нь өөрчилсөн (жишээ нь
+-- "1 хайрцагт хэдэн ширхэг"-ийг зөв тоогоор засах зэрэг) тохиолдолд
+-- warehouse_box_stock/box_stock хуучин (box_per_box-ийн өмнөх утгаар
+-- тооцоологдсон) утгаараа үлдэж, бодит ширхэгийн нөөцтэйгээ нийцгүй болдог
+-- (admin-ийн бараа засах форм эдгээр баганыг шууд өөрчилдөггүй — зөвхөн
+-- decrement_stock/admin_receive_transfer л тэдгээрийг ширхэгээс дахин
+-- тооцдог тул box_per_box өөрчлөгдсөн мөч дээр л тэдгээр дуудагдаагүй бол
+-- хуучин утга хэвээр үлдэнэ). Аюулгүй, идемпотент дахин тооцоолол тул
+-- run-all-updates ажиллуулах бүрт автоматаар зассан хэвээр байлгана
+-- (2026-11-23 Aloe Ade-ийн "Илгээх" алдааны аудитаар олдсон, 25 бараанд
+-- нөлөөлж байсан).
+-- ---------------------------------------------------------------------
+update public.products set warehouse_box_stock = floor(coalesce(warehouse_unit_stock,0)::numeric / box_per_box)
+  where unified_stock and coalesce(box_per_box,0) > 0
+  and warehouse_box_stock is distinct from floor(coalesce(warehouse_unit_stock,0)::numeric / box_per_box);
+update public.products set box_stock = floor(coalesce(unit_stock,0)::numeric / box_per_box)
+  where unified_stock and coalesce(box_per_box,0) > 0
+  and box_stock is distinct from floor(coalesce(unit_stock,0)::numeric / box_per_box);
+
 notify pgrst, 'reload schema';
 commit;
 
