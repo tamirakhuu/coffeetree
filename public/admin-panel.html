@@ -488,7 +488,6 @@ tr:hover td{background:rgba(255,255,255,.4)}
           <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй бараанууд. Check-лэгдээгүй бараа агуулах руу автоматаар буцаагдана.</p>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-outline btn-sm" onclick="printPendingList()">Хэвлэх</button>
           <button class="btn btn-primary btn-sm" onclick="receivePendingBatch()">Хүлээн авах</button>
         </div>
       </div>
@@ -2248,10 +2247,12 @@ function renderPendingTransfers() {
 
   tb.innerHTML = groups.map(g => {
     const first = g.items[0];
+    const batchKey = first.batch_id || ('__single_' + first.id);
     const linkedRequests = first.batch_id ? sentStoreRequests.filter(r => r.batch_id === first.batch_id) : [];
     const linkNote = linkedRequests.length ? ` · Дэлгүүрийн захиалгатай хамт (${linkedRequests.map(r => r.store_name).join(', ')})` : '';
     const header = `<tr class="pt-batch-header"><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
-      📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа${linkNote}
+      <span>📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа${linkNote}</span>
+      <button type="button" class="btn-line" style="float:right;padding:2px 10px;font-size:11px" onclick="printPendingBatch('${batchKey}')">Хэвлэх</button>
     </td></tr>`;
     const rows = g.items.map(t => {
       const p = products.find(x => x.id === t.product_id);
@@ -2274,7 +2275,7 @@ function renderPendingTransfers() {
       const p = products.find(x => x.id === i.product_id);
       const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
       return `<tr style="background:var(--paper)">
-        <td data-th="Захиалгаас"><span class="badge" style="background:var(--gold);color:#fff;font-size:10.5px">Захиалгаас</span></td>
+        <td data-th="Захиалгаас"><input type="checkbox" checked disabled title="Дэлгүүрийн захиалгаар аль хэдийн бэлдэгдсэн (нөөц хасагдсан) тул дахин баталгаажуулах шаардлагагүй"> <span class="badge" style="background:var(--gold);color:#fff;font-size:10.5px">Захиалгаас</span></td>
         <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
         <td data-th="Бараа">${i.product_name} <span style="color:var(--ink-soft);font-size:11px">(${i.option_label})</span></td>
         <td data-th="Брэнд">${brandName}</td>
@@ -2419,6 +2420,46 @@ function printOrderReceipt(orderNumber) {
   document.getElementById('printReceipt').innerHTML = html;
   document.body.classList.add('printing-receipt');
   setPrintPageSize('80mm auto', '2mm');
+  window.print();
+  setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
+}
+
+// Нэг "Илгээх" үйлдлээр явсан бараануудыг (агуулахын шууд нэмсэн + дэлгүүрийн
+// захиалгаар аль хэдийн бэлдэгдсэн, ижил batch_id-тай) нэг жагсаалт болгож хэвлэнэ —
+// дэлгүүрт хүлээлцэхдээ бодитоор тоолж шалгах баримт болгон ашиглана.
+function printPendingBatch(batchKey) {
+  const pending = stockTransfers.filter(t => t.status === 'pending');
+  const items = batchKey.startsWith('__single_')
+    ? pending.filter(t => !t.batch_id && String(t.id) === batchKey.slice('__single_'.length))
+    : pending.filter(t => t.batch_id === batchKey);
+  if (!items.length) return;
+  const first = items[0];
+  const linkedRequests = batchKey.startsWith('__single_') ? [] : sentStoreRequests.filter(r => r.batch_id === batchKey);
+  const linkedItems = linkedRequests.flatMap(r => (r.store_request_items || []).filter(i => i.approved).map(i => ({ item: i, request: r })));
+  const rows = [
+    ...items.map(t => {
+      const brandName = brandNameForProduct(t.product_id);
+      return `<tr><td style="width:24px;text-align:center">☐</td><td style="padding:4px 2px">${escapeHtml(t.product_name)} <span style="color:#666;font-size:10px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td><td style="padding:4px 2px">${escapeHtml(brandName)}</td><td style="padding:4px 2px;text-align:right">${t.qty}</td></tr>`;
+    }),
+    ...linkedItems.map(({ item, request }) => {
+      const brandName = brandNameForProduct(item.product_id);
+      return `<tr><td style="width:24px;text-align:center">☐</td><td style="padding:4px 2px">${escapeHtml(item.product_name)} <span style="color:#666;font-size:10px">(${item.option_label})</span> <span style="font-size:9px;color:#888">· Захиалгаас</span></td><td style="padding:4px 2px">${escapeHtml(brandName)}</td><td style="padding:4px 2px;text-align:right">${item.qty}</td></tr>`;
+    }),
+  ].join('');
+  const html = `
+    <div style="text-align:center;font-size:16px;font-weight:700;margin-bottom:4px">CUPPA · Агуулахаас илгээсэн бараа</div>
+    <div style="text-align:center;font-size:11px;margin-bottom:10px;color:#333">${escapeHtml(first.store_name || '-')} · ${new Date(first.created_at).toLocaleString('mn-MN')} · ${escapeHtml(first.admin_email || '-')}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="border-bottom:1px solid #000"><th style="text-align:center;padding:4px 2px">✓</th><th style="text-align:left;padding:4px 2px">Бараа</th><th style="text-align:left;padding:4px 2px">Брэнд</th><th style="text-align:right;padding:4px 2px">Тоо</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:32px;display:flex;justify-content:space-between;font-size:11px">
+      <div>Хүлээлгэн өгсөн: ____________________</div>
+      <div>Хүлээн авсан: ____________________</div>
+    </div>`;
+  document.getElementById('printReceipt').innerHTML = html;
+  document.body.classList.add('printing-receipt');
+  setPrintPageSize('A4', '14mm');
   window.print();
   setTimeout(() => { document.body.classList.remove('printing-receipt'); clearPrintPageSize(); }, 500);
 }
