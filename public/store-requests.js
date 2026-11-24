@@ -83,7 +83,7 @@ export async function mountRequests(root,sb,mode='staff'){
       }).map(p=>`<div class="sr-product"><div class="sr-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-product-heading"><div class="muted">${escape(brands.find(b=>b.id===p.brand_id)?.name||'Брэнд оруулаагүй')}</div><strong>${escape(p.name)}</strong>${p.box_price>0&&p.box_per_box?`<div class="muted">1 хайрцагт ${p.box_per_box} ширхэг</div>`:''}<div class="sr-choices">${stockOptions(p).map(o=>{const addLabel=o.key==='box'?'Хайрцаг':o.key==='unit'?'Ширхэг':o.label;return `<div class="sr-choice"><span>${escape(o.label)}<small>Үлдэгдэл: ${o.stock}</small></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'+ '+escape(addLabel):'Дууссан'}</button></div>`;}).join('')}</div></div></div>`).join('')||'<p class="sr-empty">Таны хайлтад тохирох бараа олдсонгүй.</p>';
       $('[data-count]').textContent=`${$('[data-products]').querySelectorAll('.sr-product').length} бараа · Агуулахын үлдэгдэл`;
       $('[data-sheet-count]').textContent=`(${draft.length})`;
-      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><div class="sr-stepper"><button type="button" data-dec="${i}" aria-label="Тоо хасах" ${busy?'disabled':''}>−</button><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button type="button" data-inc="${i}" aria-label="Тоо нэмэх" ${busy||d.qty>=d.stock?'disabled':''}>+</button></div><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Устгах</button></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
+      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><div class="sr-thumb">${d.image?`<img src="${escape(d.image)}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-draft-info"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><div class="sr-stepper"><button type="button" data-dec="${i}" aria-label="Тоо хасах" ${busy?'disabled':''}>−</button><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button type="button" data-inc="${i}" aria-label="Тоо нэмэх" ${busy||d.qty>=d.stock?'disabled':''}>+</button></div><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Устгах</button></div></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
       $('[data-sum]').textContent=(draft.length?`${draft.length} бараа`:'0 бараа')+' '+(cartOpen?'▴':'▾');
       $('[data-submit]').disabled=busy||!draft.length;
       $('[data-submit]').textContent=busy?'Илгээж байна…':'Захиалга илгээх';
@@ -106,7 +106,7 @@ export async function mountRequests(root,sb,mode='staff'){
     if(mode==='staff'&&retry&&requests.some(r=>r.id===retry&&r.requested_by===user.id)){
       draft=[];retry=null;cartOpen=false;$('[data-note]').value='';message('Захиалга агуулахад бүртгэгдсэн байна.');
     }
-    draft.forEach(d=>{d.stock=stockOptions(products.find(p=>p.id===d.product_id)||{}).find(o=>o.key===d.option_type)?.stock||0;});render();
+    draft.forEach(d=>{const prod=products.find(p=>p.id===d.product_id);d.stock=stockOptions(prod||{}).find(o=>o.key===d.option_type)?.stock||0;d.image=prod?.images?.[0];});render();
   }
   root.addEventListener('input',e=>{
     if(e.target.matches('[data-search]')){search=e.target.value;render();}
@@ -126,7 +126,7 @@ export async function mountRequests(root,sb,mode='staff'){
       const d=draft.find(d=>d.product_id===p.id&&d.option_type===o.key);
       if(o.stock<=0)return;
       if(d){if(d.qty>=o.stock)return message('Үлдэгдлээс их тоо сонгох боломжгүй.',true);d.qty++;}
-      else draft.push({product_id:p.id,option_type:o.key,qty:1,name:p.name,label:o.label,stock:o.stock});
+      else draft.push({product_id:p.id,option_type:o.key,qty:1,name:p.name,label:o.label,stock:o.stock,image:p.images?.[0]});
       retry=null;render();return;
     }
     if(b.hasAttribute('data-inc')){const d=draft[Number(b.dataset.inc)];if(d&&d.qty<d.stock){d.qty++;retry=null;render();}return;}

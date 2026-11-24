@@ -95,10 +95,11 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-empty{padding:30px;color:var(--muted);text-align:center;background:var(--surface);border-radius:var(--r)}
 
 /* ── Сонгосон бараа (cart) ── */
-.sr-cart-sheet [data-draft] .sr-card{display:flex;align-items:center;justify-content:space-between;gap:12px;
+.sr-cart-sheet [data-draft] .sr-card{display:flex;align-items:flex-start;gap:12px;
   background:var(--bg);margin:0 0 10px;padding:12px 14px}
-.sr-cart-sheet [data-draft] .sr-card strong{display:block;font-size:14px}
-.sr-cart-sheet [data-draft] .sr-card p{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
+.sr-cart-sheet [data-draft] .sr-draft-info{flex:1;min-width:0}
+.sr-cart-sheet [data-draft] .sr-draft-info strong{display:block;font-size:14px}
+.sr-cart-sheet [data-draft] .sr-draft-info p{margin:2px 0 8px;font-size:11.5px;color:var(--muted)}
 .sr-note-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 8px}
 .sr-stepper{display:flex;align-items:center;gap:6px}
 .sr-stepper button{min-height:32px;min-width:32px;padding:0;border-radius:999px;font-size:16px;line-height:1}
