@@ -23,7 +23,6 @@ class PageErrorBoundary extends Component {
   }
 }
 
-// Retry only the failed page import; keep cart and payment state in App intact.
 export function lazyPage(load) {
   const InitialPage = lazy(load);
   return function LazyPage(props) {

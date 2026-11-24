@@ -1,5 +1,3 @@
-// Optional isolated PostgreSQL test: node scripts/test-coffee-sql.mjs <PGlite package directory>
-// Install PGlite in a temporary directory; it is not an application dependency.
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -20,14 +18,12 @@ try {
     create publication supabase_realtime;
   `);
   const schema = await readFile('supabase-schema.sql', 'utf8');
-  // Only table definitions, never the destructive schema reset or Supabase services.
-  await db.exec(schema.slice(schema.indexOf('  create table admins ('), schema.indexOf('  -- 2) Row Level Security')));
-  // Ensure migration creates its column, rather than relying on the fresh schema.
+  await db.exec(schema.slice(schema.indexOf('  create table admins ('), schema.indexOf('  alter table admins enable row level security;')));
   await db.exec('alter table products drop column coffee_sizes, drop column size, drop column bulk_unit_price, drop column discount_ends_at;');
   const migration = await readFile('supabase/run-all-updates.sql', 'utf8');
-  const trainingMarker = '-- Admin-managed weekend training dates.';
+  const trainingMarker = 'create table if not exists public.training_registrations (';
   assert.ok(migration.includes(trainingMarker), 'run-all-updates must include the training setup');
-  assert.equal(migration.slice(migration.indexOf(trainingMarker), migration.indexOf('-- BEGIN approved stock top-up')).trim(),
+  assert.equal(migration.slice(migration.indexOf(trainingMarker), migration.indexOf('create table if not exists public.stock_topup_runs (')).trim(),
     schema.slice(schema.indexOf(trainingMarker)).trim(), 'Training setup must match the standalone schema');
   await db.exec(`
     insert into categories(id, name, icon) values (90001, 'Нэг удаа', 'https://example.test/custom.svg');
@@ -43,7 +39,7 @@ try {
       values (90001,'Existing student','99112233','2099-06-07','paid');
   `);
   await db.exec(migration);
-  await db.exec(migration); // Rerunning the migration must remain safe.
+  await db.exec(migration);
   await db.exec(`
     begin;
     alter table storage.objects enable row level security;
@@ -89,7 +85,7 @@ try {
       (91004,'Sizes',(select id from brands where name='Jack''s Coffee'),91001,
        '{"size_1kg":{"price":100,"stock":0},"size_250g":{"price":50,"stock":3}}');
   `);
-  const topup = migration.slice(migration.indexOf('-- BEGIN approved stock top-up'), migration.indexOf('-- END approved stock top-up'));
+  const topup = migration.slice(migration.indexOf('create table if not exists public.stock_topup_runs ('), migration.indexOf('create table if not exists public.warehouse_staff ('));
   await db.exec(topup);
   const stocks = (await db.query('select id,warehouse_unit_stock as units,warehouse_box_stock as boxes,coffee_sizes from products where id between 91001 and 91004 order by id')).rows;
   assert.equal(stocks[0].units,10);

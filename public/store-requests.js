@@ -1,9 +1,7 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
-const actionLabels={cancelled:'Цуцлах'}; // товчны бичвэр — статусын нэрнээс ялгаатайгаар "хийх үйлдэл" гэдгийг тодруулна
+const actionLabels={cancelled:'Цуцлах'};
 const tagClass={pending:'sr-tag-pending',preparing:'sr-tag-pending',sent:'sr-tag-ok',received:'sr-tag-ok',rejected:'sr-tag-bad',cancelled:'sr-tag-bad'};
-// toLocaleString('mn-MN') зарим төхөөрөмжид (бүрэн ICU локал дата байхгүй үед) буруу
-// харагддаг тул гараар, тогтвортой форматаар он-сар-өдөр цаг-минутыг бичнэ.
 function formatDateTime(iso){
   const d=new Date(iso);
   const p=n=>String(n).padStart(2,'0');

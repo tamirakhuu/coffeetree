@@ -5,7 +5,6 @@ import { extname, resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { tmpdir } from 'node:os';
 
-// Production bundle smoke test with isolated API fixtures; never creates real orders.
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const file = resolve('dist', '.' + (extname(pathname) ? pathname : '/index.html'));
@@ -57,7 +56,6 @@ try {
     }
     console.log(`PASS ${path}`);
   }
-  // Slow chunk download keeps the shell visible, and browser history keeps cart state.
   await page.route('**/WishlistPage-*.js', async route => {
     await new Promise(r => setTimeout(r, 700));
     await route.continue();
@@ -74,7 +72,6 @@ try {
   assert.deepEqual(errors, []);
   console.log('PASS lazy chunks, navigation, history and cart persistence');
 
-  // Exercise checkout -> lazy payment -> confirmation with server totals and no live writes.
   await page.route('**/rest/v1/rpc/submit_order', route => route.fulfill({ json: { orderNumber: 'TEST-1001', subtotal: 40000, deliveryFee: 0 } }));
   await page.route('**/functions/v1/qpay-create-invoice', route => route.fulfill({ json: { invoiceId: 'test-invoice', qrText: 'test', urls: [], demo: true } }));
   let paid = false;
@@ -97,7 +94,6 @@ try {
   assert.deepEqual(errors, []);
   console.log('PASS checkout, payment polling and confirmation state');
 
-  // Homepage with a complete category grid, discounted slides and mobile layout.
   const names = ['Кофе', 'Сироп', 'Соус', 'Нунтаг', 'Бариста хэрэгсэл', 'Смүүти', 'Цай', 'Нэг удаагийн хэрэгсэл', 'Бейс', 'Эйд', 'Концентрат', 'Цэцэг, Жимс', 'Кофе шопын хэрэгсэл', 'Кофены хэрэгсэл'];
   await page.route('**/rest/v1/categories?*', route => route.fulfill({ json: names.map((name, i) => ({ id: i + 1, name, icon: 'CoffeeBean' })) }));
   await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [

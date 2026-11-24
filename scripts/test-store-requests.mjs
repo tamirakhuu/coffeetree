@@ -36,9 +36,6 @@ export async function testStoreRequests(db){
     await db.query('select prepare_store_request($1,$2::jsonb)',[id,JSON.stringify(items)]);
     await db.query('select prepare_store_request($1,$2::jsonb)',[id,JSON.stringify(items)]);
     assert.equal(await stock(),6,'Approval deducts once');
-    // prepare_store_request шууд 'sent' рүү шилждэг болсон тул (агуулахаас тусад нь
-    // "Илгээсэн" гэж баталгаажуулах шаардлагагүй) бэлдсэний дараа цуцлах/татгалзах
-    // боломжгүй — зөвхөн 'pending' үедээ л manager татгалзаж болно.
     await as('sar@test.local',1);
     const rejectedId='20000000-0000-0000-0000-000000000007';
     await submit(rejectedId,items);
@@ -47,8 +44,6 @@ export async function testStoreRequests(db){
     await db.query("select change_store_request($1,'rejected')",[rejectedId]);
     assert.equal(await stock(),6,'Rejecting a still-pending request does not touch stock');
     assert.equal((await db.query('select status from store_requests where id=$1',[rejectedId])).rows[0].status,'rejected','Manager can reject while pending');
-    // 'id'-ийн баталгаажуулалт (6 болгосон) цаашид дахин сэргээгдэхгүй тул дараагийн
-    // тохиолдлуудад зориулж барааны нөөцийг гар аргаар эх байдалд нь буцаана.
     await db.exec('reset role; update products set warehouse_unit_stock=10 where id=99001;');
     await as('sar@test.local',1);
     const second='20000000-0000-0000-0000-000000000003';
@@ -90,7 +85,7 @@ export async function testStoreRequests(db){
       alter table store_requests drop column stock_reserved;
     `);
     const sql=await readFile('supabase/run-all-updates.sql','utf8');
-    const upgrade=sql.slice(sql.indexOf('-- Upgrade old reservations once;'),sql.indexOf('create or replace function public.submit_store_request'));
+    const upgrade=sql.slice(sql.indexOf('do $$ declare r record; i record; begin'),sql.indexOf('create or replace function public.submit_store_request'));
     await db.exec(upgrade);
     assert.equal(await stock(),2,'Old pending reservation restored during upgrade');
     await db.exec(upgrade);

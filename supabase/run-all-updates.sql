@@ -1,30 +1,15 @@
--- Combined with the supplied Supabase run-all-updates query.
--- Reuse that saved query; supabase-schema.sql remains separate for new databases only.
--- Preserves existing rows. Historical tags are renamed and missing defaults are added.
 begin;
 set local search_path = public;
 
----------------
 update products set tag = 'эрэлттэй' where tag = 'алдартай';
 
--- ---------------------------------------------------------------------
--- 2) Брэндүүд нэмэх
--- ---------------------------------------------------------------------
 insert into brands (name) values
   ('Pomona'), ('Taco'), ('Daeho'), ('Sweet Page'), ('Nature Tea')
 on conflict (name) do nothing;
 
--- ---------------------------------------------------------------------
--- 3) И-баримт (хувь хүн/байгууллага) талбарууд
--- ---------------------------------------------------------------------
 alter table orders add column if not exists receipt_type text default 'individual';
 alter table orders add column if not exists register_number text;
 
--- ---------------------------------------------------------------------
--- 4) admins хүснэгт, is_admin() функц, захиалгын эзэмшигч (user_id),
---    RLS policy-г "хэн ч нэвтэрсэн бол болно" байснаас зөвхөн admin
---    болгож чангатгах
--- ---------------------------------------------------------------------
 create table if not exists admins (
   email text primary key
 );
@@ -81,21 +66,11 @@ create policy "user read own order_items" on order_items for select using (
 );
 create policy "admin delete order_items" on order_items for delete using (is_admin());
 
--- ---------------------------------------------------------------------
--- 6) Хямдрахаас өмнөх үнэ хадгалах багана
--- ---------------------------------------------------------------------
 alter table products add column if not exists unit_original_price numeric;
 alter table products add column if not exists box_original_price numeric;
 
--- ---------------------------------------------------------------------
--- 7) Хүргэлтийн хэлбэр, хураамж
--- ---------------------------------------------------------------------
-alter table orders add column if not exists delivery_method text default 'pickup'; -- pickup | delivery
+alter table orders add column if not exists delivery_method text default 'pickup';
 alter table orders add column if not exists delivery_fee numeric default 0;
-
--- ---------------------------------------------------------------------
--- 8) Storage bucket-ийн зураг upload/устгах эрхийг зөвхөн админд олгох
--- ---------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
@@ -115,21 +90,10 @@ create policy "admin delete product images"
   on storage.objects for delete
   using (bucket_id = 'product-images' and is_admin());
 
--- ---------------------------------------------------------------------
--- 9) Админ гараар оруулдаг "хэдэн хайрцаг" талбар (очиж авах, хүргэлт
---    хоёуланд нь адилхан)
--- ---------------------------------------------------------------------
 alter table orders add column if not exists box_count integer default 0;
 
--- ---------------------------------------------------------------------
--- 10) "эрэлттэй" шошготой барааг "бестселлэр" болгох
--- ---------------------------------------------------------------------
 update products set tag = 'бестселлэр' where tag = 'эрэлттэй';
 
--- ---------------------------------------------------------------------
--- 11) Шинэ захиалга ирэхэд admin panel-д refresh хийхгүйгээр мэдэгдэл
---     өгөх боломжтой болгох (Supabase Realtime-г orders хүснэгтэд асаах)
--- ---------------------------------------------------------------------
 do $$
 begin
   if not exists (
@@ -140,30 +104,13 @@ begin
   end if;
 end $$;
 
--- ---------------------------------------------------------------------
--- 12) Агуулахын нөөц: гараар 2 газар (агуулах -1, дэлгүүр +1) бичихийн
---     оронд admin panel дээрх "Татах" товчоор нэг л удаа оруулдаг болгох
--- ---------------------------------------------------------------------
 alter table products add column if not exists warehouse_unit_stock int default 0;
 alter table products add column if not exists warehouse_box_stock int default 0;
 
--- Бөөний үнэ бодогдож эхлэх ширхэгийн тоо (жишээ нь: FORTE кофе 3ш, сироп 6ш,
--- зарим повдер 12ш, нэг удаагийн аяга 1000ш — бараа бүрээр өөр өөр байдаг тул
--- ангиллаар биш барааны хувиар админ гараар тохируулна)
 alter table products add column if not exists bulk_qty int;
 
--- ---------------------------------------------------------------------
--- 14) "Нэгдсэн нөөц" — хайрцгаар ирсэн барааг задалж ширхэгээр зарж байгаа
---     барааны хайрцгийн нөөцийг ширхэгийн нөөцөөс автоматаар тооцно
---     (жишээ нь: сироп, повдер зэрэг агуулахаас дандаа хайрцгаар ирж,
---     лангуунд ширхэгээр өрөгддөг бараа)
--- ---------------------------------------------------------------------
 alter table products add column if not exists unified_stock boolean default false;
 
--- ---------------------------------------------------------------------
--- 15) Анхны/хоосон ангиллын дүрсийг шинэ түлхүүрүүд рүү шилжүүлэх.
---     Админы сонгосон дүрс болон custom SVG URL-ийг өөрчлөхгүй.
--- ---------------------------------------------------------------------
 update categories set icon = 'CoffeeBean' where name = 'Кофе' and (icon is null or icon in ('Coffee', ''));
 update categories set icon = 'Syrup' where name = 'Сироп' and (icon is null or icon in ('Coffee', ''));
 update categories set icon = 'Sauce' where name = 'Соус' and (icon is null or icon in ('Coffee', ''));
@@ -171,15 +118,12 @@ update categories set icon = 'Powder' where name = 'Нунтаг' and (icon is n
 update categories set icon = 'Smoothie' where name = 'Смүүти' and (icon is null or icon in ('Coffee', ''));
 update categories set icon = 'TeaLeaf' where name = 'Цай' and (icon is null or icon in ('Coffee', ''));
 
--- ---------------------------------------------------------------------
--- 13) Агуулах ⇄ дэлгүүрийн шилжилтийн түүх (Тайлан хуудсанд харуулна)
--- ---------------------------------------------------------------------
 create table if not exists stock_transfers (
   id bigint generated by default as identity primary key,
   product_id bigint references products(id) on delete set null,
   product_name text not null,
-  option_type text not null, -- 'unit' | 'box'
-  direction text not null, -- 'to_store' (агуулахаас татсан) | 'to_warehouse' (дэлгүүрээс буцаасан)
+  option_type text not null,
+  direction text not null,
   qty int not null,
   admin_email text,
   created_at timestamptz default now()
@@ -203,7 +147,6 @@ end $$;
 
 update categories set icon = 'PaperCup' where name = 'Нэг удаа' and (icon is null or icon in ('Coffee', ''));
 
--- Add missing disposable-cup subcategories; keep existing rows and IDs.
 insert into public.subcategories (category_id, name)
 select c.id, s.name from public.categories c cross join unnest(array[
   'Хуйтний аяга', 'Давхар аяга', 'Дан аяга', 'Зайрмаг / Десерт аяга',
@@ -230,7 +173,6 @@ alter table public.products add column if not exists bulk_unit_price numeric
 alter table public.products add column if not exists discount_ends_at timestamptz;
 alter table public.products add column if not exists coffee_sizes jsonb;
 
--- Keep sizes on the existing product. Old stock is deliberately not reassigned.
 create or replace function public.validate_coffee_sizes() returns trigger
 language plpgsql set search_path = public as $$
 declare k text; v jsonb;
@@ -336,9 +278,6 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
     if p_option_type is null or p_option_type not in ('unit', 'box') then return false; end if;
     select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
     if v_unified and coalesce(v_per_box, 0) > 0 then
-      -- Нэгдсэн нөөцтэй бараа: хайрцгаар авсан ч гэсэн бодит үлдэгдэл нь
-      -- ширхэгээр хадгалагддаг тул warehouse_unit_stock-оос хасаад,
-      -- warehouse_box_stock-ыг түүнээс нь дахин (floor) тооцно
       if p_option_type = 'box' then
         update products set warehouse_unit_stock = warehouse_unit_stock - (p_qty * v_per_box)
           where id = p_product_id and warehouse_unit_stock >= p_qty * v_per_box
@@ -363,10 +302,6 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
   $$ language plpgsql security definer set search_path = public;
   revoke execute on function decrement_stock(bigint, text, int) from public, anon, authenticated;
 
-  -- Захиалга үүсгэх (эсвэл дараагийн бараа хангалтгүй болж цуцлах) явцад
-  -- аль хэдийн амжилттай хассан нөөцөө буцаах rollback функц. Мөн л
-  -- anon/authenticated-д шууд грант хийхгүй — submit_order доторх алдааны
-  -- үед автомат транзакцийн rollback хангалттай, гаднаас дуудах шаардлагагүй.
   create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
   declare
@@ -512,9 +447,6 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
 
     v_delivery_fee := case when v_delivery_method = 'delivery' and v_subtotal < 500000 then 15000 else 0 end;
 
-    -- Захиалгын дугаар (санамсаргүй 6 оронтой тоо, 900,000 хослол) мөргөлдвөл
-    -- шинэ дугаараар дахин оролдоно — захиалгын тоо олширох тусам мөргөлдөх
-    -- магадлал өсдөг тул урьдчилан хамгаална.
     loop
       v_order_number := 'CP' || floor(100000 + random() * 900000)::int::text;
       begin
@@ -540,7 +472,6 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
 
 
 grant execute on function public.submit_order(text, text, text, text, text, text, jsonb) to anon, authenticated;
--- BEGIN employee store requests. Stock is deducted only on warehouse approval.
 create table if not exists public.store_staff (
   email text primary key check (email = lower(trim(email))),
   store_name text not null check (store_name in ('Саруул зах','Яармаг'))
@@ -593,11 +524,7 @@ revoke all on public.store_requests, public.store_request_items from anon, authe
 grant select on public.store_requests,public.store_request_items to authenticated;
 create index if not exists store_requests_created on public.store_requests(created_at desc);
 alter table public.store_request_items add column if not exists approved boolean not null default false;
--- Агуулахын ажилтан захиалгыг "Илгээх"-ээр бэлдэхдээ нэмж өөр бараа оруулсан бол
--- тэр нэмэлт бараа warehouse_create_transfer-ээр ижил batch_id-тай явна; энэ баганаар
--- adminpanel дээр захиалгын мөрүүд болон нэмэлт бараанууд хоорондоо холбогдож харагдана.
 alter table public.store_requests add column if not exists batch_id text;
--- Upgrade old reservations once; rerunning must not restore stock again.
 do $$ declare r record; i record; begin
   if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='store_requests' and column_name='stock_reserved') then
     alter table public.store_requests add column stock_reserved boolean not null default false;
@@ -670,10 +597,6 @@ begin
     if not public.decrement_stock(item.product_id,item.option_type,item.qty) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Сонголтоо шинэчилнэ үү.',item.product_name; end if;
     update public.store_request_items set approved=true where request_id=p_id and product_id=item.product_id and option_type=item.option_type;
   end loop;
-  -- "Бэлдсэн" дарахад шууд дэлгүүрт хүлээн авах боломжтой ('sent') төлөвт шилжинэ —
-  -- агуулахаас тусад нь "Илгээсэн" гэж дахин товшиж баталгаажуулах шаардлагагүй.
-  -- p_batch_id нь зэрэгцэж нэмсэн (warehouse_create_transfer-ээр илгээсэн) нэмэлт
-  -- бараатай adminpanel дээр холбогдож харагдах зориулалттай, нөөцийн тооцоололд нөлөөгүй.
   update public.store_requests set status='sent',stock_reserved=true,updated_at=now(),batch_id=coalesce(p_batch_id,batch_id) where id=p_id;
 end $$;
 revoke all on function public.prepare_store_request(uuid,jsonb,text) from public,anon;
@@ -709,9 +632,6 @@ do $$ begin
     alter publication supabase_realtime add table public.store_requests;
   end if;
 end $$;
--- END employee store requests.
-
--- Admin-managed weekend training dates. Existing registrations are preserved.
 create table if not exists public.training_registrations (
   id bigint generated by default as identity primary key,
   name text not null,
@@ -762,7 +682,6 @@ drop trigger if exists touch_training_session on public.training_sessions;
 create trigger touch_training_session before insert or update on public.training_sessions
 for each row execute function public.touch_training_session();
 
--- The trigger also guards inserts from older RPCs and restores only seats reserved by this schedule.
 create or replace function public.reserve_training_seat() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -830,7 +749,6 @@ grant execute on function public.register_scheduled_training(text,text,date,uuid
 revoke all on function public.reserve_training_seat() from public, anon, authenticated;
 revoke all on function public.restore_training_seat() from public, anon, authenticated;
 
--- BEGIN approved stock top-up 2026-10-06. Once only, including on repeated Run.
 create table if not exists public.stock_topup_runs (
   operation text primary key,
   applied_at timestamptz not null default now(),
@@ -864,7 +782,6 @@ begin
         end if;
       end loop;
     elsif p.unified_stock and coalesce(p.box_per_box, 0) > 0 and (p.unit_price > 0 or p.box_price > 0) then
-      -- Shared stock: an even box count gives both an even unit count and an exact conversion.
       n := greatest(coalesce(units, 0), 0) + case when p.unit_price > 0 then 10 else 0 end;
       boxes := greatest(ceil(n::numeric / p.box_per_box)::bigint,
         greatest(coalesce(boxes, 0), 0) + case when p.box_price > 0 then 10 else 0 end);
@@ -891,16 +808,7 @@ begin
   end loop;
   update public.stock_topup_runs set changed_products=changed where operation='approved-even-topup-2026-10-06';
 end $$;
--- END approved stock top-up 2026-10-06.
 
--- ---------------------------------------------------------------------
--- 16) Өмнө нь зөвхөн Supabase SQL Editor дээр шууд бичигдэж, энэ файлд
--- хэзээ ч тэмдэглэгдээгүй байсан объектуудыг нэгтгэв (2026-11-23 аудит).
--- Эдгээр нь production дээр аль хэдийн ажиллаж байгаа тул үйлдэл өөрчлөгдөхгүй,
--- зөвхөн DB-г дахин сэргээх боломжтой болгож байна.
--- ---------------------------------------------------------------------
-
--- Агуулахын ажилтны эрх (аguulah.html-ийн нэвтрэлтийн гарц).
 create table if not exists public.warehouse_staff (
   email text primary key
 );
@@ -915,7 +823,6 @@ language sql stable security definer set search_path = public as $$
 $$;
 grant execute on function public.is_warehouse_staff() to anon, authenticated;
 
--- Агуулах ⇄ дэлгүүрийн шилжилтийн төлөв (admin-panel.html, aguulah.html).
 alter table public.stock_transfers add column if not exists status text not null default 'pending';
 alter table public.stock_transfers add column if not exists received_at timestamptz;
 alter table public.stock_transfers add column if not exists received_by text;
@@ -964,10 +871,6 @@ begin
   end if;
   v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
 
-  -- "Илгээх"/"Хасах" дарсан мөчид (admin хүлээн авахыг хүлээлгүйгээр) агуулахын
-  -- нөөцийг шууд хасна — физик байдлаар бараа агуулахаас гарч, замдаа (эсвэл
-  -- устгагдахаар) явсан тул цаашид өөр илгээлтэд дахин сонгогдохгүй байх ёстой.
-  -- Хэрэв admin "Буцаах" дарвал admin_reject_transfer энэ хасалтыг буцаана.
   if p_direction = 'to_store' or p_direction = 'writeoff' then
     if v_unified then
       v_need_unit := case when p_option_type = 'box' then p_qty * v_per_box else p_qty end;
@@ -1028,8 +931,6 @@ begin
   v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
 
   if v_transfer.direction = 'to_store' then
-    -- Агуулахын нөөцийг warehouse_create_transfer үед (илгээх товч дарахад) аль
-    -- хэдийн хассан тул энд дахин хасахгүй, зөвхөн дэлгүүрийн нөөцийг л нэмнэ.
     if v_unified then
       if v_transfer.option_type = 'box' then
         update products set unit_stock = coalesce(unit_stock, 0) + (v_transfer.qty * v_per_box)
@@ -1102,9 +1003,6 @@ begin
     end if;
 
   elsif v_transfer.direction = 'writeoff' then
-    -- Агуулахын нөөцийг warehouse_create_transfer үед (хасах хүсэлт илгээхэд) аль
-    -- хэдийн хассан тул энд дахин хийх үйлдэл алга — зөвхөн "Хасах уу?" гэдгийг
-    -- баталгаажуулж статусыг 'received' болгоно.
     null;
   end if;
 
@@ -1137,10 +1035,6 @@ begin
     raise exception 'Энэ шилжилт аль хэдийн хүлээн авагдсан/цуцлагдсан байна';
   end if;
 
-  -- 'to_store'/'writeoff' чиглэлийн хувьд warehouse_create_transfer үед (илгээх/
-  -- хасах товч дарахад) агуулахын нөөцийг аль хэдийн хассан байгаа тул "Буцаах"
-  -- үед тэрийг буцаан нэмнэ. 'restock'/'to_warehouse' чиглэлд үүсэх үед нөөц
-  -- хөдөлдөггүй (зөвхөн admin_receive_transfer-ээр л хөдөлдөг) тул энд хөдлөхгүй.
   if v_transfer.direction in ('to_store', 'writeoff') then
     select unified_stock, box_per_box into v_unified, v_per_box
       from products where id = v_transfer.product_id for update;
@@ -1166,19 +1060,9 @@ begin
   return true;
 end;
 $$;
--- Эдгээр хоёр нь зөвхөн is_admin()-ийг амжилттай давсан authenticated админд л
--- бодитоор ажилладаг ч, өмнө нь EXECUTE эрх анон/public-д ч нээлттэй үлдсэн
--- байсныг (2026-11-23 аудитаар олдсон) энд цэгцэлж байна.
 revoke all on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) from public, anon;
 grant execute on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) to authenticated;
 
--- 2026-11-24: warehouse_create_transfer одооноос 'to_store'/'writeoff' үед
--- (admin хүлээн авахыг хүлээлгүйгээр) агуулахын нөөцийг шууд хасдаг болсон тул
--- энэ migration ажиллах мөчид аль хэдийн 'pending' төлөвтэй (хуучин загвараар
--- үүссэн, нөөц нь хараахан хасагдаагүй) ийм шилжилтүүдийн нөөцийг нэг удаа
--- гар аргаар хасна — эс тэгвээс admin хожим хүлээн авах/буцаах үед нөөц
--- давхар тооцогдох (эсвэл огт хасагдаагүй үлдэх) эрсдэлтэй. Дахин ажиллуулахад
--- аюулгүй (нэг л удаа хэрэгжинэ).
 do $$
 declare
   t record;
@@ -1211,9 +1095,6 @@ begin
   end if;
 end $$;
 
--- Захиалга/сургалтын бүртгэлийг утасны дугаараар шалгах, хугацаа хэтэрсэн
--- төлбөргүй захиалгыг чөлөөлөх (admin-panel.html-ийн "Сонсох" бус харин
--- OrderTrackingPage/TrainingStatusPage-ээс дуудагддаг нийтийн функцууд).
 create or replace function public.expire_stale_orders() returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -1280,25 +1161,9 @@ end;
 $$;
 grant execute on function public.lookup_training_by_phone(text) to anon, authenticated;
 
--- Хуучин сургалтын систем (admin-ээс гараар өдөр нэмдэг training_sessions
--- болохоос өмнөх хувилбар) — ямар ч клиент код дуудахгүй болсон тул устгав.
 drop function if exists public.register_training(text, text, date);
 drop function if exists public.training_slots(date[]);
--- END 2026-11-23 audit consolidation.
 
--- ---------------------------------------------------------------------
--- 17) unified_stock бараанд box_per_box-ийг дараа нь өөрчилсөн (жишээ нь
--- "1 хайрцагт хэдэн ширхэг"-ийг зөв тоогоор засах зэрэг) тохиолдолд
--- warehouse_box_stock/box_stock хуучин (box_per_box-ийн өмнөх утгаар
--- тооцоологдсон) утгаараа үлдэж, бодит ширхэгийн нөөцтэйгээ нийцгүй болдог
--- (admin-ийн бараа засах форм эдгээр баганыг шууд өөрчилдөггүй — зөвхөн
--- decrement_stock/admin_receive_transfer л тэдгээрийг ширхэгээс дахин
--- тооцдог тул box_per_box өөрчлөгдсөн мөч дээр л тэдгээр дуудагдаагүй бол
--- хуучин утга хэвээр үлдэнэ). Аюулгүй, идемпотент дахин тооцоолол тул
--- run-all-updates ажиллуулах бүрт автоматаар зассан хэвээр байлгана
--- (2026-11-23 Aloe Ade-ийн "Илгээх" алдааны аудитаар олдсон, 25 бараанд
--- нөлөөлж байсан).
--- ---------------------------------------------------------------------
 update public.products set warehouse_box_stock = floor(coalesce(warehouse_unit_stock,0)::numeric / box_per_box)
   where unified_stock and coalesce(box_per_box,0) > 0
   and warehouse_box_stock is distinct from floor(coalesce(warehouse_unit_stock,0)::numeric / box_per_box);
@@ -1309,7 +1174,6 @@ update public.products set box_stock = floor(coalesce(unit_stock,0)::numeric / b
 notify pgrst, 'reload schema';
 commit;
 
--- The full query should finish with this result row, not just an empty Success message.
 select
   'run-all-updates: training schedule ready' as update_status,
   to_regclass('public.training_sessions')::text as training_table,

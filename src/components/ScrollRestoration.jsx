@@ -21,7 +21,6 @@ export function ScrollRestoration() {
     const restore = () => {
       if (!restoring) return;
       window.scrollTo({ top: target, left: 0, behavior: 'instant' });
-      // Lazy pages and images may not have their final height yet.
       if (Math.abs(window.scrollY - target) < 2 || performance.now() - started > 10000) {
         restoring = false;
         lastY = window.scrollY;

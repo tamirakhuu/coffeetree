@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 const html = await readFile('public/admin-panel.html', 'utf8');
 const code = html.slice(html.indexOf('const PRODUCTS_PER_PAGE'), html.indexOf('function categoryOptions'));
-const escapeCode = html.slice(html.indexOf('function escapeHtml('), html.indexOf('// toLocaleDateString'));
+const escapeCode = html.slice(html.indexOf('function escapeHtml('), html.indexOf('function formatMnDate('));
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();

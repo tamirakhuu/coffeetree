@@ -17,7 +17,6 @@ html {
   opacity: 0.75;
 }
 
-/* search box nuuh */
 .cuppa-search-toggle {
   display: none !important;
 }
@@ -27,7 +26,6 @@ html {
 
 @media (max-width: 720px) {
   .footer-order-tracking { display: none; }
-  /* headers busad tomruulah */
   main, footer {
     zoom: 1.08;
   }
@@ -159,20 +157,11 @@ html {
   .cuppa-hero-title { font-size: 24px !important; }
 }
 
-/* Таблет (жишээ нь iPad Mini 768px, iPad Air 820px) хэмжээнд mobile-ийн
-   breakpoint (720px) хараахан хүрээгүй тул hero carousel цэвэр desktop-ийн
-   utga-аар (320px өндөр, 14px gap, талын slide 16%) зурагдаж, гол зурагтай
-   хажуугийн slide-ын хооронд их хоосон зай гарч замбараагүй харагддаг байв —
-   энэ хэсэгт mobile болон desktop хоёрын хоорондох дунд зэргийн утгаар тохируулна */
 @media (min-width: 721px) and (max-width: 1024px) {
   .cuppa-hero-carousel { height: 260px !important; gap: 10px !important; }
   .cuppa-hero-side-slide { width: 20% !important; height: 84% !important; opacity: 0.55 !important; }
 }
 
-/* Босоо, өндөр дэлгэцтэй (kiosk-той адил) том дэлгэц дээр барааны
-   дэлгэрэнгүй хэсгийн зургийг дэлгэцийн голд харагдуулна — учир нь
-   энгийн desktop/mobile-ийн бодлого хэрэглэвэл контент дэлгэцийн
-   дээд хэсэгт наалдаж, доор нь ашиглагдаагүй хоосон зай их үлддэг */
 @media (min-width: 900px) and (orientation: portrait) {
   .cuppa-detail-hero {
     min-height: calc(100vh - 220px);
@@ -188,13 +177,11 @@ html {
   box-shadow: 0 8px 20px rgba(36, 28, 20, .14) !important;
 }
 
-/* darah mochid bagazereg jijigreh, gar utsan deer daraltiig medruuleh */
 .cuppa-category-tile:active {
   transform: scale(0.95);
   transition: transform 0.1s ease;
 }
 
-/* safari zoom. */
 @media (max-width: 720px) {
   input, textarea, select {
     font-size: 16px !important;

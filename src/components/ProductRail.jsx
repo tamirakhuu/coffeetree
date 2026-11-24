@@ -42,8 +42,6 @@ export function ProductRail({ items, onOpen, onQuickAdd, wishlist, onToggleWish,
         if (position >= end) { position = 0; interactionUntil.current = now + 1800; }
         node.scrollLeft = position;
         lastWritten = node.scrollLeft;
-        // Scroll offsets may be rounded to physical pixels. Render the fractional
-        // remainder on the compositor so slow movement stays visually smooth.
         content.style.transform = `translate3d(${lastWritten - position}px, 0, 0)`;
       }
       frame = requestAnimationFrame(animate);

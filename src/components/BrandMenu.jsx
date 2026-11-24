@@ -4,7 +4,6 @@ import { ChevronDown } from 'lucide-react';
 import { DataContext } from '../context/DataContext.jsx';
 import { CategoryMenu } from './CategoryMenu.jsx';
 
-// Navigation only: keep these brands and their products in the catalogue.
 const hiddenMenuBrands = new Set(['magister', 'jacks', 'jackscoffee', 'borbone', 'caffeborbone', 'starbucks', 'kalita', 'sweetpage']);
 const brandMenuKey = name => (name || '').normalize('NFKD').toLowerCase().replace(/[\s'’‘`ʼ\u0300-\u036f-]/g, '');
 

@@ -48,7 +48,6 @@
 @media(max-width:720px){.home-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}.home-category-card{padding:8px 2px}.home-category-image{height:90px;max-width:100px}.home-category-card>span{font-size:14px;min-height:40px;margin-top:10px;overflow-wrap:anywhere}}
 @media(prefers-reduced-motion:reduce){.home-category-image img{transition:none}.home-category-card:hover .home-category-image img{transform:none}}
 
-/* Give every product its own space so the center card cannot cover its neighbors. */
 .home-hero-media{isolation:isolate;overflow:hidden;gap:10px}
 .home-image-button{position:relative;order:2;flex:2 1 0;min-width:0;background:#fff;border-radius:14px}
 .home-side-product{position:relative;flex:1 1 0;min-width:0;height:220px;box-sizing:border-box;border:0;border-radius:12px;background:#fff;opacity:.5;padding:0}

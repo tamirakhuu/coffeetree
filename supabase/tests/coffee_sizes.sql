@@ -1,5 +1,3 @@
--- Run after run-all-updates.sql on a TEST database as its owner.
--- All fixture rows/orders are rolled back. No payment API calls are made.
 begin;
 do $$
 declare

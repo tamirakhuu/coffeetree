@@ -1,7 +1,5 @@
 import { createLucideIcon } from 'lucide-react';
 
-// Lucide scan-box, ISC license: https://github.com/lucide-icons/lucide
-// Copyright (c) Lucide Contributors. Distributed under the lucide-react ISC license.
 export const ScanBox = createLucideIcon('ScanBox', [
   ['path', { d: 'M12 12v5.5', key: 'a' }],
   ['path', { d: 'M17 3h2a2 2 0 012 2v2', key: 'b' }],

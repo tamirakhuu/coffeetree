@@ -124,7 +124,6 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const bulkPrice = product.hasPowderSizes ? option.bulkUnitPrice : getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? (product.hasPowderSizes ? option.bulkQty : product.bulkQty) : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
-  // The small squeeze bottle does not fit a sauce pump.
   const incompatibleSaucePump = pumpName === "Sauce pump" &&
     product.name.trim().replace(/\s+/g, " ").toLowerCase() === "caramel sauce s";
   const suggestedPump = pumpName && !incompatibleSaucePump
@@ -138,10 +137,6 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const productBaseName = stripSizeSuffix(product.name).toLowerCase();
   const sameNameOtherBrands = productBaseName ? products.filter((p) =>
     p.brandId !== product.brandId && stripSizeSuffix(p.name).toLowerCase() === productBaseName) : [];
-  // Мөн адил брэндийн, ИЖИЛ ДЭД АНГИЛЛЫН (sub) бусад бараа (жишээ нь Pomona Espresso
-  // (Blend)-гийн дор Pomona Premium (мөн Blend) гэх мэт нэр нь өөр ч тухайн брэндийн
-  // яг тэр дэд ангиллын төстэй бараа санал болгоно — ангиллаар нь ерөнхийлбөл
-  // жишээ нь сироп бүгдийг (жимсний, кофены гэх мэт ялгаагүй) харуулчихдаг тул sub-ийг мөн шалгана
   const sameBrandSimilar = products.filter((p) =>
     p.id !== product.id && p.brandId === product.brandId &&
     p.categoryId === product.categoryId && p.sub === product.sub);

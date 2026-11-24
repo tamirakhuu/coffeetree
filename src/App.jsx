@@ -35,9 +35,6 @@ const DiscountsPage = lazyPage(() => import("./pages/DiscountsPage.jsx"));
 export default function App() {
   const [data, setData] = useState({ categories: [], brands: [], products: [] });
   const [dataStatus, setDataStatus] = useState("loading");
-  // view нь одоо react-router-ийн location-оос уусгагдана — address bar нь
-  // цорын ганц үнэн сурвалж тул хуудас бүр өөрийн гэсэн бодит URL-тэй,
-  // хуулж/хуваалцаж, browser-ийн буцах/урагшлах товчоор шилжиж болно
   const location = useLocation();
   const navigate = useNavigate();
   const view = viewFromLocation(location.pathname, location.search);
@@ -57,7 +54,6 @@ export default function App() {
   const [toast, setToast] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
 
-  // Лого animation
   const MIN_LOADING_MS = 1500;
   const pendingLoads = useRef(new Set());
   const loadVersion = useRef(0);
@@ -110,9 +106,6 @@ export default function App() {
     };
   }, []);
 
-  // Mobile/tab background руу орох үед browser нь setInterval-ыг удаашруулдаг
-  // (throttle) тул tab дахин идэвхжих бүрд шууд шалгаж хуучирсан үзүүлэлт
-  // үлдэхээс сэргийлнэ
   useEffect(() => {
     const checkExpired = () => {
       setData((prev) => {
@@ -166,8 +159,6 @@ export default function App() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   const openProduct = (p) => setView({ name: "product", productId: p.id });
-  // Дэлгэрэнгүй хуудаснаас "Буцах" дарахад аппын дотоод шилжилт байсан бол
-  // browser-ийн буцах, эс бол (шууд URL-аар орж ирсэн бол) Нүүр хуудас
   const backFromProduct = () => {
     if (location.key !== "default") navigate(-1);
     else navigate("/");
@@ -187,14 +178,9 @@ export default function App() {
       });
       const { orderNumber, subtotal, deliveryFee } = await submitOrder({ form, cart: orderCart, products: data.products });
       setOrderNumber(orderNumber);
-      // Reload authoritative stocks; realtime may already have delivered this sale.
-      // Subtracting locally again would count the same order twice.
       fetchBootstrap().then(setData).catch(error => console.warn('Stock refresh failed', error));
       setCart([]);
       const serverTotal = (subtotal || 0) + (deliveryFee || 0);
-      // Захиалга аль хэдийн бүртгэгдсэн тул QPay нэхэмжлэл үүсгэхэд алдаа гарсан ч
-      // захиалгыг цуцлахгүй — зүгээр баталгаажуулах хуудас руу шууд оруулна
-      // (дараа нь бэлнээр/шилжүүлгээр төлж болно)
       try {
         const invoice = await createQpayInvoice({
           orderNumber, description: `CUPPA захиалга ${orderNumber}`,

@@ -1,5 +1,3 @@
-/* CUPPA ажилтны аппын дизайны систем — aguulah.html-тэй ижил хувьсагч/фонт/
-   компонент ашиглаж, нэг "гэр бүл" мэдрэмж өгнө (employee.html, staff-access.html). */
 :root{
   --bg:#F6F7F8; --surface:#ffffff; --text:#20242B;
   --accent:#45516B; --accent-600:#343D50; --accent-700:#262C3B; --accent-100:#EBEDF2; --accent-200:#DADDE3;
@@ -36,7 +34,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr .success{color:var(--sage-800);font-family:var(--font-b);font-weight:400}
 .sr :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* ── Нэвтрэх хуудас ── */
 .login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:14px;
   max-width:420px;margin:0 auto;padding:32px 24px 40px;position:relative;overflow:hidden;
   font-family:var(--font-b);color:var(--text)}
@@ -49,9 +46,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .login .field label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted)}
 .login .input,.login input{width:100%;height:50px;padding:0 18px;border:1px solid var(--line);border-radius:999px;
   background:var(--surface);font:16px var(--font-b);color:var(--text)}
-/* Нэвтрэх/topbar-ийн товч нь .sr хүрээний гадна байрладаг тул (login болон
-   logout үйлдэл нь мэдээллийн урсгалын шатлалаас гадуур, host хуудсанд
-   харьяалагддаг) энд тусад нь нийтлэг .btn-загвар тодорхойлно. */
 .btn,.login button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;
   padding:0 22px;border:none;border-radius:999px;background:var(--accent);color:var(--bg);
   font-family:var(--font-h);font-weight:700;font-size:15px;cursor:pointer}
@@ -59,7 +53,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .login button{width:100%}
 .btn-line{background:transparent !important;color:var(--accent-700) !important;box-shadow:none}
 
-/* ── Дээд талбар ── */
 .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,36,43,.08)}
 .topbar .wrap{display:flex;align-items:center;gap:12px;max-width:620px;margin:auto;padding:12px 16px}
 .brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);overflow:hidden}
@@ -69,13 +62,11 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .who span{font-size:11.5px;color:var(--muted)}
 .spacer{margin-left:auto}
 
-/* ── Хайлт/шүүлтүүр ── */
 .sr-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 10px}
 .sr-toolbar [data-search]{flex:1;min-width:160px}
 .sr-toolbar select{flex:1;min-width:120px}
 .sr-toolbar label{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:13px;color:var(--muted)}
 
-/* ── Барааны карт ── */
 .sr-product{background:var(--surface);border-radius:var(--r);padding:14px;margin:10px 0;display:flex;gap:12px}
 .sr-product-heading{min-width:0;flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center}
 .sr-product-heading strong{display:block;overflow-wrap:anywhere;margin:2px 0;font-size:15px;font-weight:600}
@@ -89,7 +80,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-choice button{min-height:38px;padding:0 16px;font-size:13px}
 .sr-empty{padding:30px;color:var(--muted);text-align:center;background:var(--surface);border-radius:var(--r)}
 
-/* ── Сонгосон бараа (cart) ── */
 .sr-cart-sheet [data-draft] .sr-card{display:flex;align-items:flex-start;gap:12px;
   background:var(--bg);margin:0 0 10px;padding:12px 14px}
 .sr-cart-sheet [data-draft] .sr-draft-info{flex:1;min-width:0}
@@ -100,7 +90,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-stepper button{min-height:32px;min-width:32px;padding:0;border-radius:999px;font-size:16px;line-height:1}
 .sr-stepper input{width:48px;padding:0 4px}
 
-/* ── Доод талд наалдсан баталгаажуулах мөр + сонгосон барааны sheet ── */
 .sr-backdrop{position:fixed;inset:0;z-index:24;background:rgba(32,36,43,.35)}
 .sr-bar{position:fixed;left:0;right:0;bottom:16px;z-index:25;padding:0 16px;pointer-events:none}
 .sr-bar .in{max-width:588px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
@@ -120,7 +109,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-sheet-close{min-height:32px;min-width:32px;padding:0;border-radius:999px;margin-left:0;
   background:var(--accent-100);color:var(--accent-700);font-size:13px}
 
-/* ── Захиалгын түүх ── */
 .sr-history{margin-top:28px}
 .sr-history summary{font-family:var(--font-h);font-size:17px;font-weight:700;cursor:pointer;padding:10px 0;list-style:none}
 .sr-history summary::-webkit-details-marker{display:none}
@@ -142,13 +130,10 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-tag-unprepared{display:inline-block;background:var(--red-100);color:var(--red-800);font-size:11px;
   font-weight:600;padding:3px 10px;border-radius:999px;margin-top:4px}
 
-/* ── Агуулахын горим (sr-warehouse) — 2 баганатай жагсаалт, одоогоор
-   бодит хэрэглээгүй ч regression test-ээр шалгагддаг тул дизайныг нь нийцүүлнэ ── */
 .sr-warehouse{max-width:960px}
 .sr-warehouse [data-requests]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
 @media(max-width:760px){.sr-warehouse [data-requests]{grid-template-columns:1fr}}
 
-/* Агуулахын "Хэвлэх" баримт — дэлгэцэнд үл харагдах, хэвлэх үед л гарч ирнэ. */
 #sr-print-slip{display:none}
 #sr-print-slip h1{font-size:18px;margin:0 0 6px;font-family:Arial,sans-serif}
 #sr-print-slip table{width:100%;border-collapse:collapse;margin-top:10px}
@@ -164,6 +149,4 @@ html,body{margin:0;padding:0;background:var(--bg)}
   .topbar .wrap{max-width:680px}
 }
 
-/* Гар утсан дээр input/select/textarea-ийн font-size 16px-ээс багадвал iOS Safari
-   фокус хийх үед хуудсыг автоматаар дүрс томруулдаг тул гар утсанд энэ хэмжээг барина. */
 @media(max-width:760px){.sr input,.sr select,.sr textarea{font-size:16px}}

@@ -4,12 +4,6 @@ import { compareProductNames, COFFEE_SIZES, POWDER_SIZES, availableOptionTypes }
 export const DELIVERY_FEE = 15000;
 export const FREE_DELIVERY_THRESHOLD = 500000;
 
-// Хямдралын хугацаа (discount_ends_at) өнгөрсөн бол тухайн барааг цаашид
-// "хямдралтай" гэж тооцохгүй — шошгыг унтраагаад, хямдрахаас өмнөх үнээр
-// (originalPrice) борлуулна. Аль хэдийн шинэчлэгдсэн (tag аль хэдийн null)
-// бол өөрчлөлтгүйгээр буцаана (идемпотент) — fetchBootstrap-с ирэх шинэ
-// мөрөнд (shapeProduct дотор), мөн аль хэдийн ачаалагдсан төлөвт (App.jsx-ийн
-// цаг тутмын шалгалт, хуудас refresh хийхгүйгээр) хоёуланд нь ашиглагдана.
 export function revertExpiredDiscount(p) {
   const expired = p.tag === "хямдралтай" && p.discountEndsAt &&
     new Date(p.discountEndsAt).getTime() <= Date.now();
@@ -51,10 +45,6 @@ export function shapeProduct(r) {
   });
 }
 
-// Барааг ширхэгээр авахад, тоо нь тухайн барааны "бөөний тоо"-нд хүрвэл
-// (админ бараа бүрээр тохируулдаг — жишээ нь FORTE кофе 3ш, сироп 6ш,
-// нэг удаагийн аяга 1000ш гэх мэт) бөөний нэгж үнээр бүх ширхэгийг тооцно.
-// Тусдаа үнэ оруулаагүй хуучин бараанд хайрцгийн нэгж үнийг ашиглана.
 export function getBulkUnitPrice(product) {
   if (product.bulkUnitPrice > 0) return product.bulkUnitPrice;
   if (product.box?.price > 0 && product.box?.perBox > 0) return product.box.price / product.box.perBox;
@@ -75,7 +65,6 @@ export function computeLineTotal(product, optionType, qty) {
   return (product[optionType]?.price || 0) * qty;
 }
 
-// Ангилал, брэнд, бараа — бүгд нээлттэй уншигддаг (public read RLS policy)
 export async function fetchBootstrap() {
   const [{ data: categories, error: ce }, { data: subcategories, error: se },
          { data: brands, error: be }, { data: products, error: pe }] = await Promise.all([
@@ -95,13 +84,7 @@ export async function fetchBootstrap() {
   return { categories: cats, brands: sortedBrands, products: products.map(shapeProduct).sort(compareProductNames) };
 }
 
-// Захиалга үүсгэх — үнэ, нөөцийн шалгалт, бичилт бүгд submit_order гэсэн
-// SECURITY DEFINER функц дотор серверийн талд л хийгддэг (нэг транзакц тул
-// аль нэг алхам алдвал бүгд автоматаар буцна). Клиент зөвхөн product_id/
-// option_type/qty дамжуулна, үнийг сервер өөрөө products хүснэгтээс уншиж
-// тооцдог тул захиалгын дүнг client талаас хуурамчаар өөрчлөх боломжгүй.
 export async function submitOrder({ form, cart, products }) {
-  // Сагсанд байгаа ч устгагдсан/олдохгүй болсон бараа байвал алгасна
   const validItems = cart
     .map((item) => ({ item, product: products.find((x) => x.id === item.productId) }))
     .filter(({ product }) => product);
@@ -122,12 +105,9 @@ export async function submitOrder({ form, cart, products }) {
     })),
   });
   if (error) throw new Error(error.message);
-  return data; // { orderNumber, subtotal, deliveryFee }
+  return data;
 }
 
-// Хэрэглэгч бүртгэлгүйгээр утасны дугаараараа захиалгаа хайж хянах —
-// lookup_orders_by_phone нь SECURITY DEFINER тул RLS-ийг тойрч, зөвхөн
-// идэвхтэй (хүлээлгэн өгсөн/хүргэгдсэн болоогүй) захиалгуудыг буцаадаг
 export async function lookupOrdersByPhone({ phone }) {
   const { data, error } = await supabase.rpc("lookup_orders_by_phone", {
     p_phone: phone.trim(),
@@ -136,9 +116,6 @@ export async function lookupOrdersByPhone({ phone }) {
   return data || [];
 }
 
-// Сургалтад бүртгүүлэх — register_scheduled_training нь SECURITY DEFINER тул
-// админы тохируулсан сул суудлыг серверийн талд атомикаар шалгадаг
-// (хоёр хэрэглэгч сүүлийн байрыг зэрэг авахыг зөвшөөрөхгүй).
 export async function registerTraining({ name, phone, trainingDate, requestId }) {
   const { data, error } = await supabase.rpc("register_scheduled_training", {
     p_name: name.trim(),
@@ -147,11 +124,9 @@ export async function registerTraining({ name, phone, trainingDate, requestId })
     p_request_id: requestId,
   });
   if (error) throw new Error(error.message);
-  return data; // шинэ бүртгэлийн id
+  return data;
 }
 
-// Хэрэглэгч бүртгэлгүйгээр утасны дугаараараа сургалтын бүртгэл/төлбөрийн
-// төлвөө шалгах — lookupOrdersByPhone-той ижил зарчим.
 export async function lookupTrainingByPhone({ phone }) {
   const { data, error } = await supabase.rpc("lookup_training_by_phone", {
     p_phone: phone.trim(),
@@ -160,34 +135,24 @@ export async function lookupTrainingByPhone({ phone }) {
   return data || [];
 }
 
-// QPay нэхэмжлэл (invoice) үүсгэх — client_id/client_secret нь Edge Function
-// дотор, хэзээ ч browser-т ирдэггүй. Төлбөрийн дүнг Edge Function өөрөө
-// orders (эсвэл kind:"training" бол training_registrations) хүснэгтээс
-// уншдаг тул энд дүн дамжуулах шаардлагагүй (client талаас хуурамч дүн
-// илгээж бага мөнгөөр нэхэмжлэл үүсгэх боломжийг хаасан).
-// QPay мерчант эрх (secrets) тохируулаагүй үед Edge Function demo QR
-// буцаадаг тул үүнийг frontend-с ялгаж мэдэх шаардлагагүй.
 export async function createQpayInvoice({ orderNumber, registrationId, description, kind }) {
   const { data, error } = await supabase.functions.invoke("qpay-create-invoice", {
     body: { orderNumber, registrationId, description, kind },
   });
   if (error) throw new Error(error.message || "QPay нэхэмжлэл үүсгэхэд алдаа гарлаа");
   if (data?.error) throw new Error(data.error);
-  return data; // { invoiceId, qrText, qrImage, urls, demo }
+  return data;
 }
 
-// Хэрэглэгч QR-аа төлсөн эсэхийг шалгах (checkout болон сургалтын бүртгэлийн
-// дэлгэц 3 секунд тутам polling хийнэ)
 export async function checkQpayPayment({ invoiceId, orderNumber, registrationId, kind }) {
   const { data, error } = await supabase.functions.invoke("qpay-check-payment", {
     body: { invoiceId, orderNumber, registrationId, kind },
   });
   if (error) throw new Error(error.message || "Төлбөр шалгахад алдаа гарлаа");
   if (data?.error) throw new Error(data.error);
-  return data; // { paid, paidAmount, demo }
+  return data;
 }
 
-// Only admin-published dates and remaining seats; no registration/customer data.
 export async function getTrainingSlots() {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
   const { data, error } = await supabase.from('training_sessions')

@@ -1,15 +1,3 @@
-// QPay нэхэмжлэл төлөгдсөн эсэхийг шалгадаг Edge Function (client талаас
-// 3 секунд тутам polling хийж дуудагдана). Төлөгдсөн нь батлагдвал ЗӨВХӨН
-// энд, service_role эрхээр л payment_status='paid' болгож бичнэ (kind:
-// 'training' бол training_registrations, эс бол orders хүснэгтэд) —
-// client өөрөө шууд бичих эрхгүй (RLS), учир нь эс тэгвэл хэн ч төлөөгүй
-// захиалгаа/бүртгэлээ "төлөгдсөн" гэж хуурамчаар тэмдэглэх боломжтой болно.
-//
-// Deploy: npx supabase functions deploy qpay-check-payment --project-ref vbgqgwfcklkfecvocsyt
-// QPAY_BASE_URL-ийг ЗААВАЛ production хаягаар тохируулна — өгөхгүй бол
-// sandbox руу чимээгүйхэн унаж, жинхэнэ credential-ууд sandbox-т таарахгүй
-// байх тул доор тодорхой алдаа шидэж зогсооно (see CONFIG_ERROR).
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -22,8 +10,6 @@ const DEMO_MODE = !QPAY_CLIENT_ID || !QPAY_CLIENT_SECRET;
 const CONFIG_ERROR = !DEMO_MODE && !Deno.env.get("QPAY_BASE_URL")
   ? "QPAY_CLIENT_ID/SECRET тохируулсан ч QPAY_BASE_URL тохируулаагүй байна. Sandbox руу чимээгүй унахаас сэргийлж энд зогсоов — жинхэнэ мерчант хаягаа (QPAY_BASE_URL) тодорхой тохируулна уу."
   : "";
-// Demo горимд бодит төлбөр хийх боломжгүй тул QR-ийг харуулаад ийм хугацааны
-// дараа "төлөгдсөн" гэж дүрд тоглуулна — зөвхөн урсгалыг харуулах зорилготой
 const DEMO_AUTO_PAY_MS = 15000;
 
 const corsHeaders = {
@@ -32,10 +18,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// checkQpayPayment нь 3 секунд тутам polling хийгддэг тул access_token-ийг
-// warm isolate дотор кэшилж, дуусахаас нь 60 секундийн өмнө л дахин авна —
-// эс тэгвэл шалгалт бүрд шинэ token авах гэж QPay руу нэмэлт хүсэлт
-// (мөн rate-limit эрсдэл) үүсгэнэ.
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 async function getQpayToken(): Promise<string> {

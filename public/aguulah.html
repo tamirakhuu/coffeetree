@@ -29,7 +29,6 @@ button{cursor:pointer}
 a{color:var(--accent-700)}
 [hidden]{display:none !important}
 
-/* layout */
 .wrap{max-width:960px;margin:0 auto;padding:0 16px}
 .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,36,43,.08)}
 .topbar .wrap{display:flex;align-items:center;gap:12px;padding:12px 16px}
@@ -47,7 +46,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .head h2{font-size:26px}
 .head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
 
-/* atoms */
 .card{background:var(--surface);border-radius:var(--r);padding:16px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;
   border:none;border-radius:999px;background:var(--accent);color:var(--bg);font-family:var(--font-h);font-size:16px}
@@ -82,7 +80,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .chip{flex:none;min-height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:12.5px;white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--sage);color:var(--sage-100);border-color:transparent}
 
-/* stat cards */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .stat{border-radius:var(--r);padding:14px 16px;background:var(--surface)}
 .stat.sage{background:var(--sage);color:var(--sage-100)}
@@ -92,7 +89,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .stat .s{font-size:12px;color:var(--muted)}
 .stat.sage .s{color:rgba(240,250,225,.8)}
 
-/* list rows */
 .pick{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;background:transparent;border-radius:var(--r-sm);text-align:left}
 .pick:hover{background:var(--bg)}
 .pick .plus{width:32px;height:32px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);display:grid;place-items:center;font-size:18px}
@@ -102,7 +98,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .num{font-family:var(--font-h);font-size:20px}
 .num.low{color:var(--accent-600)}
 
-/* item card (draft rows) */
 .item{background:var(--surface);border-radius:var(--r);padding:12px 14px;position:relative}
 .item-body{display:flex;gap:12px}
 .item-thumb{width:88px;min-height:96px;border-radius:14px;flex:none;align-self:stretch;overflow:hidden}
@@ -119,8 +114,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .step .u{flex:none;font-size:12.5px;color:var(--muted);min-width:58px;text-align:right;margin-left:auto}
 .calc{font-size:12.5px;color:var(--accent-700);background:var(--accent-100);border-radius:999px;padding:6px 14px;align-self:flex-start}
 
-/* 400px-с нарийн дэлгэц дээр .item доторх мөр (зураг + тоолуур) багтахгүй
-   болж баруун захын шошго (жишээ нь "хайрцаг") тасарч гардаг тул нягтруулна */
 @media (max-width:400px){
   .item-thumb{width:76px;min-height:88px}
   .step{gap:6px}
@@ -129,7 +122,6 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
   .step .u{min-width:0;font-size:11.5px}
 }
 
-/* sticky action bar */
 .bar{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h, 84px) + var(--kb-offset,0px));z-index:25;padding:0 16px;pointer-events:none;transition:bottom .15s ease}
 .bar .in{max-width:928px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
   padding:12px 12px 12px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);pointer-events:auto}
@@ -137,13 +129,9 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .bar .in strong{font-family:var(--font-h);font-size:19px;font-weight:700}
 .bar .in .btn{margin-left:auto;min-height:44px;font-size:15px}
 
-/* tab bar */
 .tabbar{position:fixed;left:0;right:0;bottom:var(--kb-offset,0px);z-index:30;background:var(--surface);border-top:1px solid rgba(32,36,43,.08);
   padding-bottom:env(safe-area-inset-bottom);transition:bottom .15s ease}
 .tabbar .in{max-width:960px;margin:0 auto;display:flex;gap:2px;padding:8px 10px}
-/* Гар утасны гар (keyboard) нээлттэй үед tabbar болон browser-ийн өөрийн
-   form-navigation toolbar хоёр давхцаж "замбараагүй" харагддаг тул tabbar-ыг
-   бүрэн нууж, action bar-ыг шууд гарын дээр байрлуулна */
 html.kb-open .tabbar{display:none}
 html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .tab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 6px;
@@ -153,7 +141,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .tab b{position:absolute;top:4px;right:14px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
   background:var(--accent);color:var(--bg);font-size:10px;font-weight:600;display:grid;place-items:center}
 
-/* login */
 .login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:14px;
   max-width:420px;margin:0 auto;padding:32px 20px 40px;position:relative;overflow:hidden}
 .login .blob{position:absolute;width:340px;height:340px;border-radius:999px;background:var(--sage-200);top:-140px;right:-150px}
@@ -161,7 +148,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .login h1{font-size:34px;margin-bottom:8px}
 .field label{display:block;font-size:12px;margin-bottom:6px;color:rgba(32,36,43,.7)}
 
-/* scanner */
 .scanner{position:fixed;inset:0;z-index:60;background:#20242B;color:var(--bg);display:flex;flex-direction:column}
 .scanner .sh{display:flex;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 20px 10px}
 .scanner .sh h3{font-family:var(--font-h);font-size:18px;margin-right:auto}
@@ -175,18 +161,15 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .scanner .foot .input{background:#333846;border-color:rgba(246,247,248,.25);color:var(--bg)}
 .scanner .hint{font-size:12.5px;color:rgba(246,247,248,.65);text-align:center}
 
-/* toast */
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom));z-index:70;
   display:flex;align-items:center;gap:9px;padding:12px 18px;border-radius:999px;background:var(--text);color:var(--bg);
   font-size:13.5px;box-shadow:var(--shadow-lg);max-width:calc(100% - 32px)}
 #toast i{width:20px;height:20px;flex:none;border-radius:999px;background:#8fa073;color:#272e1b;display:grid;place-items:center;font-size:12px}
 
-/* confirm dialog */
 .confirm-overlay{position:fixed;inset:0;z-index:80;background:rgba(32,36,43,.5);display:flex;align-items:center;justify-content:center;padding:20px}
 .confirm-card{background:var(--bg);border-radius:var(--r);padding:22px;max-width:340px;width:100%;box-shadow:var(--shadow-lg)}
 .confirm-card p{font-size:15px;font-weight:600;margin:0 0 18px;text-align:center}
 
-/* desktop */
 @media (min-width:760px){
   body{font-size:16px}
   main.wrap{padding:24px 0 40px}
@@ -205,7 +188,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 </head>
 <body>
 
-<!-- ══════════ НЭВТРЭХ ══════════ -->
 <div class="login" id="login">
   <div class="blob"></div>
   <div class="z">
@@ -218,7 +200,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
   <div class="muted" id="li-err" style="font-size:12.5px;min-height:16px"></div>
 </div>
 
-<!-- ══════════ АПП ══════════ -->
 <div id="app" hidden>
   <header class="topbar">
     <div class="wrap">
@@ -231,7 +212,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
   <nav class="tabbar"><div class="in" id="tabs"></div></nav>
 
   <main class="wrap">
-    <!-- Нүүр -->
     <section class="screen" id="s-home" hidden>
       <div class="stats">
         <div class="stat"><div class="k">Нийт үлдэгдэл</div><div class="v" id="h-total">0</div><div class="s">ширхэг</div></div>
@@ -249,7 +229,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
       <div id="notif" style="display:flex;flex-direction:column;gap:20px"></div>
     </section>
 
-    <!-- Бараа нэмэх / хасах -->
     <section class="screen" id="s-add" hidden>
       <div class="head"><h2 id="add-title">Агуулахын бараа нэмэх</h2><p>Хүсэлт админ руу явж, баталгаажуулсны дараа үлдэгдэлд тусна.</p></div>
       <div class="chips">
@@ -268,7 +247,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
       </div></div>
     </section>
 
-    <!-- Дэлгүүрт илгээх -->
     <section class="screen" id="s-send" hidden>
       <div class="head"><h2>Дэлгүүрт илгээх</h2><p>Хүсэлт админ руу явж, дэлгүүр хүлээн авснаа баталгаажуулна.</p></div>
       <div class="chips" id="stores"></div>
@@ -285,7 +263,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
       </div></div>
     </section>
 
-    <!-- Үлдэгдэл -->
     <section class="screen" id="s-stock" hidden>
       <div class="head"><h2>Агуулахын үлдэгдэл</h2><p>Нэмэх, илгээх хөдөлгөөн бүрээр автоматаар шинэчлэгдэнэ.</p></div>
       <input class="input" id="stock-q" placeholder="Хайх" />
@@ -293,7 +270,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
       <div id="stock-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </section>
 
-    <!-- Түүх -->
     <section class="screen" id="s-history" hidden>
       <div class="head"><h2>Бараа татан авалт,буцаалтын түүх</h2><p>Нэмсэн болон илгээсэн бараанууд</p></div>
       <div id="history-list" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -315,15 +291,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ══════════════════════════════════════════════════════════════════
-   Cuppa MN · Агуулахын ажилтны хуудас  (/aguulah)
-   admin-panel.html-ийн адил Supabase-тай шууд холбогдоно: products/
-   brands-ийг бодитоор татаж, шилжилтийг warehouse_create_transfer /
-   warehouse_add_stock RPC-ээр илгээж, admin-panel.html "Хүлээгдэж буй
-   шилжилтүүд" хэсгээр хүлээн авдаг — 2 хуудас нэг stock_transfers
-   хүснэгт дээр хамтран ажиллана.
-   ══════════════════════════════════════════════════════════════════ */
-
 const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -333,19 +300,16 @@ const LOW = 20;
 const SEEN_KEY = 'cuppamn_aguulah_seen_v1';
 const DISMISSED_KEY = 'cuppamn_aguulah_dismissed_v1';
 
-let worker = null;                 // { email }
+let worker = null;
 let products = [], brands = [];
 let stockTransfers = [];
-let storeRequests = []; // зөвхөн status='pending' мөрүүд — tab badge, toast, sound-д зориулав
-const excludedRequestItems = new Set(); // "Илгээх" жагсаалтаас ажилтны гараар хассан захиалгын мөрүүд (key: requestId:productId:optionType)
+let storeRequests = [];
+const excludedRequestItems = new Set();
 let screen = 'home', store = STORES[0];
-let addMode = 'add'; // 'add' | 'remove' — Нэмэх/Хасах хэсгийн идэвхтэй горим
+let addMode = 'add';
 let addDraft = [], sendDraft = [], nextK = 1;
 let stockBrandFilter = 'all', stockLowOnly = false, stockOutOnly = false;
 let seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'));
-// Мэдэгдлийн жагсаалтаас "Бүгдийг арилгах"-аар түр нуусан мэдэгдлүүд —
-// stock_transfers өөрөө DB-д хэвээрээ үлдэж, Түүх хуудсанд харагдсаар байна,
-// зөвхөн Мэдэгдэл хэсгээс л алга болно
 let dismissedNotifs = new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]'));
 
 const $  = (s, r=document) => r.querySelector(s);
@@ -355,29 +319,18 @@ const prod = (id) => products.find(p => p.id === id);
 const brandName = (p) => brands.find(b => b.id === p?.brand_id)?.name || '';
 const hasUnit = (p) => !p.coffee_sizes && !!(p.unit_price || p.warehouse_unit_stock);
 const hasBox = (p) => !p.coffee_sizes && !!(p.box_price || p.warehouse_box_stock);
-// Дэлгүүрт илгээх хэсэгт агуулахад үлдэгдэлгүй (дууссан) барааг сонгох боломжгүй —
-// хайрцаг эсвэл ширхэгийн аль нэгээр нь нөөцтэй байхад л илгээх боломжтой.
 const canSend = (p) => (hasUnit(p) && (p.warehouse_unit_stock||0) > 0) || (hasBox(p) && (p.warehouse_box_stock||0) > 0);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
-// unit_label/box_label нь "1 ширхэг", "1 хайрцаг", зарим бараанд "100 ширхэг",
-// "500 ширхэг" гэх мэт (боодлоор зарагддаг бараа) худалдан авах нэгжийн бүтэн
-// тайлбар тул, өмнө нь бодит нөөцийн тоо (3000, 12 гэх мэт) нэмэхэд
-// "3000 100 ширхэг" мэт хос тоо гарч замбараагүй харагддаг — эхний тоог (ямар ч
-// байсан, зөвхөн "1" биш) хасаад цэвэр нэрийг л үлдээнэ
 const unitWord = (label, fallback) => String(label || '').replace(/^\d+\s+/, '').trim() || fallback;
 const productThumb = (p, size=40) => p.images && p.images[0]
   ? `<img src="${p.images[0]}" style="width:${size}px;height:${size}px;border-radius:10px;object-fit:cover;flex-shrink:0">`
   : `<div style="width:${size}px;height:${size}px;border-radius:10px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))"></div>`;
 
-/* Гар утасны дэлгэцийн гар (keyboard) нээгдэхэд доод tab bar/action bar-ыг
-   гарын дор бүрхэгдэхээс сэргийлж, gарын өндрөөр дээшлүүлнэ */
 if (window.visualViewport) {
   const vv = window.visualViewport;
   const syncKeyboardOffset = () => {
     const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
     document.documentElement.style.setProperty('--kb-offset', offset + 'px');
-    // Жижиг хэлбэлзлээс (жишээ нь browser toolbar намирах/гарах) болж
-    // худал нээгдсэн гэж бүү тоолуулахын тулд босго утга ашиглана
     document.documentElement.classList.toggle('kb-open', offset > 60);
   };
   vv.addEventListener('resize', syncKeyboardOffset);
@@ -385,11 +338,6 @@ if (window.visualViewport) {
   syncKeyboardOffset();
 }
 
-// .bar (доод sticky үйлдлийн мөр) нь .tabbar-ийн яг дээр наалдаж байх ёстой,
-// гэвч tabbar-ийн бодит өндөр нь төхөөрөмжийн safe-area-inset-bottom-оос
-// хамаараад өөр өөр байдаг тул хатуу тоо (жишээ нь 84px) ашиглавал зарим
-// төхөөрөмж дээр хоёрын хооронд хоосон зай гарч "тасарсан" мэт харагддаг —
-// bodит өндрийг тохируулга бүрд хэмжиж CSS хувьсагчид хадгална
 function syncTabbarHeight(){
   const tb = document.querySelector('.tabbar');
   if (tb) document.documentElement.style.setProperty('--tabbar-h', tb.offsetHeight + 'px');
@@ -427,7 +375,6 @@ function playNotifSound(){
   } catch (e) { console.error('Дуу тоглуулахад алдаа гарлаа:', e); }
 }
 
-/* ── НЭВТРЭХ ─────────────────────────────────────────────── */
 async function doLogin(){
   const email = $('#li-email').value.trim();
   const password = $('#li-pass').value;
@@ -444,7 +391,6 @@ $('#li-email').addEventListener('keydown', e => { if (e.key === 'Enter') $('#li-
 $('#li-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 $('#logout').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
 
-/* ── МЭДЭГДЭЛ АРИЛГАХ ────────────────────────────────────── */
 $('#clearNotifBtn').addEventListener('click', () => { $('#clearConfirm').hidden = false; });
 $('#clearNo').addEventListener('click', () => { $('#clearConfirm').hidden = true; });
 $('#clearConfirm').addEventListener('click', e => { if (e.target === $('#clearConfirm')) $('#clearConfirm').hidden = true; });
@@ -459,8 +405,6 @@ $('#clearYes').addEventListener('click', () => {
 async function checkAuth(){
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
-  // Session байгаа ч гэсэн зөвхөн warehouse_staff хүснэгтэд байгаа имэйл
-  // хаяг л энэ хуудас руу орох ёстой тул is_warehouse_staff()-ээр шалгана
   const { data: isWarehouseStaff, error } = await sb.rpc('is_warehouse_staff');
   if (error || !isWarehouseStaff) {
     await sb.auth.signOut();
@@ -544,7 +488,6 @@ function go(s){
   render(); window.scrollTo({top:0});
 }
 
-/* ── ЖАГСААЛТЫН МӨР (нийтлэг) ────────────────────────────── */
 function draftRow(r){
   const p = prod(r.productId);
   const meta = p
@@ -618,7 +561,6 @@ function bindDraft(container, listOf){
   });
 }
 
-/* ── ХАЙЛТ ───────────────────────────────────────────────── */
 function results(q, mode){
   const s = q.trim().toLowerCase();
   if (!s) return '';
@@ -651,10 +593,6 @@ function addToDraft(mode, product){
     cases: hasBox(product) ? 1 : 0, extra: hasBox(product) ? 0 : 1 });
 }
 
-// "Илгээх" дэх сонгосон дэлгүүрт хамаарах хүлээгдэж буй захиалгуудыг
-// жагсаалтад автоматаар бөглөнө (locked мөр) — агуулахын ажилтан эдгээр
-// дээр нэмж өөр бараа оруулах боломжтой, харин locked мөрийн тоог солихгүй
-// (prepare_store_request нь захиалгын эх тооноос хэтрэхгүй тул).
 function syncRequestRows(){
   sendDraft = sendDraft.filter(r => !r.locked);
   const matches = storeRequests.filter(r => r.store_name === store);
@@ -677,7 +615,6 @@ function syncRequestRows(){
     : '';
 }
 
-/* ── ХАДГАЛАХ ҮЙЛДЛҮҮД ───────────────────────────────────── */
 document.addEventListener('click', e => {
   const m = e.target.closest('[data-add-mode]'); if (!m) return;
   addMode = m.dataset.addMode; addDraft = []; render();
@@ -726,7 +663,6 @@ $('#send-commit').addEventListener('click', async () => {
   toast('Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
 });
 
-/* ── РЕНДЕР ──────────────────────────────────────────────── */
 function renderSums(){
   const sum = (list) => list.reduce((s,r) => s + (Number(r.cases)||0) + (Number(r.extra)||0), 0);
   const a = sum(addDraft), b = sum(sendDraft);
@@ -765,7 +701,6 @@ function render(){
   renderTabs();
   TABS.forEach(([id]) => $('#s-' + id).hidden = screen !== id);
 
-  /* Нүүр */
   const totalStock = products.reduce((s,p) => s + (p.coffee_sizes ? p.coffee_sizes.size_1kg.stock + p.coffee_sizes.size_250g.stock : (p.warehouse_unit_stock||0)), 0);
   const addedToday = stockTransfers.filter(t => t.direction === 'restock' && t.status === 'received' && isToday(t.received_at || t.created_at)).reduce((s,t) => s + t.qty, 0);
   $('#h-total').textContent   = totalStock;
@@ -785,7 +720,6 @@ function render(){
     </button>`;
   }).join('') || `<div class="empty">Мэдэгдэл байхгүй</div>`;
 
-  /* Нэмэх / Хасах */
   $$('[data-add-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.addMode === addMode));
   $('#add-title').textContent = addMode === 'add' ? 'Агуулахын бараа нэмэх' : 'Агуулахын бараа хасах';
   $('#add-list-title').textContent = addMode === 'add' ? 'Нэмэх жагсаалт' : 'Хасах жагсаалт';
@@ -796,7 +730,6 @@ function render(){
   $('#add-list').innerHTML = addDraft.map(r => draftRow(r)).join('')
     || `<div class="empty">Хайж сонгоно уу.</div>`;
 
-  /* Илгээх */
   syncRequestRows();
   $('#stores').innerHTML = STORES.map(s => `<button class="chip" data-store="${esc(s)}" aria-pressed="${store===s}">${esc(s)}</button>`).join('');
   $('#send-store').textContent = store;
@@ -805,7 +738,6 @@ function render(){
   $('#send-list').innerHTML = sendDraft.map(r => draftRow(r)).join('')
     || `<div class="empty">Хайж сонгоно уу.</div>`;
 
-  /* Үлдэгдэл */
   renderStockFilters();
   const q = $('#stock-q').value.trim().toLowerCase();
   const stockRows = products
@@ -813,7 +745,6 @@ function render(){
     .filter(p => stockBrandFilter === 'all' || p.brand_id === stockBrandFilter)
     .filter(p => !stockLowOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) < LOW))
     .filter(p => !stockOutOnly || (hasUnit(p) && (p.warehouse_unit_stock||0) === 0));
-  // Хайлт хийгээгүй үед хамгийн их үлдэгдэлтэй бараа түрүүлж харагдана
   if (!q) stockRows.sort((a, b) => (b.warehouse_unit_stock||0) - (a.warehouse_unit_stock||0));
   $('#stock-list').innerHTML = stockRows
     .map(p => { const n = p.warehouse_unit_stock || 0, out = hasUnit(p) && n === 0, low = !out && hasUnit(p) && n < LOW;
@@ -829,7 +760,6 @@ function render(){
         ${out ? '<span class="tag t-out">дууссан</span>' : (low ? '<span class="tag t-low">бага</span>' : '')}
       </div>`; }).join('') || `<div class="empty">Бараа алга</div>`;
 
-  /* Түүх */
   $('#history-list').innerHTML = stockTransfers.map(t => {
     const m = transferMeta(t);
     return `<div class="card">
