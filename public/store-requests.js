@@ -23,7 +23,7 @@ export function stockOptions(p){
 export async function mountRequests(root,sb,mode='staff'){
   root.classList.add('sr');
   root.classList.add('sr-'+mode);
-  let products=[],brands=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0,cartOpen=false;
+  let products=[],brands=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0,cartOpen=false,historyOpen=false;
   const excluded=new Set();
   let brandFilter='',inStock=false;
   root.innerHTML='<p>Түр хүлээнэ үү…</p>';
@@ -33,8 +33,8 @@ export async function mountRequests(root,sb,mode='staff'){
   if(access.error||!access.data){root.innerHTML='<p class="error">Хандах эрхгүй эсвэл SQL шинэчлэлт хийгдээгүй байна.</p>';return;}
   branch=mode==='staff'?access.data:null;
   root.innerHTML=`<header><div><h2>${mode==='staff'?'Бараа захиалах':'Дэлгүүрүүдийн захиалга'}</h2><p class="muted">${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
-    ${mode==='staff'?`<div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2 style="margin:18px 0 10px">Хүсэлтүүд</h2><div data-requests></div>'}
-    ${mode==='staff'?`<div class="sr-backdrop" data-cart-backdrop hidden></div><div class="sr-bar"><div class="sr-cart-sheet" data-cart-sheet hidden><div class="sr-sheet-head"><strong>Сонгосон бараа <span data-sheet-count>(0)</span></strong><button type="button" class="sr-sheet-close" data-cart-toggle aria-label="Хаах">✕</button></div><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар(Заавал биш)</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Хүргэлтээр гарах бараа"></textarea></div><div class="in"><button type="button" class="sr-bar-info" data-cart-toggle><small>Сонгосон</small><strong data-sum>0 бараа</strong></button><button data-submit>Захиалга илгээх</button></div></div>`:''}`;
+    ${mode==='staff'?`<div class="sr-quick" data-quick hidden><h3>Ихэвчлэн захидаг</h3><div class="sr-quick-row" data-quick-row></div></div><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div>`:'<h2 style="margin:18px 0 10px">Хүсэлтүүд</h2><div data-requests></div>'}
+    ${mode==='staff'?`<div class="sr-backdrop" data-cart-backdrop hidden></div><div class="sr-bar"><div class="sr-cart-sheet" data-cart-sheet hidden><div class="sr-sheet-head"><strong>Сонгосон бараа <span data-sheet-count>(0)</span></strong><button type="button" class="sr-sheet-close" data-cart-toggle aria-label="Хаах">✕</button></div><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар(Заавал биш)</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Хүргэлтээр гарах бараа"></textarea></div><div class="in"><button type="button" class="sr-bar-info" data-cart-toggle><small>Сонгосон</small><strong data-sum>0 бараа</strong></button><button data-submit>Захиалга илгээх</button></div></div><div class="sr-backdrop" data-history-backdrop hidden></div><div class="sr-history-panel" data-history-panel hidden><div class="sr-sheet-head"><strong>Захиалгын түүх</strong><button type="button" class="sr-sheet-close" data-history-toggle aria-label="Хаах">✕</button></div><div data-requests></div></div>`:''}`;
   const $=q=>root.querySelector(q);
   if(mode==='warehouse'){
     const hint=document.createElement('p');hint.className='muted';
@@ -69,6 +69,22 @@ export async function mountRequests(root,sb,mode='staff'){
     const canPrint=mode==='warehouse'&&['preparing','sent','received'].includes(r.status);
     return `<article class="sr-card"><div class="sr-row">${header}</div><p class="muted">${formatDateTime(r.created_at)}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}${r.note?`<p class="muted">${escape(r.note)}</p>`:''}<div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}${canPrint?`<button data-print="${r.id}" class="secondary">Хэвлэх</button>`:''}</div></article>`;
   }
+  function topOrderedOptions(){
+    const counts=new Map();
+    requests.forEach(r=>{
+      if(r.status!=='sent'&&r.status!=='received')return;
+      (r.store_request_items||[]).forEach(i=>{
+        const key=i.product_id+':'+i.option_type;
+        counts.set(key,(counts.get(key)||0)+1);
+      });
+    });
+    return [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([key])=>{
+      const [pid,opt]=key.split(':');
+      const p=products.find(x=>String(x.id)===pid);
+      const o=p&&stockOptions(p).find(o=>o.key===opt);
+      return o?{p,o}:null;
+    }).filter(Boolean);
+  }
   root.addEventListener('error',e=>{
     if(e.target.matches?.('.sr-request-image img')){e.target.hidden=true;e.target.nextElementSibling.hidden=false;}
     if(e.target.matches?.('.sr-thumb img')){e.target.parentElement.textContent='Зураггүй';}
@@ -88,6 +104,11 @@ export async function mountRequests(root,sb,mode='staff'){
       $('[data-note]').disabled=busy;
       $('[data-cart-sheet]').hidden=!cartOpen;
       $('[data-cart-backdrop]').hidden=!cartOpen;
+      const quick=topOrderedOptions();
+      $('[data-quick]').hidden=!quick.length;
+      $('[data-quick-row]').innerHTML=quick.map(({p,o})=>`<button class="sr-quick-item" data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}><div class="sr-quick-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-quick-name">${escape(p.name)}</div><div class="sr-quick-label">${escape(o.label)}</div></button>`).join('');
+      $('[data-history-panel]').hidden=!historyOpen;
+      $('[data-history-backdrop]').hidden=!historyOpen;
     }
     $('[data-requests]').innerHTML=requests.map(requestCard).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
@@ -111,14 +132,24 @@ export async function mountRequests(root,sb,mode='staff'){
     if(e.target.matches('[data-note]'))retry=null;
   });
   root.addEventListener('change',e=>{if(e.target.matches('[data-qty]')&&!busy){draft[Number(e.target.dataset.qty)].qty=Number(e.target.value);retry=null;}});
-  root.addEventListener('click',e=>{if(e.target.matches('[data-cart-backdrop]')){cartOpen=false;render();}});
+  root.addEventListener('click',e=>{
+    if(e.target.matches('[data-cart-backdrop]')){cartOpen=false;render();}
+    if(e.target.matches('[data-history-backdrop]')){historyOpen=false;render();}
+  });
+  if(mode==='staff'){
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('[data-profile]'))return;
+      cartOpen=false;historyOpen=!historyOpen;render();
+    });
+  }
   root.addEventListener('change',e=>{if(e.target.matches('[data-select-item]')){if(e.target.checked)excluded.delete(e.target.dataset.selectItem);else excluded.add(e.target.dataset.selectItem);}});
   root.addEventListener('change',e=>{if(e.target.matches('[data-brand]')){brandFilter=e.target.value;render();}if(e.target.matches('[data-instock]')){inStock=e.target.checked;render();}});
   root.addEventListener('click',async e=>{
     const b=e.target.closest('button');if(!b||busy)return;
     if(b.hasAttribute('data-refresh'))return refresh();
     if(b.dataset.print){const r=requests.find(x=>x.id===b.dataset.print);if(r)printRequest(r);return;}
-    if(b.hasAttribute('data-cart-toggle')){cartOpen=!cartOpen;render();return;}
+    if(b.hasAttribute('data-cart-toggle')){historyOpen=false;cartOpen=!cartOpen;render();return;}
+    if(b.hasAttribute('data-history-toggle')){historyOpen=false;render();return;}
     if(b.hasAttribute('data-add')){
       const p=products.find(p=>p.id===Number(b.dataset.add));const o=stockOptions(p).find(o=>o.key===b.dataset.option);
       const d=draft.find(d=>d.product_id===p.id&&d.option_type===o.key);
