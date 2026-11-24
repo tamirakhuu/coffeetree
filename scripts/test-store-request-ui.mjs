@@ -22,7 +22,7 @@ try{
  await page.goto(`http://127.0.0.1:${server.address().port}/employee.html`);
  await page.locator('[data-add="1"]').waitFor();
  assert.equal(await page.locator('[data-add="2"]').isDisabled(),true);
- assert.equal(await page.locator('[data-add="3"][data-option="unit"]').count(),0);
+ assert.equal(await page.locator('[data-add="3"][data-option="unit"]').count(),1);
  assert.equal(await page.locator('[data-add="3"][data-option="box"]').count(),1);
  await page.locator('[data-brand]').selectOption('7');
  assert.equal(await page.locator('[data-products] .sr-product').count(),1);

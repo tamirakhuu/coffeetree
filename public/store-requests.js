@@ -16,7 +16,10 @@ function ensurePrintSlip(){
 export function stockOptions(p){
   if(p.powder_sizes) return Object.entries(p.powder_sizes).map(([key,v])=>({key,label:v.label||key.slice(-1).toUpperCase(),stock:v.stock}));
   if(p.coffee_sizes) return Object.entries(p.coffee_sizes).map(([key,v])=>({key,label:key==='size_1kg'?'1кг':'250гр',stock:v.stock}));
-  return (p.box_price>0?['box']:p.unit_price>0?['unit']:[]).map(key=>({key,label:p[key+'_label']||(key==='box'?'Хайрцаг':'Ширхэг'),stock:p['warehouse_'+key+'_stock']||0}));
+  const keys=[];
+  if(p.box_price>0) keys.push('box');
+  if(p.unit_price>0) keys.push('unit');
+  return keys.map(key=>({key,label:p[key+'_label']||(key==='box'?'Хайрцаг':'Ширхэг'),stock:p['warehouse_'+key+'_stock']||0}));
 }
 export async function mountRequests(root,sb,mode='staff'){
   root.classList.add('sr');
