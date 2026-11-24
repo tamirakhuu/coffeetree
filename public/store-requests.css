@@ -95,20 +95,34 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-empty{padding:30px;color:var(--muted);text-align:center;background:var(--surface);border-radius:var(--r)}
 
 /* ── Сонгосон бараа (cart) ── */
-.sr-cart h2{margin-bottom:14px}
-.sr-cart [data-draft] .sr-card{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  background:var(--bg);margin:0 0 10px}
-.sr-cart [data-draft] .sr-card strong{display:block;font-size:14.5px}
-.sr-cart [data-draft] .sr-card p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.sr-cart-sheet [data-draft] .sr-card{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--bg);margin:0 0 10px;padding:12px 14px}
+.sr-cart-sheet [data-draft] .sr-card strong{display:block;font-size:14px}
+.sr-cart-sheet [data-draft] .sr-card p{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
 .sr-note-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 8px}
+.sr-stepper{display:flex;align-items:center;gap:6px}
+.sr-stepper button{min-height:32px;min-width:32px;padding:0;border-radius:999px;font-size:16px;line-height:1}
+.sr-stepper input{width:48px;padding:0 4px}
 
-/* ── Доод талд наалдсан баталгаажуулах мөр ── */
+/* ── Доод талд наалдсан баталгаажуулах мөр + сонгосон барааны sheet ── */
+.sr-backdrop{position:fixed;inset:0;z-index:24;background:rgba(32,36,43,.35)}
 .sr-bar{position:fixed;left:0;right:0;bottom:16px;z-index:25;padding:0 16px;pointer-events:none}
 .sr-bar .in{max-width:588px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
   padding:10px 10px 10px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);pointer-events:auto}
 .sr-bar small{display:block;font-size:11px;opacity:.65;font-family:var(--font-b)}
 .sr-bar strong{font-family:var(--font-h);font-size:18px;font-weight:700}
 .sr-bar button{margin-left:auto;min-height:44px}
+.sr-bar .sr-bar-info{background:transparent;color:inherit;flex-direction:column;align-items:flex-start;
+  gap:0;padding:4px 8px;min-height:auto;margin-left:0}
+.sr-bar .sr-bar-info:hover{background:rgba(255,255,255,.08)}
+.sr-cart-sheet{max-width:588px;margin:0 auto 10px;background:var(--surface);color:var(--text);
+  border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-lg);pointer-events:auto;
+  max-height:60vh;overflow-y:auto}
+.sr-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.sr-sheet-head strong{font-family:var(--font-h);font-size:16px}
+.sr-sheet-head span{color:var(--muted);font-family:var(--font-b);font-weight:400;font-size:13px}
+.sr-sheet-close{min-height:32px;min-width:32px;padding:0;border-radius:999px;margin-left:0;
+  background:var(--accent-100);color:var(--accent-700);font-size:13px}
 
 /* ── Захиалгын түүх ── */
 .sr-history{margin-top:28px}

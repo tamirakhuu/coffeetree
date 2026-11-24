@@ -25,7 +25,7 @@ export function stockOptions(p){
 export async function mountRequests(root,sb,mode='staff'){
   root.classList.add('sr');
   root.classList.add('sr-'+mode);
-  let products=[],brands=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0;
+  let products=[],brands=[],requests=[],draft=[],user=null,branch=null,search='',busy=false,retry=null,closed=false,loadId=0,cartOpen=false;
   const excluded=new Set();
   let brandFilter='',inStock=false;
   root.innerHTML='<p>Түр хүлээнэ үү…</p>';
@@ -35,8 +35,8 @@ export async function mountRequests(root,sb,mode='staff'){
   if(access.error||!access.data){root.innerHTML='<p class="error">Хандах эрхгүй эсвэл SQL шинэчлэлт хийгдээгүй байна.</p>';return;}
   branch=mode==='staff'?access.data:null;
   root.innerHTML=`<header><div><h2>${mode==='staff'?'Бараа захиалах':'Дэлгүүрүүдийн захиалга'}</h2><p class="muted">${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
-    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлдсэн” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div><div class="sr-card sr-cart"><h2>Сонгосон бараа</h2><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2 style="margin:18px 0 10px">Хүсэлтүүд</h2><div data-requests></div>'}
-    ${mode==='staff'?`<div class="sr-bar"><div class="in"><div><small>Сонгосон</small><strong data-sum>0 бараа</strong></div><button data-submit>Захиалга илгээх</button></div></div>`:''}`;
+    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлдсэн” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2 style="margin:18px 0 10px">Хүсэлтүүд</h2><div data-requests></div>'}
+    ${mode==='staff'?`<div class="sr-backdrop" data-cart-backdrop hidden></div><div class="sr-bar"><div class="sr-cart-sheet" data-cart-sheet hidden><div class="sr-sheet-head"><strong>Сонгосон бараа <span data-sheet-count>(0)</span></strong><button type="button" class="sr-sheet-close" data-cart-toggle aria-label="Хаах">✕</button></div><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea></div><div class="in"><button type="button" class="sr-bar-info" data-cart-toggle><small>Сонгосон</small><strong data-sum>0 бараа</strong></button><button data-submit>Захиалга илгээх</button></div></div>`:''}`;
   const $=q=>root.querySelector(q);
   if(mode==='warehouse'){
     const hint=document.createElement('p');hint.className='muted';
@@ -82,12 +82,14 @@ export async function mountRequests(root,sb,mode='staff'){
         return stockOptions(p).length&&(p.name+' '+brand).toLowerCase().includes(search.toLowerCase())&&(!brandFilter||String(p.brand_id)===brandFilter)&&(!inStock||stockOptions(p).some(o=>o.stock>0));
       }).map(p=>`<div class="sr-product"><div class="sr-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-product-heading"><div class="muted">${escape(brands.find(b=>b.id===p.brand_id)?.name||'Брэнд оруулаагүй')}</div><strong>${escape(p.name)}</strong>${p.box_price>0&&p.box_per_box?`<div class="muted">1 хайрцагт ${p.box_per_box} ширхэг</div>`:''}<div class="sr-choices">${stockOptions(p).map(o=>{const addLabel=o.key==='box'?'Хайрцаг':o.key==='unit'?'Ширхэг':o.label;return `<div class="sr-choice"><span>${escape(o.label)}<small>Үлдэгдэл: ${o.stock}</small></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'+ '+escape(addLabel):'Дууссан'}</button></div>`;}).join('')}</div></div></div>`).join('')||'<p class="sr-empty">Таны хайлтад тохирох бараа олдсонгүй.</p>';
       $('[data-count]').textContent=`${$('[data-products]').querySelectorAll('.sr-product').length} бараа · Агуулахын үлдэгдэл`;
-      $('.sr-cart h2').textContent=`Сонгосон бараа (${draft.length})`;
-      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Хасах</button></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
-      $('[data-sum]').textContent=draft.length?`${draft.length} бараа`:'0 бараа';
+      $('[data-sheet-count]').textContent=`(${draft.length})`;
+      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><div class="sr-stepper"><button type="button" data-dec="${i}" aria-label="Тоо хасах" ${busy?'disabled':''}>−</button><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button type="button" data-inc="${i}" aria-label="Тоо нэмэх" ${busy||d.qty>=d.stock?'disabled':''}>+</button></div><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Устгах</button></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
+      $('[data-sum]').textContent=(draft.length?`${draft.length} бараа`:'0 бараа')+' '+(cartOpen?'▴':'▾');
       $('[data-submit]').disabled=busy||!draft.length;
       $('[data-submit]').textContent=busy?'Илгээж байна…':'Захиалга илгээх';
       $('[data-note]').disabled=busy;
+      $('[data-cart-sheet]').hidden=!cartOpen;
+      $('[data-cart-backdrop]').hidden=!cartOpen;
     }
     $('[data-requests]').innerHTML=requests.map(requestCard).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
@@ -102,7 +104,7 @@ export async function mountRequests(root,sb,mode='staff'){
       $('[data-brand]').value=brandFilter;
     }
     if(mode==='staff'&&retry&&requests.some(r=>r.id===retry&&r.requested_by===user.id)){
-      draft=[];retry=null;$('[data-note]').value='';message('Захиалга агуулахад бүртгэгдсэн байна.');
+      draft=[];retry=null;cartOpen=false;$('[data-note]').value='';message('Захиалга агуулахад бүртгэгдсэн байна.');
     }
     draft.forEach(d=>{d.stock=stockOptions(products.find(p=>p.id===d.product_id)||{}).find(o=>o.key===d.option_type)?.stock||0;});render();
   }
@@ -111,12 +113,14 @@ export async function mountRequests(root,sb,mode='staff'){
     if(e.target.matches('[data-note]'))retry=null;
   });
   root.addEventListener('change',e=>{if(e.target.matches('[data-qty]')&&!busy){draft[Number(e.target.dataset.qty)].qty=Number(e.target.value);retry=null;}});
+  root.addEventListener('click',e=>{if(e.target.matches('[data-cart-backdrop]')){cartOpen=false;render();}});
   root.addEventListener('change',e=>{if(e.target.matches('[data-select-item]')){if(e.target.checked)excluded.delete(e.target.dataset.selectItem);else excluded.add(e.target.dataset.selectItem);}});
   root.addEventListener('change',e=>{if(e.target.matches('[data-brand]')){brandFilter=e.target.value;render();}if(e.target.matches('[data-instock]')){inStock=e.target.checked;render();}});
   root.addEventListener('click',async e=>{
     const b=e.target.closest('button');if(!b||busy)return;
     if(b.hasAttribute('data-refresh'))return refresh();
     if(b.dataset.print){const r=requests.find(x=>x.id===b.dataset.print);if(r)printRequest(r);return;}
+    if(b.hasAttribute('data-cart-toggle')){cartOpen=!cartOpen;render();return;}
     if(b.hasAttribute('data-add')){
       const p=products.find(p=>p.id===Number(b.dataset.add));const o=stockOptions(p).find(o=>o.key===b.dataset.option);
       const d=draft.find(d=>d.product_id===p.id&&d.option_type===o.key);
@@ -125,12 +129,14 @@ export async function mountRequests(root,sb,mode='staff'){
       else draft.push({product_id:p.id,option_type:o.key,qty:1,name:p.name,label:o.label,stock:o.stock});
       retry=null;render();return;
     }
+    if(b.hasAttribute('data-inc')){const d=draft[Number(b.dataset.inc)];if(d&&d.qty<d.stock){d.qty++;retry=null;render();}return;}
+    if(b.hasAttribute('data-dec')){const i=Number(b.dataset.dec);const d=draft[i];if(d){if(d.qty<=1)draft.splice(i,1);else d.qty--;retry=null;render();}return;}
     if(b.hasAttribute('data-remove')){draft.splice(Number(b.dataset.remove),1);retry=null;render();return;}
     if(b.hasAttribute('data-submit')){
       if(draft.some(d=>!Number.isInteger(d.qty)||d.qty<1||d.qty>d.stock||d.qty>1000))return message('Тоо ширхэгийг үлдэгдэлд багтааж зөв оруулна уу.',true);
       retry ||= crypto.randomUUID();busy=true;render();
       try{const {error}=await sb.rpc('submit_store_request',{p_id:retry,p_items:draft.map(({product_id,option_type,qty})=>({product_id,option_type,qty})),p_note:$('[data-note]').value});
-        if(error)throw error;draft=[];retry=null;$('[data-note]').value='';message('Захиалга агуулахад илгээгдлээ.');
+        if(error)throw error;draft=[];retry=null;cartOpen=false;$('[data-note]').value='';message('Захиалга агуулахад илгээгдлээ.');
       }catch(e){message(e.message||'Холболт тасарлаа. Дахин оролдоно уу.',true);}finally{busy=false;await refresh();render();}return;
     }
     if(b.dataset.action){

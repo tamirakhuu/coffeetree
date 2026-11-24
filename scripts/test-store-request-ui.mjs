@@ -34,11 +34,17 @@ try{
  assert.equal(await page.locator('[data-products] .sr-product').count(),1);
  await page.locator('[data-search]').fill('');
  await page.locator('[data-add="1"]').click();
+ await page.locator('.sr-bar-info').click();
  await page.locator('[data-qty]').fill('6');await page.locator('[data-note]').click();
  await page.locator('[data-submit]').click();
  assert.equal(await page.evaluate(()=>calls.filter(c=>c.name==='submit_store_request').length),0);
+ await page.locator('[data-dec="0"]').click();await page.locator('[data-dec="0"]').click();
+ assert.equal(await page.locator('[data-qty]').inputValue(),'4');
+ await page.locator('[data-inc="0"]').click();
+ assert.equal(await page.locator('[data-qty]').inputValue(),'5');
  await page.locator('[data-qty]').fill('2');await page.locator('[data-note]').click();
  await page.locator('[data-submit]').click();
+ assert.equal(await page.locator('[data-cart-sheet]').isHidden(),true);
  await page.locator('.sr-history summary').click();
  await page.waitForFunction(()=>document.querySelector('[data-requests] article'));
  assert.equal(await page.locator('[data-action="cancelled"]').count(),1);
