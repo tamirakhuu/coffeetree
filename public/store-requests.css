@@ -69,11 +69,6 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .who span{font-size:11.5px;color:var(--muted)}
 .spacer{margin-left:auto}
 
-/* ── Мэдэгдэл карт ── */
-.sr-notice{background:var(--accent-100);border-radius:var(--r);padding:16px 20px;margin:16px 0}
-.sr-notice strong{font-family:var(--font-h)}
-.sr-notice p{margin:6px 0 0;color:var(--accent-700);font-size:13px}
-
 /* ── Хайлт/шүүлтүүр ── */
 .sr-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 10px}
 .sr-toolbar [data-search]{flex:1;min-width:160px}
