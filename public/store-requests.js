@@ -1,6 +1,7 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
 const actionLabels={cancelled:'Цуцлах'}; // товчны бичвэр — статусын нэрнээс ялгаатайгаар "хийх үйлдэл" гэдгийг тодруулна
+const tagClass={pending:'sr-tag-pending',preparing:'sr-tag-pending',sent:'sr-tag-ok',received:'sr-tag-ok',rejected:'sr-tag-bad',cancelled:'sr-tag-bad'};
 // toLocaleString('mn-MN') зарим төхөөрөмжид (бүрэн ICU локал дата байхгүй үед) буруу
 // харагддаг тул гараар, тогтвортой форматаар он-сар-өдөр цаг-минутыг бичнэ.
 function formatDateTime(iso){
@@ -33,8 +34,9 @@ export async function mountRequests(root,sb,mode='staff'){
   const access=await sb.rpc(mode==='warehouse'?'is_request_manager':'request_store');
   if(access.error||!access.data){root.innerHTML='<p class="error">Хандах эрхгүй эсвэл SQL шинэчлэлт хийгдээгүй байна.</p>';return;}
   branch=mode==='staff'?access.data:null;
-  root.innerHTML=`<header><div><h1>${mode==='staff'?'Дэлгүүрийн бараа захиалга':'Дэлгүүрүүдийн захиалга'}</h1><p>${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
-    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлдсэн” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-grid"><section aria-label="Агуулахын бараа"><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div></section><section class="sr-cart"><h2>Сонгосон бараа</h2><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea><button data-submit>Захиалга илгээх</button></section></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2>Захиалгын түүх</h2><div data-requests></div>'}`;
+  root.innerHTML=`<header><div><h2>${mode==='staff'?'Бараа захиалах':'Дэлгүүрүүдийн захиалга'}</h2><p class="muted">${escape(branch||'Агуулахад ирсэн хүсэлтүүд')}</p></div><button data-refresh class="secondary">Шинэчлэх</button></header><p role="status" data-message></p>
+    ${mode==='staff'?`<div class="sr-notice"><strong>Агуулахаас бараа захиалах</strong><p>Хайрцагтай барааг хайрцгаар, зөвхөн ширхэгээр зарагддаг барааг ширхэгээр захиална. Агуулах “Бэлдсэн” гэж баталсны дараа үлдэгдэл хасагдана.</p></div><div class="sr-toolbar"><input data-search placeholder="Нэр, брэндээр хайх…" aria-label="Бараа хайх"><select data-brand aria-label="Брэнд"><option value="">Бүх брэнд</option></select><label><input type="checkbox" data-instock> Үлдэгдэлтэй</label></div><p class="muted" data-count></p><div data-products></div><div class="sr-card sr-cart"><h2>Сонгосон бараа</h2><div data-draft></div><label class="sr-note-label" for="request-note">Нэмэлт тайлбар</label><textarea id="request-note" data-note maxlength="500" placeholder="Жишээ: Баасан гарагт авах (заавал биш)"></textarea></div><details class="sr-history"><summary>Захиалгын түүх харах</summary><div data-requests></div></details>`:'<h2 style="margin:18px 0 10px">Хүсэлтүүд</h2><div data-requests></div>'}
+    ${mode==='staff'?`<div class="sr-bar"><div class="in"><div><small>Сонгосон</small><strong data-sum>0 бараа</strong></div><button data-submit>Захиалга илгээх</button></div></div>`:''}`;
   const $=q=>root.querySelector(q);
   if(mode==='warehouse'){
     const hint=document.createElement('p');hint.className='muted';
@@ -63,6 +65,12 @@ export async function mountRequests(root,sb,mode='staff'){
     const select=mode==='warehouse'&&request.status==='pending';
     return `<div class="sr-request-item">${select?`<input type="checkbox" data-select-item="${escape(key)}" aria-label="${escape(item.product_name+' '+item.option_label)} бэлдэх" ${excluded.has(key)?'':'checked'} ${busy?'disabled':''}>`:''}<div class="sr-request-image">${image?`<img src="${escape(image)}" alt="${escape(item.product_name)}" loading="lazy">`:''}<span ${image?'hidden':''}>Зураггүй</span></div><div class="sr-request-info"><div class="muted">${escape(brand||'Брэнд оруулаагүй')}</div><strong>${escape(item.product_name)}</strong><div>${escape(item.option_label)} × <b>${item.qty}</b></div>${request.status!=='pending'?(item.approved?`<div class="muted">Бэлдсэн</div>`:`<div class="sr-tag-unprepared">Бэлдээгүй</div>`):''}</div></div>`;
   }
+  function requestCard(r){
+    const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
+    const header=mode==='warehouse'?`<strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><span class="sr-tag ${tagClass[r.status]}">${labels[r.status]}</span>`:`<span class="sr-tag ${tagClass[r.status]}">${labels[r.status]}</span>`;
+    const canPrint=mode==='warehouse'&&['preparing','sent','received'].includes(r.status);
+    return `<article class="sr-card"><div class="sr-row">${header}</div><p class="muted">${formatDateTime(r.created_at)}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}${r.note?`<p class="muted">${escape(r.note)}</p>`:''}<div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}${canPrint?`<button data-print="${r.id}" class="secondary">Хэвлэх</button>`:''}</div></article>`;
+  }
   root.addEventListener('error',e=>{
     if(e.target.matches?.('.sr-request-image img')){e.target.hidden=true;e.target.nextElementSibling.hidden=false;}
     if(e.target.matches?.('.sr-thumb img')){e.target.parentElement.textContent='Зураггүй';}
@@ -72,20 +80,16 @@ export async function mountRequests(root,sb,mode='staff'){
       $('[data-products]').innerHTML=products.filter(p=>{
         const brand=brands.find(b=>b.id===p.brand_id)?.name||'';
         return stockOptions(p).length&&(p.name+' '+brand).toLowerCase().includes(search.toLowerCase())&&(!brandFilter||String(p.brand_id)===brandFilter)&&(!inStock||stockOptions(p).some(o=>o.stock>0));
-      }).map(p=>`<div class="sr-product"><div class="sr-product-heading"><div class="sr-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div><div class="muted">${escape(brands.find(b=>b.id===p.brand_id)?.name||'Брэнд оруулаагүй')}</div><strong>${escape(p.name)}</strong>${p.box_price>0&&p.box_per_box?`<div class="muted">1 хайрцагт ${p.box_per_box} ширхэг</div>`:''}</div></div><div class="sr-choices">${stockOptions(p).map(o=>`<div class="sr-choice"><span>${escape(o.label)}<small>Үлдэгдэл: ${o.stock}</small></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'+ Нэмэх':'Дууссан'}</button></div>`).join('')}</div></div>`).join('')||'<p class="sr-empty">Таны хайлтад тохирох бараа олдсонгүй.</p>';
+      }).map(p=>`<div class="sr-product"><div class="sr-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-product-heading"><div class="muted">${escape(brands.find(b=>b.id===p.brand_id)?.name||'Брэнд оруулаагүй')}</div><strong>${escape(p.name)}</strong>${p.box_price>0&&p.box_per_box?`<div class="muted">1 хайрцагт ${p.box_per_box} ширхэг</div>`:''}<div class="sr-choices">${stockOptions(p).map(o=>`<div class="sr-choice"><span>${escape(o.label)}<small>Үлдэгдэл: ${o.stock}</small></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'+ Нэмэх':'Дууссан'}</button></div>`).join('')}</div></div></div>`).join('')||'<p class="sr-empty">Таны хайлтад тохирох бараа олдсонгүй.</p>';
       $('[data-count]').textContent=`${$('[data-products]').querySelectorAll('.sr-product').length} бараа · Агуулахын үлдэгдэл`;
       $('.sr-cart h2').textContent=`Сонгосон бараа (${draft.length})`;
       $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Хасах</button></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
+      $('[data-sum]').textContent=draft.length?`${draft.length} бараа`:'0 бараа';
       $('[data-submit]').disabled=busy||!draft.length;
       $('[data-submit]').textContent=busy?'Илгээж байна…':'Захиалга илгээх';
       $('[data-note]').disabled=busy;
     }
-    $('[data-requests]').innerHTML=requests.map(r=>{
-      const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
-      const header=mode==='warehouse'?`<strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><b>${labels[r.status]}</b>`:`<b>${labels[r.status]}</b>`;
-      const canPrint=mode==='warehouse'&&['preparing','sent','received'].includes(r.status);
-      return `<article class="sr-card"><div class="sr-row">${header}</div><p class="muted">${formatDateTime(r.created_at)}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}<p>${escape(r.note)}</p><div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}${canPrint?`<button data-print="${r.id}" class="secondary">Хэвлэх</button>`:''}</div></article>`;
-    }).join('')||'<p class="muted">Захиалга байхгүй.</p>';
+    $('[data-requests]').innerHTML=requests.map(requestCard).join('')||'<p class="muted">Захиалга байхгүй.</p>';
   }
   async function refresh(){
     const seq=++loadId;

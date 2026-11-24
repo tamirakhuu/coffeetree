@@ -1,18 +1,159 @@
-.sr{font:14px/1.5 Arial,sans-serif;color:#18253c;max-width:1200px;margin:auto;padding:20px}.sr *{box-sizing:border-box}.sr h1{font-size:26px;margin:0}.sr h2{font-size:19px}.sr header,.sr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.sr-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin-top:20px}.sr-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin:12px 0}.sr input,.sr select,.sr textarea{padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;max-width:100%}.sr input[type=number]{width:80px}.sr button,.sr a{font:inherit}.sr button{background:#2365e5;color:white;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}.sr button:disabled{background:#cbd5e1;color:#475569;cursor:not-allowed}.sr .secondary{background:#eef2f6;color:#334155}.sr .danger{background:#fee2e2;color:#991b1b}.sr .muted{color:#64748b;font-size:13px}.sr .error{color:#a32424;white-space:pre-wrap}.sr .success{color:#166534}.sr-product{border-bottom:1px solid #e2e8f0;padding:14px 0}.sr-product img{width:48px;height:48px;object-fit:contain}.sr-product .sr-row{justify-content:flex-start}.sr-choices{display:grid;gap:8px;margin-top:10px}.sr-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.sr textarea{width:100%;min-height:70px}.sr :focus-visible{outline:2px solid #2365e5;outline-offset:3px}@media(max-width:760px){.sr-grid{grid-template-columns:1fr}.sr{padding:14px}.sr h1{font-size:22px}}
-.sr-request-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #eef2f6}.sr-request-image{width:64px;height:64px;flex:0 0 64px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;display:grid;place-items:center;overflow:hidden}.sr-request-image img{width:100%;height:100%;object-fit:contain;background:white}.sr-request-image span{font-size:11px;color:#64748b}.sr-request-image [hidden]{display:none}.sr-request-info{min-width:0;overflow-wrap:anywhere}.sr-request-info strong{display:block;margin:3px 0}
-.sr-staff{max-width:1440px}.sr-staff header{padding:12px 0 20px}.sr-staff header p{margin:6px 0;color:#64748b}.sr-staff .sr-grid{grid-template-columns:minmax(0,1fr) 340px;align-items:start;gap:28px}.sr-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.sr-toolbar [data-search]{flex:1;min-width:180px;background:white}.sr-toolbar label{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px}.sr-staff [data-products]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-height:72vh;overflow:auto;padding:2px 6px 6px 2px}.sr-staff .sr-product{margin:0;border:1px solid #e2e8f0;border-radius:12px;background:white;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:16px}.sr-product-heading{display:flex;gap:12px;align-items:center;min-width:0}.sr-product-heading strong{display:block;overflow-wrap:anywhere;margin:4px 0;font-size:15px}.sr-thumb{width:64px;height:72px;flex:0 0 64px;display:grid;place-items:center;background:#f8fafc;border-radius:8px;overflow:hidden}.sr-thumb img{width:100%;height:100%;object-fit:contain}.sr-thumb span{font-size:10px;color:#64748b}.sr-choice small{display:block;color:#64748b;font-size:12px;margin-top:3px}.sr-staff .sr-choices{margin:0}.sr-cart{position:sticky;top:20px;border:1px solid #e2e8f0;border-radius:14px;padding:20px;background:white;box-shadow:0 4px 18px #18253c08}.sr-cart h2{margin:0 0 16px}.sr-cart [data-draft]{max-height:45vh;overflow:auto}.sr-cart .sr-card{border:0;border-bottom:1px solid #e2e8f0;border-radius:0;padding:12px 0;margin:0 0 12px}.sr-cart [data-submit]{width:100%;min-height:44px}.sr-history{margin-top:32px;border-top:1px solid #e2e8f0;padding-top:22px}.sr-history summary{font-size:18px;font-weight:600;cursor:pointer;padding:10px 0}.sr-empty{padding:30px;color:#64748b}.sr-staff [data-message]:empty{display:none}@media(max-width:1050px){.sr-staff .sr-grid{grid-template-columns:minmax(0,1fr) 300px}.sr-staff [data-products]{grid-template-columns:1fr}}@media(max-width:760px){.sr-staff .sr-grid{grid-template-columns:1fr;gap:20px}.sr-cart{position:static}.sr-staff [data-products]{max-height:55vh}.sr-staff header{padding-bottom:8px}.sr-toolbar [data-search]{flex-basis:100%}.sr-toolbar select{flex:1}.sr-staff .sr-product{padding:14px}}
-.sr-notice{background:#eef3fb;border:1px solid #dce6f4;border-radius:12px;padding:16px 20px}.sr-notice p{margin:6px 0 0;color:#52627a;font-size:13px}.sr-note-label{display:block;font-size:13px;font-weight:600;margin:16px 0 8px}.sr-cart [data-submit]{margin-top:12px}.sr-thumb{color:#64748b;font-size:11px}.sr-staff [data-products]{align-content:start}.sr-staff .sr-product-heading>div:last-child{min-width:0}.sr-staff .sr-history [data-requests]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.sr-staff .sr-history .sr-card{margin:16px 0 0}@media(max-width:760px){.sr-staff .sr-history [data-requests]{grid-template-columns:1fr}.sr-notice{padding:14px}.sr-staff header button{min-height:44px}}
-.sr-tag-unprepared{display:inline-block;background:#fee2e2;color:#991b1b;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;margin-top:2px}
+/* CUPPA ажилтны аппын дизайны систем — aguulah.html-тэй ижил хувьсагч/фонт/
+   компонент ашиглаж, нэг "гэр бүл" мэдрэмж өгнө (employee.html, staff-access.html). */
+:root{
+  --bg:#F6F7F8; --surface:#ffffff; --text:#20242B;
+  --accent:#45516B; --accent-600:#343D50; --accent-700:#262C3B; --accent-100:#EBEDF2; --accent-200:#DADDE3;
+  --sage:#7a8a5e; --sage-100:#f0fae1; --sage-200:#e1eecc; --sage-800:#3d472b;
+  --red:#a63a2c; --red-100:#f1d9d6; --red-800:#96382c;
+  --line:rgba(32,36,43,.16); --muted:rgba(32,36,43,.55);
+  --r:24px; --r-sm:18px;
+  --font-h:Podkova,Georgia,serif; --font-b:Rubik,system-ui,-apple-system,sans-serif;
+  --shadow:0 3px 10px rgba(32,36,43,.16); --shadow-lg:0 12px 32px rgba(32,36,43,.22);
+}
+html,body{margin:0;padding:0;background:var(--bg)}
+[hidden]{display:none !important}
+.sr{font-family:var(--font-b);font-size:15px;line-height:1.5;color:var(--text);max-width:620px;margin:auto;padding:0 16px 140px}
+.sr *{box-sizing:border-box}
+.sr h1{font-family:var(--font-h);font-size:26px;margin:0;line-height:1.15;font-weight:700}
+.sr h2{font-family:var(--font-h);font-size:19px;margin:0;font-weight:700}
+.sr header,.sr-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sr header{margin:18px 0 14px}
+.sr-card{background:var(--surface);border-radius:var(--r);padding:18px;margin:12px 0}
+.sr input,.sr select,.sr textarea{padding:0 16px;height:46px;border:1px solid var(--line);border-radius:999px;font:inherit;max-width:100%;background:var(--surface);color:var(--text)}
+.sr textarea{height:auto;min-height:72px;padding:12px 16px;border-radius:var(--r-sm);width:100%;resize:vertical}
+.sr input[type=number]{width:76px;padding:0 10px;text-align:center}
+.sr input[type=checkbox]{width:18px;height:18px;height:18px;flex:none;accent-color:var(--accent)}
+.sr button,.sr a{font-family:var(--font-h);font-weight:700}
+.sr a{color:var(--accent-700)}
+.sr button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;
+  background:var(--accent);color:var(--bg);border:0;border-radius:999px;font-size:15px;cursor:pointer}
+.sr button:hover{background:var(--accent-600)}
+.sr button:disabled{background:var(--accent-100);color:var(--muted);cursor:not-allowed}
+.sr .secondary{background:var(--accent-100);color:var(--accent-700)}
+.sr .danger{background:var(--red-100);color:var(--red-800)}
+.sr .muted{color:var(--muted);font-size:13px;font-family:var(--font-b);font-weight:400}
+.sr .error{color:var(--red-800);white-space:pre-wrap;font-family:var(--font-b);font-weight:400}
+.sr .success{color:var(--sage-800);font-family:var(--font-b);font-weight:400}
+.sr :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── Нэвтрэх хуудас ── */
+.login{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:14px;
+  max-width:420px;margin:0 auto;padding:32px 24px 40px;position:relative;overflow:hidden;
+  font-family:var(--font-b);color:var(--text)}
+.login *{box-sizing:border-box}
+.login .blob{position:absolute;width:340px;height:340px;border-radius:999px;background:var(--sage-200);top:-140px;right:-150px;z-index:-1}
+.login h1{font-family:var(--font-h);font-size:32px;margin:0 0 4px;line-height:1.15;font-weight:700}
+.login .brand{border-radius:999px;overflow:hidden}
+.login .brand img{width:100%;height:100%;object-fit:contain}
+.login .field{margin-bottom:14px}
+.login .field label{display:block;font-size:12px;margin-bottom:6px;color:var(--muted)}
+.login .input,.login input{width:100%;height:50px;padding:0 18px;border:1px solid var(--line);border-radius:999px;
+  background:var(--surface);font:16px var(--font-b);color:var(--text)}
+/* Нэвтрэх/topbar-ийн товч нь .sr хүрээний гадна байрладаг тул (login болон
+   logout үйлдэл нь мэдээллийн урсгалын шатлалаас гадуур, host хуудсанд
+   харьяалагддаг) энд тусад нь нийтлэг .btn-загвар тодорхойлно. */
+.btn,.login button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;
+  padding:0 22px;border:none;border-radius:999px;background:var(--accent);color:var(--bg);
+  font-family:var(--font-h);font-weight:700;font-size:15px;cursor:pointer}
+.btn:hover,.login button:hover{background:var(--accent-600)}
+.login button{width:100%}
+.btn-line{background:transparent !important;color:var(--accent-700) !important;box-shadow:none}
+
+/* ── Дээд талбар ── */
+.topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,36,43,.08)}
+.topbar .wrap{display:flex;align-items:center;gap:12px;max-width:620px;margin:auto;padding:12px 16px}
+.brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);overflow:hidden}
+.brand img{width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box}
+.who{min-width:0;line-height:1.2}
+.who b{display:block;font-family:var(--font-h);font-size:16px;font-weight:700}
+.who span{font-size:11.5px;color:var(--muted)}
+.spacer{margin-left:auto}
+
+/* ── Мэдэгдэл карт ── */
+.sr-notice{background:var(--accent-100);border-radius:var(--r);padding:16px 20px;margin:16px 0}
+.sr-notice strong{font-family:var(--font-h)}
+.sr-notice p{margin:6px 0 0;color:var(--accent-700);font-size:13px}
+
+/* ── Хайлт/шүүлтүүр ── */
+.sr-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 10px}
+.sr-toolbar [data-search]{flex:1;min-width:160px}
+.sr-toolbar select{flex:1;min-width:120px}
+.sr-toolbar label{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:13px;color:var(--muted)}
+
+/* ── Барааны карт ── */
+.sr-product{background:var(--surface);border-radius:var(--r);padding:14px;margin:10px 0;display:flex;gap:12px}
+.sr-product-heading{min-width:0;flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.sr-product-heading strong{display:block;overflow-wrap:anywhere;margin:2px 0;font-size:15px;font-weight:600}
+.sr-thumb{width:52px;height:52px;flex:0 0 52px;display:grid;place-items:center;border-radius:14px;overflow:hidden;
+  background:linear-gradient(155deg,#6B4226,var(--text));color:rgba(255,255,255,.75);font-size:10px;align-self:flex-start}
+.sr-thumb img{width:100%;height:100%;object-fit:cover}
+.sr-choices{display:flex;flex-direction:column;gap:8px}
+.sr-choice{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sr-choice span{font-size:13px}
+.sr-choice small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.sr-choice button{min-height:38px;padding:0 16px;font-size:13px}
+.sr-empty{padding:30px;color:var(--muted);text-align:center;background:var(--surface);border-radius:var(--r)}
+
+/* ── Сонгосон бараа (cart) ── */
+.sr-cart h2{margin-bottom:14px}
+.sr-cart [data-draft] .sr-card{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--bg);margin:0 0 10px}
+.sr-cart [data-draft] .sr-card strong{display:block;font-size:14.5px}
+.sr-cart [data-draft] .sr-card p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.sr-note-label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:16px 0 8px}
+
+/* ── Доод талд наалдсан баталгаажуулах мөр ── */
+.sr-bar{position:fixed;left:0;right:0;bottom:16px;z-index:25;padding:0 16px;pointer-events:none}
+.sr-bar .in{max-width:588px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
+  padding:10px 10px 10px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);pointer-events:auto}
+.sr-bar small{display:block;font-size:11px;opacity:.65;font-family:var(--font-b)}
+.sr-bar strong{font-family:var(--font-h);font-size:18px;font-weight:700}
+.sr-bar button{margin-left:auto;min-height:44px}
+
+/* ── Захиалгын түүх ── */
+.sr-history{margin-top:28px}
+.sr-history summary{font-family:var(--font-h);font-size:17px;font-weight:700;cursor:pointer;padding:10px 0;list-style:none}
+.sr-history summary::-webkit-details-marker{display:none}
+.sr-history summary::before{content:'▸';display:inline-block;margin-right:8px;transition:transform .15s}
+.sr-history[open] summary::before{transform:rotate(90deg)}
+.sr-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:4px 11px;border-radius:999px;white-space:nowrap}
+.sr-tag-pending{background:var(--accent-100);color:var(--accent-700)}
+.sr-tag-ok{background:var(--sage-100);color:var(--sage-800)}
+.sr-tag-bad{background:var(--red-100);color:var(--red-800)}
+.sr-request-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(32,36,43,.08)}
+.sr-request-item:first-of-type{border-top:0}
+.sr-request-image{width:48px;height:48px;flex:0 0 48px;border-radius:12px;background:var(--bg);
+  display:grid;place-items:center;overflow:hidden}
+.sr-request-image img{width:100%;height:100%;object-fit:cover}
+.sr-request-image span{font-size:10px;color:var(--muted)}
+.sr-request-image [hidden]{display:none}
+.sr-request-info{min-width:0;overflow-wrap:anywhere;font-size:13px}
+.sr-request-info strong{display:block;margin:2px 0;font-size:14.5px}
+.sr-tag-unprepared{display:inline-block;background:var(--red-100);color:var(--red-800);font-size:11px;
+  font-weight:600;padding:3px 10px;border-radius:999px;margin-top:4px}
+
+/* ── Агуулахын горим (sr-warehouse) — 2 баганатай жагсаалт, одоогоор
+   бодит хэрэглээгүй ч regression test-ээр шалгагддаг тул дизайныг нь нийцүүлнэ ── */
+.sr-warehouse{max-width:960px}
+.sr-warehouse [data-requests]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+@media(max-width:760px){.sr-warehouse [data-requests]{grid-template-columns:1fr}}
+
 /* Агуулахын "Хэвлэх" баримт — дэлгэцэнд үл харагдах, хэвлэх үед л гарч ирнэ. */
 #sr-print-slip{display:none}
-#sr-print-slip h1{font-size:18px;margin:0 0 6px}
+#sr-print-slip h1{font-size:18px;margin:0 0 6px;font-family:Arial,sans-serif}
 #sr-print-slip table{width:100%;border-collapse:collapse;margin-top:10px}
-#sr-print-slip th,#sr-print-slip td{border:1px solid #333;padding:6px 8px;text-align:left;font-size:13px}
+#sr-print-slip th,#sr-print-slip td{border:1px solid #333;padding:6px 8px;text-align:left;font-size:13px;font-family:Arial,sans-serif}
 @media print{
   body.sr-printing>*:not(#sr-print-slip){visibility:hidden}
   body.sr-printing #sr-print-slip{display:block;visibility:visible;position:absolute;top:0;left:0;width:100%}
   body.sr-printing #sr-print-slip *{visibility:visible}
 }
+
+@media(min-width:680px){
+  .sr{max-width:680px}
+  .topbar .wrap{max-width:680px}
+}
+
 /* Гар утсан дээр input/select/textarea-ийн font-size 16px-ээс багадвал iOS Safari
    фокус хийх үед хуудсыг автоматаар дүрс томруулдаг тул гар утсанд энэ хэмжээг барина. */
 @media(max-width:760px){.sr input,.sr select,.sr textarea{font-size:16px}}
