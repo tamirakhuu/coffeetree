@@ -14,6 +14,10 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   await page.setContent('<div id="form"></div><div id="modalFoot"><button class="btn-primary">Save</button></div>');
   await page.addScriptTag({ content: `
+    // Playwright's about:blank page is not a secure context in current Chromium,
+    // so crypto.randomUUID() (used by productFormHtml for powder-size row keys)
+    // is missing here even though it exists on the real https:// admin page.
+    if (typeof crypto.randomUUID !== 'function') { let _uid = 0; crypto.randomUUID = () => 'test-uuid-' + (_uid++); }
     let productImages = [], saved = [];
     const brandOptions = () => '<option value="1">Brand</option>';
     const categoryOptions = () => '<option value="1">Category</option>';
