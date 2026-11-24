@@ -485,9 +485,10 @@ tr:hover td{background:rgba(255,255,255,.4)}
       <div class="card-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div>
           <div class="card-title">Хүлээгдэж буй таталтууд</div>
-          <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй бараанууд. Check-лэгдээгүй бараа агуулах руу автоматаар буцаагдана.</p>
+          <p style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">Агуулахын ажилтны илгээсэн, хараахан хүлээн аваагүй бараанууд. Check-лэгдсэн мөрөнд "Хүлээн авах" эсвэл "Буцаах" дарж баталгаажуулна; сонгоогүй мөр хариу авсан хэвээр хүлээгдсэн байна.</p>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="rejectPendingBatch()">Буцаах</button>
           <button class="btn btn-primary btn-sm" onclick="receivePendingBatch()">Хүлээн авах</button>
         </div>
       </div>
@@ -2288,21 +2289,35 @@ function renderPendingTransfers() {
   }).join('');
 }
 
+// Checkbox-оор сонгосон мөрүүд л нөлөөлнө — сонгоогүй мөрүүд ямар ч үйлдэл
+// хийгдэхгүй "Хүлээгдэж буй" хэвээр үлдэнэ (өмнө нь сонгоогүй бол автоматаар
+// агуулах руу буцдаг байсныг тусдаа "Буцаах" товчоор ухамсартайгаар хийдэг болгов).
 async function receivePendingBatch() {
   const checks = [...document.querySelectorAll('#pendingTransfersTable .pending-check')];
-  if (!checks.length) { toast('Хүлээгдэж буй шилжилт алга байна', 'err'); return; }
   const accepted = checks.filter(c => c.checked).map(c => +c.dataset.id);
-  const rejected = checks.filter(c => !c.checked).map(c => +c.dataset.id);
-  if (!await requestAdminPassword(`${accepted.length} хүсэлт хүлээн авч, ${rejected.length} хүсэлтийг агуулах руу буцаах үйлдлийг баталгаажуулна уу.`)) return;
-  if (rejected.length && !confirm(`${rejected.length} бараа хүлээн авагдаагүй тул агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
+  if (!accepted.length) { toast('Хүлээн авах бараа сонгогдоогүй байна', 'err'); return; }
+  if (!await requestAdminPassword(`${accepted.length} барааг хүлээн авахыг баталгаажуулна уу.`)) return;
 
-  const results = await Promise.all([
-    ...accepted.map(id => sb.rpc('admin_receive_transfer', { p_transfer_id: id })),
-    ...rejected.map(id => sb.rpc('admin_reject_transfer', { p_transfer_id: id })),
-  ]);
+  const results = await Promise.all(accepted.map(id => sb.rpc('admin_receive_transfer', { p_transfer_id: id })));
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
-  else { toast(`✓ ${accepted.length} хүлээн авагдаж, ${rejected.length} агуулах руу буцлаа`); }
+  else { toast(`✓ ${accepted.length} бараа хүлээн авлаа`); }
+  await loadAll();
+}
+
+// Сонгосон мөрүүдийг агуулах руу буцаана — илгээх/хасах хүсэлт үүсгэх үед аль
+// хэдийн хасагдсан агуулахын нөөцийг энд буцаан нэмнэ (admin_reject_transfer).
+async function rejectPendingBatch() {
+  const checks = [...document.querySelectorAll('#pendingTransfersTable .pending-check')];
+  const rejected = checks.filter(c => c.checked).map(c => +c.dataset.id);
+  if (!rejected.length) { toast('Буцаах бараа сонгогдоогүй байна', 'err'); return; }
+  if (!confirm(`${rejected.length} бараа агуулах руу буцна. Үргэлжлүүлэх үү?`)) return;
+  if (!await requestAdminPassword(`${rejected.length} барааг агуулах руу буцаахыг баталгаажуулна уу.`)) return;
+
+  const results = await Promise.all(rejected.map(id => sb.rpc('admin_reject_transfer', { p_transfer_id: id })));
+  const failed = results.find(r => r.error);
+  if (failed) { toast('Алдаа: ' + failed.error.message, 'err'); }
+  else { toast(`↩ ${rejected.length} бараа агуулах руу буцлаа`); }
   await loadAll();
 }
 

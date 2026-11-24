@@ -944,6 +944,7 @@ declare
   v_per_box int;
   v_need_unit int;
   v_new_id bigint;
+  v_new_unit int;
 begin
   if not is_warehouse_staff() then
     raise exception 'Зөвхөн агуулахын ажилтан энэ үйлдлийг хийх эрхтэй';
@@ -963,21 +964,29 @@ begin
   end if;
   v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
 
+  -- "Илгээх"/"Хасах" дарсан мөчид (admin хүлээн авахыг хүлээлгүйгээр) агуулахын
+  -- нөөцийг шууд хасна — физик байдлаар бараа агуулахаас гарч, замдаа (эсвэл
+  -- устгагдахаар) явсан тул цаашид өөр илгээлтэд дахин сонгогдохгүй байх ёстой.
+  -- Хэрэв admin "Буцаах" дарвал admin_reject_transfer энэ хасалтыг буцаана.
   if p_direction = 'to_store' or p_direction = 'writeoff' then
     if v_unified then
       v_need_unit := case when p_option_type = 'box' then p_qty * v_per_box else p_qty end;
       if coalesce(v_warehouse_unit, 0) < v_need_unit then
         raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
       end if;
+      update products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
+        where id = p_product_id returning warehouse_unit_stock into v_new_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = p_product_id;
     else
       if p_option_type = 'box' then
-        if coalesce(v_warehouse_box, 0) < p_qty then
-          raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
-        end if;
+        update products set warehouse_box_stock = warehouse_box_stock - p_qty
+          where id = p_product_id and warehouse_box_stock >= p_qty;
       else
-        if coalesce(v_warehouse_unit, 0) < p_qty then
-          raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
-        end if;
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty
+          where id = p_product_id and warehouse_unit_stock >= p_qty;
+      end if;
+      if not found then
+        raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
       end if;
     end if;
   end if;
@@ -1019,28 +1028,8 @@ begin
   v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
 
   if v_transfer.direction = 'to_store' then
-    if v_unified then
-      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
-      select warehouse_unit_stock into v_cur_unit from products where id = v_transfer.product_id;
-      if coalesce(v_cur_unit, 0) < v_need_unit then
-        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
-      end if;
-      update products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
-        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
-      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
-    else
-      if v_transfer.option_type = 'box' then
-        update products set warehouse_box_stock = warehouse_box_stock - v_transfer.qty
-          where id = v_transfer.product_id and warehouse_box_stock >= v_transfer.qty;
-      else
-        update products set warehouse_unit_stock = warehouse_unit_stock - v_transfer.qty
-          where id = v_transfer.product_id and warehouse_unit_stock >= v_transfer.qty;
-      end if;
-      if not found then
-        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
-      end if;
-    end if;
-
+    -- Агуулахын нөөцийг warehouse_create_transfer үед (илгээх товч дарахад) аль
+    -- хэдийн хассан тул энд дахин хасахгүй, зөвхөн дэлгүүрийн нөөцийг л нэмнэ.
     if v_unified then
       if v_transfer.option_type = 'box' then
         update products set unit_stock = coalesce(unit_stock, 0) + (v_transfer.qty * v_per_box)
@@ -1113,27 +1102,10 @@ begin
     end if;
 
   elsif v_transfer.direction = 'writeoff' then
-    if v_unified then
-      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
-      select warehouse_unit_stock into v_cur_unit from products where id = v_transfer.product_id;
-      if coalesce(v_cur_unit, 0) < v_need_unit then
-        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
-      end if;
-      update products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
-        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
-      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
-    else
-      if v_transfer.option_type = 'box' then
-        update products set warehouse_box_stock = warehouse_box_stock - v_transfer.qty
-          where id = v_transfer.product_id and warehouse_box_stock >= v_transfer.qty;
-      else
-        update products set warehouse_unit_stock = warehouse_unit_stock - v_transfer.qty
-          where id = v_transfer.product_id and warehouse_unit_stock >= v_transfer.qty;
-      end if;
-      if not found then
-        raise exception 'Агуулахын нөөц хүрэлцэхгүй байна';
-      end if;
-    end if;
+    -- Агуулахын нөөцийг warehouse_create_transfer үед (хасах хүсэлт илгээхэд) аль
+    -- хэдийн хассан тул энд дахин хийх үйлдэл алга — зөвхөн "Хасах уу?" гэдгийг
+    -- баталгаажуулж статусыг 'received' болгоно.
+    null;
   end if;
 
   update stock_transfers
@@ -1148,6 +1120,10 @@ create or replace function public.admin_reject_transfer(p_transfer_id bigint) re
 language plpgsql security definer set search_path = public as $$
 declare
   v_transfer record;
+  v_unified boolean;
+  v_per_box int;
+  v_need_unit int;
+  v_new_unit int;
 begin
   if not is_admin() then
     raise exception 'Зөвхөн админ энэ үйлдлийг хийх эрхтэй';
@@ -1159,6 +1135,28 @@ begin
   end if;
   if v_transfer.status <> 'pending' then
     raise exception 'Энэ шилжилт аль хэдийн хүлээн авагдсан/цуцлагдсан байна';
+  end if;
+
+  -- 'to_store'/'writeoff' чиглэлийн хувьд warehouse_create_transfer үед (илгээх/
+  -- хасах товч дарахад) агуулахын нөөцийг аль хэдийн хассан байгаа тул "Буцаах"
+  -- үед тэрийг буцаан нэмнэ. 'restock'/'to_warehouse' чиглэлд үүсэх үед нөөц
+  -- хөдөлдөггүй (зөвхөн admin_receive_transfer-ээр л хөдөлдөг) тул энд хөдлөхгүй.
+  if v_transfer.direction in ('to_store', 'writeoff') then
+    select unified_stock, box_per_box into v_unified, v_per_box
+      from products where id = v_transfer.product_id for update;
+    v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
+    if v_unified then
+      v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
+      update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_need_unit
+        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+    else
+      if v_transfer.option_type = 'box' then
+        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      else
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+      end if;
+    end if;
   end if;
 
   update stock_transfers
@@ -1173,6 +1171,45 @@ $$;
 -- байсныг (2026-11-23 аудитаар олдсон) энд цэгцэлж байна.
 revoke all on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) from public, anon;
 grant execute on function public.admin_receive_transfer(bigint), public.admin_reject_transfer(bigint) to authenticated;
+
+-- 2026-11-24: warehouse_create_transfer одооноос 'to_store'/'writeoff' үед
+-- (admin хүлээн авахыг хүлээлгүйгээр) агуулахын нөөцийг шууд хасдаг болсон тул
+-- энэ migration ажиллах мөчид аль хэдийн 'pending' төлөвтэй (хуучин загвараар
+-- үүссэн, нөөц нь хараахан хасагдаагүй) ийм шилжилтүүдийн нөөцийг нэг удаа
+-- гар аргаар хасна — эс тэгвээс admin хожим хүлээн авах/буцаах үед нөөц
+-- давхар тооцогдох (эсвэл огт хасагдаагүй үлдэх) эрсдэлтэй. Дахин ажиллуулахад
+-- аюулгүй (нэг л удаа хэрэгжинэ).
+do $$
+declare
+  t record;
+  v_unified boolean;
+  v_per_box int;
+  v_need_unit int;
+  v_new_unit int;
+  v_changed int := 0;
+begin
+  if not exists (select 1 from public.stock_topup_runs where operation = 'reserve-pending-transfers-2026-11-24') then
+    insert into public.stock_topup_runs(operation) values ('reserve-pending-transfers-2026-11-24');
+    for t in select * from public.stock_transfers where status = 'pending' and direction in ('to_store','writeoff') order by id for update loop
+      select unified_stock, box_per_box into v_unified, v_per_box from public.products where id = t.product_id for update;
+      v_unified := coalesce(v_unified, false) and coalesce(v_per_box, 0) > 0;
+      if v_unified then
+        v_need_unit := case when t.option_type = 'box' then t.qty * v_per_box else t.qty end;
+        update public.products set warehouse_unit_stock = warehouse_unit_stock - v_need_unit
+          where id = t.product_id returning warehouse_unit_stock into v_new_unit;
+        update public.products set warehouse_box_stock = v_new_unit / v_per_box where id = t.product_id;
+      else
+        if t.option_type = 'box' then
+          update public.products set warehouse_box_stock = warehouse_box_stock - t.qty where id = t.product_id;
+        else
+          update public.products set warehouse_unit_stock = warehouse_unit_stock - t.qty where id = t.product_id;
+        end if;
+      end if;
+      v_changed := v_changed + 1;
+    end loop;
+    update public.stock_topup_runs set changed_products = v_changed where operation = 'reserve-pending-transfers-2026-11-24';
+  end if;
+end $$;
 
 -- Захиалга/сургалтын бүртгэлийг утасны дугаараар шалгах, хугацаа хэтэрсэн
 -- төлбөргүй захиалгыг чөлөөлөх (admin-panel.html-ийн "Сонсох" бус харин

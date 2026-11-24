@@ -56,7 +56,7 @@ run('closeModal()');
 resolveLogin();
 await submitting;
 assert.equal(await cancelled, false, 'cancel during verification prevents mutation');
-for (const name of ['deleteProductNow', 'deleteCategoryNow', 'deleteBrandNow', 'receivePendingBatch']) {
+for (const name of ['deleteProductNow', 'deleteCategoryNow', 'deleteBrandNow', 'receivePendingBatch', 'rejectPendingBatch']) {
   const body = source.slice(source.indexOf(`async function ${name}(`));
   assert.ok(body.indexOf('await requestAdminPassword(') < body.search(/await sb\.from|const results = await Promise/), `${name} verifies before mutation`);
 }
