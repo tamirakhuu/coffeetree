@@ -31,7 +31,7 @@ a{color:var(--accent-700)}
 
 .wrap{max-width:960px;margin:0 auto;padding:0 16px}
 .topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid rgba(32,36,43,.08)}
-.topbar .wrap{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px}
 .brand{width:38px;height:38px;flex:none;border-radius:999px;background:var(--accent);color:var(--bg);
   display:grid;place-items:center;font-family:var(--font-h);font-size:17px;overflow:hidden}
 .brand img{width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box}
@@ -58,7 +58,7 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 16px + env(safe-area-inset
 .btn-ghost{background:transparent;color:var(--accent-700);border:1px dashed rgba(32,36,43,.28);font-family:var(--font-b);font-weight:600;min-height:44px}
 .btn-ghost:hover{background:var(--accent-100)}
 .btn-line{background:transparent;color:rgba(32,36,43,.7);border: none;font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
-#logout{width:40px;height:40px;min-height:auto;padding:0;border:0;border-radius:999px;align-self:flex-start;
+#logout{width:40px;height:40px;min-height:auto;padding:0;border:0;border-radius:999px;flex:none;
   display:grid;place-items:center;background:#f1d9d6;color:#a63a2c;box-shadow:0 2px 8px rgba(32,36,43,.1)}
 #logout:hover,#logout:active{background:#e8c4bf}
 #logout svg{width:20px;height:20px}
@@ -181,17 +181,9 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
   .head h2{font-size:34px}
   .stats{grid-template-columns:repeat(4,1fr)}
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-  .nav-shell{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;
-    display:flex;align-items:center;gap:2px;padding:7px 8px;border-radius:999px;
-    background:rgba(255,255,255,.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
-    border:1px solid rgba(255,255,255,.65);box-shadow:0 14px 38px rgba(32,36,43,.22),inset 0 1px 0 rgba(255,255,255,.6)}
-  .nav-shell .topbar{position:static;background:transparent;border:0;box-shadow:none}
-  .nav-shell .topbar .wrap{max-width:none;margin:0;padding:0 6px 0 10px;gap:10px}
-  .nav-shell .tabbar{position:static;bottom:auto;background:transparent;border:0;padding:0}
-  .nav-shell .tabbar .in{max-width:none;margin:0;padding:0;gap:2px;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;box-shadow:none}
+  .tabbar .in{width:fit-content}
   .tab{flex:none;flex-direction:row;gap:8px;padding:8px 18px;font-size:14px}
   .tab b{position:static;margin-left:2px}
-  .nav-shell .tab[aria-current="page"]{background:rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(32,36,43,.1)}
   .bar{position:static;bottom:auto;padding:0}
   .bar .in{border-radius:var(--r)}
   #toast{bottom:32px}
@@ -213,23 +205,21 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 </div>
 
 <div id="app" hidden>
-  <div class="nav-shell">
-    <header class="topbar">
-      <div class="wrap">
-        <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
-      </div>
-    </header>
-
-    <nav class="tabbar"><div class="in" id="tabs"></div></nav>
-  </div>
-
-  <main class="wrap">
-    <section class="screen" id="s-home" hidden>
+  <header class="topbar">
+    <div class="wrap">
       <button id="logout" aria-label="Гарах">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3"/><path d="M13 14l4-4-4-4"/><path d="M17 10H7.5"/>
         </svg>
       </button>
+      <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
+    </div>
+  </header>
+
+  <nav class="tabbar"><div class="in" id="tabs"></div></nav>
+
+  <main class="wrap">
+    <section class="screen" id="s-home" hidden>
       <div class="stats">
         <div class="stat sage"><div class="k">Өнөөдөр нэмсэн</div><div class="v" id="h-added">0</div><div class="s">ширхэг</div></div>
         <div class="stat"><div class="k">Хүлээгдэж буй</div><div class="v" id="h-pending">0</div><div class="s">илгээсэн хүсэлт</div></div>
