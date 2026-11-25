@@ -423,6 +423,7 @@ async function checkAuth(){
   $('#login').hidden = true; $('#app').hidden = false;
   await loadAll();
   subscribeTransfers();
+  setInterval(() => { if (!document.hidden) loadAll(); }, 30000);
 }
 
 

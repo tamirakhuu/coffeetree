@@ -70,7 +70,7 @@ export async function mountRequests(root,sb,mode='staff'){
   }
   function requestCard(r){
     const actions=mode==='warehouse'?(r.status==='pending'?['preparing','rejected']:r.status==='preparing'?['sent','rejected']:[]):r.status==='pending'&&r.requested_by===user.id?['cancelled']:r.status==='sent'?['received']:[];
-    const dismissBtn=mode==='staff'?`<button type="button" class="sr-sheet-close" data-dismiss="${escape(r.id)}" aria-label="Жагсаалтаас устгах" title="Жагсаалтаас устгах">✕</button>`:'';
+    const dismissBtn=mode==='staff'?`<button type="button" class="sr-sheet-close" data-dismiss="${escape(r.id)}" ${busy?'disabled':''} aria-label="Жагсаалтаас устгах" title="Жагсаалтаас устгах">✕</button>`:'';
     const header=mode==='warehouse'?`<strong>${escape(r.store_name)} · ${escape(r.id.slice(0,8))}</strong><span class="sr-tag ${tagClass[r.status]}">${labels[r.status]}</span>`:`<span class="sr-tag ${tagClass[r.status]}">${labels[r.status]}</span>${dismissBtn}`;
     const canPrint=mode==='warehouse'&&['preparing','sent','received'].includes(r.status);
     return `<article class="sr-card"><div class="sr-row">${header}</div><p class="muted">${formatDateTime(r.created_at)}</p>${(r.store_request_items||[]).map(i=>requestItem(i,r)).join('')}${r.note?`<p class="muted">${escape(r.note)}</p>`:''}<div class="sr-row">${actions.map(a=>`<button data-action="${a}" data-id="${r.id}" ${busy?'disabled':''} class="${a==='rejected'||a==='cancelled'?'danger':''}">${actionLabels[a]||labels[a]}</button>`).join('')}${canPrint?`<button data-print="${r.id}" class="secondary">Хэвлэх</button>`:''}</div></article>`;
@@ -199,13 +199,13 @@ export async function mountRequests(root,sb,mode='staff'){
     if(e.target.matches('[data-quick-edit-backdrop]')){quickEditOpen=false;render();}
   });
   root.addEventListener('click',async e=>{
-    const btn=e.target.closest('[data-dismiss]');if(!btn)return;
+    const btn=e.target.closest('[data-dismiss]');if(!btn||busy)return;
     const id=btn.dataset.dismiss;
     const r=requests.find(x=>x.id===id);
     const needsCancelFirst=r&&r.status==='pending'&&r.requested_by===user.id;
     if(r&&(r.status==='cancelled'||r.status==='rejected'||needsCancelFirst)){
       if(!confirm('Энэ захиалгыг бүр мөсөн устгах уу?'))return;
-      btn.disabled=true;
+      busy=true;render();
       try{
         if(needsCancelFirst){
           const {error:cancelError}=await sb.rpc('change_store_request',{p_id:id,p_status:'cancelled'});
@@ -216,7 +216,7 @@ export async function mountRequests(root,sb,mode='staff'){
         requests=requests.filter(x=>x.id!==id);
         dismissed.delete(id);persistDismissed();
       }catch(err){message(err.message,true);}
-      finally{render();}
+      finally{busy=false;await refresh();render();}
       return;
     }
     dismissed.add(id);persistDismissed();render();
