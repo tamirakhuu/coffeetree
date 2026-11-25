@@ -42,7 +42,7 @@ a{color:var(--accent-700)}
 .who span{font-size:11.5px;color:var(--muted)}
 .topbar-logo{height:20px;width:auto;flex:none}
 .spacer{margin-left:auto}
-main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
+main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 16px + env(safe-area-inset-bottom) + 28px)}
 .screen{display:flex;flex-direction:column;gap:14px; margin-top: 10px }
 .head h2{font-size:26px}
 .head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
@@ -58,8 +58,10 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .btn-ghost{background:transparent;color:var(--accent-700);border:1px dashed rgba(32,36,43,.28);font-family:var(--font-b);font-weight:600;min-height:44px}
 .btn-ghost:hover{background:var(--accent-100)}
 .btn-line{background:transparent;color:rgba(32,36,43,.7);border: none;font-family:var(--font-b);min-height:36px;padding:0 14px;font-size:12.5px}
-#logout{background:var(--accent-100);color:var(--text)}
-#logout:hover,#logout:active{background:var(--accent-200)}
+#logout{width:40px;height:40px;min-height:auto;padding:0;border:0;border-radius:999px;align-self:flex-start;
+  display:grid;place-items:center;background:#f1d9d6;color:#a63a2c;box-shadow:0 2px 8px rgba(32,36,43,.1)}
+#logout:hover,#logout:active{background:#e8c4bf}
+#logout svg{width:20px;height:20px}
 .btn-icon{width:48px;min-height:48px;padding:0;flex:none;background:var(--text);color:var(--bg);font-size:18px}
 .btn-danger{background:#a63a2c;color:#fff2eb}
 .btn-danger:hover{background:#8f2f22}
@@ -123,22 +125,24 @@ main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
   .step .u{min-width:0;font-size:11.5px}
 }
 
-.bar{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h, 84px) + var(--kb-offset,0px));z-index:25;padding:0 16px;pointer-events:none;transition:bottom .15s ease}
+.bar{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h, 84px) + 16px + env(safe-area-inset-bottom) + var(--kb-offset,0px));z-index:25;padding:0 16px;pointer-events:none;transition:bottom .15s ease}
 .bar .in{max-width:928px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:var(--r);
   padding:12px 12px 12px 20px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-lg);pointer-events:auto}
 .bar .in small{display:block;font-size:11px;opacity:.6}
 .bar .in strong{font-family:var(--font-h);font-size:19px;font-weight:700}
 .bar .in .btn{margin-left:auto;min-height:44px;font-size:15px}
 
-.tabbar{position:fixed;left:0;right:0;bottom:var(--kb-offset,0px);z-index:30;background:var(--surface);border-top:1px solid rgba(32,36,43,.08);
-  padding-bottom:env(safe-area-inset-bottom);transition:bottom .15s ease}
-.tabbar .in{max-width:960px;margin:0 auto;display:flex;gap:2px;padding:8px 10px}
+.tabbar{position:fixed;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom) + var(--kb-offset,0px));z-index:30;
+  padding:0 16px;pointer-events:none;transition:bottom .15s ease}
+.tabbar .in{max-width:960px;margin:0 auto;display:flex;gap:2px;padding:8px 10px;border-radius:999px;pointer-events:auto;
+  background:rgba(255,255,255,.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(255,255,255,.65);box-shadow:0 14px 38px rgba(32,36,43,.22),inset 0 1px 0 rgba(255,255,255,.6)}
 html.kb-open .tabbar{display:none}
 html.kb-open .bar{bottom:var(--kb-offset,0px)}
 .tab{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 6px;
   border:none;border-radius:20px;background:transparent;color:var(--muted);font-size:11px}
 .tab svg{width:19px;height:19px;flex:none}
-.tab[aria-current="page"]{background:var(--bg);color:var(--accent-700);font-weight:700}
+.tab[aria-current="page"]{background:rgba(255,255,255,.75);color:var(--accent-700);font-weight:700;box-shadow:0 2px 8px rgba(32,36,43,.1)}
 .tab b{position:absolute;top:4px;right:14px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;
   background:var(--accent);color:var(--bg);font-size:10px;font-weight:600;display:grid;place-items:center}
 
@@ -183,9 +187,8 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
     border:1px solid rgba(255,255,255,.65);box-shadow:0 14px 38px rgba(32,36,43,.22),inset 0 1px 0 rgba(255,255,255,.6)}
   .nav-shell .topbar{position:static;background:transparent;border:0;box-shadow:none}
   .nav-shell .topbar .wrap{max-width:none;margin:0;padding:0 6px 0 10px;gap:10px}
-  .nav-shell .topbar .spacer{margin-left:6px;padding-left:10px;border-left:1px solid rgba(32,36,43,.12)}
   .nav-shell .tabbar{position:static;bottom:auto;background:transparent;border:0;padding:0}
-  .nav-shell .tabbar .in{max-width:none;margin:0;padding:0;gap:2px}
+  .nav-shell .tabbar .in{max-width:none;margin:0;padding:0;gap:2px;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;box-shadow:none}
   .tab{flex:none;flex-direction:row;gap:8px;padding:8px 18px;font-size:14px}
   .tab b{position:static;margin-left:2px}
   .nav-shell .tab[aria-current="page"]{background:rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(32,36,43,.1)}
@@ -214,7 +217,6 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
     <header class="topbar">
       <div class="wrap">
         <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
-        <button class="btn btn-line spacer" id="logout">Гарах</button>
       </div>
     </header>
 
@@ -223,14 +225,18 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
   <main class="wrap">
     <section class="screen" id="s-home" hidden>
+      <button id="logout" aria-label="Гарах">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3"/><path d="M13 14l4-4-4-4"/><path d="M17 10H7.5"/>
+        </svg>
+      </button>
       <div class="stats">
-        <div class="stat"><div class="k">Нийт үлдэгдэл</div><div class="v" id="h-total">0</div><div class="s">ширхэг</div></div>
         <div class="stat sage"><div class="k">Өнөөдөр нэмсэн</div><div class="v" id="h-added">0</div><div class="s">ширхэг</div></div>
         <div class="stat"><div class="k">Хүлээгдэж буй</div><div class="v" id="h-pending">0</div><div class="s">илгээсэн хүсэлт</div></div>
         <div class="stat"><div class="k">Үлдэгдэл бага</div><div class="v" id="h-low">0</div><div class="s">нэр төрөл</div></div>
       </div>
       <div class="row" style="gap:10px">
-        <button class="btn btn-2" style="flex:1" data-goto="add">Бараа нэмэх</button>
+        <button class="btn btn-2" style="flex:1" data-goto="send">Бэлдэх барааны жагсаалт</button>
       </div>
       <div class="head" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <h2 style="font-size:20px">Мэдэгдэл</h2>
@@ -259,16 +265,11 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
     <section class="screen" id="s-send" hidden>
       <div class="head"><h2>Дэлгүүрт илгээх</h2><p>Хүсэлт админ руу явж, дэлгүүр хүлээн авснаа баталгаажуулна.</p></div>
-      <div class="chips" id="stores"></div>
       <div id="send-request-note" class="muted" style="font-size:12.5px;margin:-4px 0 6px"></div>
-      <div class="row">
-        <input class="input" id="send-q" placeholder="Барааны нэр / брэндээр хайх" />
-      </div>
-      <div class="card" id="send-results" hidden style="padding:6px"></div>
       <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Илгээх жагсаалт</h3><span class="muted" id="send-count" style="font-size:12px"></span></div>
       <div id="send-list" style="display:flex;flex-direction:column;gap:10px"></div>
       <div class="bar"><div class="in">
-        <div><small id="send-store">—</small><strong id="send-sum">0 ширхэг</strong></div>
+        <div><small>Нийт бэлдэх</small><strong id="send-sum">0 ширхэг</strong></div>
         <button class="btn" id="send-commit">Илгээх</button>
       </div></div>
     </section>
@@ -305,7 +306,6 @@ const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const STORES = ['Саруул зах', 'Яармаг'];
 const LOW = 20;
 const SEEN_KEY = 'cuppamn_aguulah_seen_v1';
 const DISMISSED_KEY = 'cuppamn_aguulah_dismissed_v1';
@@ -315,7 +315,7 @@ let products = [], brands = [];
 let stockTransfers = [];
 let storeRequests = [];
 const excludedRequestItems = new Set();
-let screen = 'home', store = STORES[0];
+let screen = 'home';
 let addMode = 'add';
 let addDraft = [], sendDraft = [], nextK = 1;
 let stockBrandFilter = 'all', stockLowOnly = false, stockOutOnly = false;
@@ -512,7 +512,7 @@ function draftRow(r){
       <div class="item-body">
         ${thumb}
         <div class="item-info">
-          <div class="name">${esc(r.name)} <span class="muted" style="font-size:11px">· Захиалгаас</span></div>
+          <div class="name">${esc(r.name)} <span class="muted" style="font-size:11px">· ${esc(r.storeName || 'Захиалгаас')}</span></div>
           <div class="meta">${esc(meta)}</div>
           <div class="step"><span class="u">${esc(qtyText)}</span></div>
         </div>
@@ -585,11 +585,10 @@ function results(q, mode){
 document.addEventListener('click', e => {
   const p = e.target.closest('[data-pick]'); if (!p) return;
   addToDraft(p.dataset.mode, prod(+p.dataset.pick));
-  const q = p.dataset.mode === 'add' ? $('#add-q') : $('#send-q'); q.value = '';
+  $('#add-q').value = '';
   render();
 });
 $('#add-q').addEventListener('input', () => render());
-$('#send-q').addEventListener('input', () => render());
 $('#stock-q').addEventListener('input', () => render());
 
 function addToDraft(mode, product){
@@ -603,24 +602,21 @@ function addToDraft(mode, product){
 
 function syncRequestRows(){
   sendDraft = sendDraft.filter(r => !r.locked);
-  const matches = storeRequests.filter(r => r.store_name === store);
   const skipped = [];
   const lockedRows = [];
-  matches.forEach(req => {
+  storeRequests.forEach(req => {
     (req.store_request_items || []).forEach(item => {
       const key = req.id + ':' + item.product_id + ':' + item.option_type;
       if (excludedRequestItems.has(key)) return;
-      if (item.option_type === 'box') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: item.qty, extra: 0, locked: true, fromRequestId: req.id });
-      else if (item.option_type === 'unit') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: 0, extra: item.qty, locked: true, fromRequestId: req.id });
+      if (item.option_type === 'box') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: item.qty, extra: 0, locked: true, fromRequestId: req.id, storeName: req.store_name });
+      else if (item.option_type === 'unit') lockedRows.push({ k: nextK++, productId: item.product_id, name: item.product_name, cases: 0, extra: item.qty, locked: true, fromRequestId: req.id, storeName: req.store_name });
       else skipped.push(`${item.product_name} (${item.option_label})`);
     });
   });
   sendDraft = [...lockedRows, ...sendDraft];
   const note = $('#send-request-note');
   if (!note) return;
-  note.textContent = matches.length
-    ? `${store}-ийн захиалга (${matches.length}) жагсаалтад орлоо.${skipped.length ? ' Эдгээрийг энд нэмэх боломжгүй тул гараар зохицуулна уу: ' + skipped.join(', ') : ''}`
-    : '';
+  note.textContent = `Дэлгүүрт бэлдэх жагсаалтанд ${lockedRows.length} бараа байна.${skipped.length ? ' Эдгээрийг энд нэмэх боломжгүй тул гараар зохицуулна уу: ' + skipped.join(', ') : ''}`;
 }
 
 document.addEventListener('click', e => {
@@ -648,27 +644,21 @@ $('#add-commit').addEventListener('click', async () => {
 
 $('#send-commit').addEventListener('click', async () => {
   const rows = sendDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
-  if (!rows.length) return toast('Бараа болон тоог оруулна уу');
+  if (!rows.length) return toast('Бэлдэх бараа алга');
   const btn = $('#send-commit'); btn.disabled = true; btn.textContent = 'Илгээж байна…';
   const batchId = (crypto.randomUUID ? crypto.randomUUID() : 'b' + Date.now() + Math.random().toString(36).slice(2));
-  const calls = [];
   const byRequest = new Map();
   rows.forEach(r => {
-    if (r.locked && r.fromRequestId) {
-      if (!byRequest.has(r.fromRequestId)) byRequest.set(r.fromRequestId, []);
-      byRequest.get(r.fromRequestId).push({ product_id: r.productId, option_type: r.cases > 0 ? 'box' : 'unit' });
-      return;
-    }
-    if (r.cases > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'box', p_qty: r.cases, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
-    if (r.extra > 0) calls.push(sb.rpc('warehouse_create_transfer', { p_product_id: r.productId, p_option_type: 'unit', p_qty: r.extra, p_direction: 'to_store', p_store_name: store, p_batch_id: batchId }));
+    if (!byRequest.has(r.fromRequestId)) byRequest.set(r.fromRequestId, []);
+    byRequest.get(r.fromRequestId).push({ product_id: r.productId, option_type: r.cases > 0 ? 'box' : 'unit' });
   });
-  byRequest.forEach((items, requestId) => calls.push(sb.rpc('prepare_store_request', { p_id: requestId, p_items: items, p_batch_id: batchId })));
+  const calls = [...byRequest].map(([requestId, items]) => sb.rpc('prepare_store_request', { p_id: requestId, p_items: items, p_batch_id: batchId }));
   const results = await Promise.all(calls);
   btn.disabled = false; btn.textContent = 'Илгээх';
   const failed = results.find(r => r.error);
   if (failed) { toast('Алдаа: ' + failed.error.message); return; }
   sendDraft = []; excludedRequestItems.clear(); screen = 'history'; await loadAll();
-  toast('Илгээгдлээ, ' + store + ' хүлээн авахыг хүлээнэ');
+  toast('Илгээгдлээ, дэлгүүрүүд хүлээн авахыг хүлээнэ');
 });
 
 function renderSums(){
@@ -709,9 +699,7 @@ function render(){
   renderTabs();
   TABS.forEach(([id]) => $('#s-' + id).hidden = screen !== id);
 
-  const totalStock = products.reduce((s,p) => s + (p.coffee_sizes ? p.coffee_sizes.size_1kg.stock + p.coffee_sizes.size_250g.stock : (p.warehouse_unit_stock||0)), 0);
   const addedToday = stockTransfers.filter(t => t.direction === 'restock' && t.status === 'received' && isToday(t.received_at || t.created_at)).reduce((s,t) => s + t.qty, 0);
-  $('#h-total').textContent   = totalStock;
   $('#h-added').textContent   = addedToday;
   $('#h-pending').textContent = stockTransfers.filter(t => t.status === 'pending').length;
   $('#h-low').textContent     = products.filter(p => hasUnit(p) && (p.warehouse_unit_stock||0) < LOW).length;
@@ -739,12 +727,8 @@ function render(){
     || `<div class="empty">Хайж сонгоно уу.</div>`;
 
   syncRequestRows();
-  $('#stores').innerHTML = STORES.map(s => `<button class="chip" data-store="${esc(s)}" aria-pressed="${store===s}">${esc(s)}</button>`).join('');
-  $('#send-store').textContent = store;
-  const sq = $('#send-q').value, sr = results(sq, 'send');
-  $('#send-results').hidden = !sq; $('#send-results').innerHTML = sr;
   $('#send-list').innerHTML = sendDraft.map(r => draftRow(r)).join('')
-    || `<div class="empty">Хайж сонгоно уу.</div>`;
+    || `<div class="empty">Бэлдэх шаардлагатай бараа алга.</div>`;
 
   renderStockFilters();
   const q = $('#stock-q').value.trim().toLowerCase();
@@ -787,7 +771,6 @@ function render(){
   syncTabbarHeight();
 }
 document.addEventListener('click', e => {
-  const s = e.target.closest('[data-store]'); if (s) { store = s.dataset.store; excludedRequestItems.clear(); render(); }
   const n = e.target.closest('[data-notif]');
   if (n) {
     const id = +n.dataset.notif;
