@@ -173,14 +173,22 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
 @media (min-width:760px){
   body{font-size:16px}
-  main.wrap{padding:24px 0 40px}
+  main.wrap{padding:24px 0 124px}
   .head h2{font-size:34px}
   .stats{grid-template-columns:repeat(4,1fr)}
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-  .tabbar{position:sticky;top:62px;bottom:auto;background:var(--bg);border-top:none;border-bottom:1px solid rgba(32,36,43,.08)}
-  .tabbar .in{padding:8px 16px}
+  .nav-shell{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;
+    display:flex;align-items:center;gap:2px;padding:7px 8px;border-radius:999px;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,.65);box-shadow:0 14px 38px rgba(32,36,43,.22),inset 0 1px 0 rgba(255,255,255,.6)}
+  .nav-shell .topbar{position:static;background:transparent;border:0;box-shadow:none}
+  .nav-shell .topbar .wrap{max-width:none;margin:0;padding:0 6px 0 10px;gap:10px}
+  .nav-shell .topbar .spacer{margin-left:6px;padding-left:10px;border-left:1px solid rgba(32,36,43,.12)}
+  .nav-shell .tabbar{position:static;bottom:auto;background:transparent;border:0;padding:0}
+  .nav-shell .tabbar .in{max-width:none;margin:0;padding:0;gap:2px}
   .tab{flex:none;flex-direction:row;gap:8px;padding:8px 18px;font-size:14px}
   .tab b{position:static;margin-left:2px}
+  .nav-shell .tab[aria-current="page"]{background:rgba(255,255,255,.75);box-shadow:0 2px 8px rgba(32,36,43,.1)}
   .bar{position:static;bottom:auto;padding:0}
   .bar .in{border-radius:var(--r)}
   #toast{bottom:32px}
@@ -202,14 +210,16 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 </div>
 
 <div id="app" hidden>
-  <header class="topbar">
-    <div class="wrap">
-      <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
-      <button class="btn btn-line spacer" id="logout">Гарах</button>
-    </div>
-  </header>
+  <div class="nav-shell">
+    <header class="topbar">
+      <div class="wrap">
+        <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
+        <button class="btn btn-line spacer" id="logout">Гарах</button>
+      </div>
+    </header>
 
-  <nav class="tabbar"><div class="in" id="tabs"></div></nav>
+    <nav class="tabbar"><div class="in" id="tabs"></div></nav>
+  </div>
 
   <main class="wrap">
     <section class="screen" id="s-home" hidden>
