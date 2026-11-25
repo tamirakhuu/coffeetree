@@ -1832,6 +1832,7 @@ function renderOrders() {
     const deliveryText = isDelivery
       ? `<span class="badge" style="background:#DCE8FB;color:#1D4ED8">Хүргэлт</span><div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px">+${fmt(o.delivery_fee || 0)}</div>${o.address ? `<div style="font-size:12px;color:var(--ink);margin-top:5px;max-width:180px;white-space:normal">📍 ${escapeHtml(o.address)}</div>` : ''}`
       : `<span class="badge" style="background:var(--green-light);color:#2F4A22">Очиж авах</span>`;
+    const orderDate = new Date(o.created_at);
     return `<tr style="${isDelivery ? 'background:#F5F9FF' : ''}">
       <td class="mono"><button class="order-num-btn" onclick="openOrderDetail('${o.order_number}')">${o.order_number}</button></td>
       <td data-th="Хэрэглэгч"><div class="order-customer">${escapeHtml(o.customer_name||'-')}</div><div class="order-phone mono">${escapeHtml(o.phone||'-')}</div></td>
@@ -1839,7 +1840,7 @@ function renderOrders() {
       <td data-th="Хүргэлт">${deliveryText}</td>
       <td data-th="Бараанууд"><div class="order-items-list">${itemsText || '-'}</div>${boxCountInput}</td>
       <td class="mono order-amount" data-th="Дүн">${fmt(o.subtotal + (o.delivery_fee || 0))}</td>
-      <td class="mono order-date" data-th="Огноо">${new Date(o.created_at).toLocaleDateString('mn-MN')}</td>
+      <td class="mono order-date" data-th="Огноо">${orderDate.toLocaleDateString('mn-MN')}<div style="font-size:11px;color:var(--ink-soft)">${orderDate.toLocaleTimeString('mn-MN',{hour:'2-digit',minute:'2-digit'})}</div></td>
       <td>
         <select onchange="updateOrderStatus('${o.order_number}', this.value)" style="border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px;background:var(--card)">
           ${statusesFor(o).map(s => `<option value="${s}" ${o.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}

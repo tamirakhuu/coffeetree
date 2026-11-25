@@ -1,4 +1,5 @@
 const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const unitWord = (label,fallback) => String(label||'').replace(/^\d+\s+/,'').trim() || fallback;
 const labels={pending:'Хүлээгдэж байна',preparing:'Бэлдсэн',sent:'Илгээсэн',received:'Хүлээн авсан',rejected:'Татгалзсан',cancelled:'Цуцалсан'};
 const actionLabels={cancelled:'Цуцлах'};
 const tagClass={pending:'sr-tag-pending',preparing:'sr-tag-pending',sent:'sr-tag-ok',received:'sr-tag-ok',rejected:'sr-tag-bad',cancelled:'sr-tag-bad'};
@@ -89,6 +90,15 @@ export async function mountRequests(root,sb,mode='staff'){
       return o?{p,o}:null;
     }).filter(Boolean);
   }
+  function draftStockText(d){
+    const p=products.find(pp=>pp.id===d.product_id);
+    if(!p)return '';
+    if(p.coffee_sizes||p.powder_sizes)return `Агуулахад: ${d.stock} ширхэг`;
+    const parts=[];
+    if(p.unit_price>0)parts.push(`${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ширхэг')}`);
+    if(p.box_price>0)parts.push(`${p.warehouse_box_stock||0} ${unitWord(p.box_label,'хайрцаг')}`);
+    return parts.length?`Агуулахад: ${parts.join(' буюу ')}`:'';
+  }
   function productCard(p){
     return `<div class="sr-product"><div class="sr-thumb">${p.images?.[0]?`<img src="${escape(p.images[0])}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-product-heading"><div class="muted">${escape(brands.find(b=>b.id===p.brand_id)?.name||'Брэнд оруулаагүй')}</div><strong>${escape(p.name)}</strong>${p.box_price>0&&p.box_per_box?`<div class="muted">1 хайрцагт ${p.box_per_box} ширхэг</div>`:''}<div class="sr-choices">${stockOptions(p).map(o=>{const addLabel=o.key==='box'?'Хайрцаг':o.key==='unit'?'Ширхэг':o.label;return `<div class="sr-choice"><span>${escape(o.label)}<small>Үлдэгдэл: ${o.stock}</small></span><button data-add="${p.id}" data-option="${escape(o.key)}" ${busy||o.stock<=0?'disabled':''}>${o.stock>0?'+ '+escape(addLabel):'Дууссан'}</button></div>`;}).join('')}</div></div></div>`;
   }
@@ -137,7 +147,7 @@ export async function mountRequests(root,sb,mode='staff'){
       }).join(''):'<p class="sr-empty">Таны хайлтанд тохирох бараа олдсонгүй.</p>';
       $('[data-count]').textContent=`${totalCount} бараа · Агуулахын үлдэгдэл`;
       $('[data-sheet-count]').textContent=`(${draft.length})`;
-      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><div class="sr-thumb">${d.image?`<img src="${escape(d.image)}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-draft-info"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><div class="sr-row"><div class="sr-stepper"><button type="button" data-dec="${i}" aria-label="Тоо хасах" ${busy?'disabled':''}>−</button><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button type="button" data-inc="${i}" aria-label="Тоо нэмэх" ${busy||d.qty>=d.stock?'disabled':''}>+</button></div><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Арилгах</button></div></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
+      $('[data-draft]').innerHTML=draft.map((d,i)=>`<div class="sr-card"><div class="sr-thumb">${d.image?`<img src="${escape(d.image)}" alt="" loading="lazy">`:'<span>Зураггүй</span>'}</div><div class="sr-draft-info"><strong>${escape(d.name)}</strong><p>${escape(d.label)}</p><p>${escape(draftStockText(d))}</p><div class="sr-row"><div class="sr-stepper"><button type="button" data-dec="${i}" aria-label="Тоо хасах" ${busy?'disabled':''}>−</button><input data-qty="${i}" type="number" min="1" max="${d.stock}" value="${d.qty}" aria-label="Тоо ширхэг" ${busy?'disabled':''}><button type="button" data-inc="${i}" aria-label="Тоо нэмэх" ${busy||d.qty>=d.stock?'disabled':''}>+</button></div><button data-remove="${i}" class="danger" ${busy?'disabled':''}>Арилгах</button></div></div></div>`).join('')||'<p class="muted">Бараа сонгоно уу.</p>';
       $('[data-sum]').textContent=(draft.length?`${draft.length} бараа`:'0 бараа')+' '+(cartOpen?'▴':'▾');
       $('[data-submit]').disabled=busy||!draft.length;
       $('[data-submit]').textContent=busy?'Илгээж байна…':'Захиалга илгээх';
@@ -263,7 +273,7 @@ export async function mountRequests(root,sb,mode='staff'){
     if(!pulling)return;
     const dy=e.touches[0].clientY-pullStartY;
     if(dy<=0||window.scrollY>0){pulling=false;setPull(0,'Татаж доош чирнэ үү…');return;}
-    setPull(Math.min(dy*0.5,64),dy*0.5>=56?'Суллаад шинэчлэх':'Татаж доош чирнэ үү…');
+    setPull(Math.min(dy*0.5,64),dy*0.5>=56?'Доош шударч шинэчлэх':'Татаж доош чирнэ үү…');
   };
   const onTouchEnd=async()=>{
     if(!pulling)return;pulling=false;
