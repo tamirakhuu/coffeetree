@@ -202,10 +202,15 @@ export async function mountRequests(root,sb,mode='staff'){
     const btn=e.target.closest('[data-dismiss]');if(!btn)return;
     const id=btn.dataset.dismiss;
     const r=requests.find(x=>x.id===id);
-    if(r&&(r.status==='cancelled'||r.status==='rejected')){
+    const needsCancelFirst=r&&r.status==='pending'&&r.requested_by===user.id;
+    if(r&&(r.status==='cancelled'||r.status==='rejected'||needsCancelFirst)){
       if(!confirm('Энэ захиалгыг бүр мөсөн устгах уу?'))return;
       btn.disabled=true;
       try{
+        if(needsCancelFirst){
+          const {error:cancelError}=await sb.rpc('change_store_request',{p_id:id,p_status:'cancelled'});
+          if(cancelError)throw cancelError;
+        }
         const {error}=await sb.rpc('delete_store_request',{p_id:id});
         if(error)throw error;
         requests=requests.filter(x=>x.id!==id);
