@@ -174,6 +174,27 @@ try {
   assert.equal(await page.getByRole('button', { name: /Сагслах/ }).isEnabled(), true);
   assert.deepEqual(errors, []);
   console.log('PASS size selection, separate cart lines, checkout labels, RPC options and independent sold-out states');
+
+  const hotCup = { ...product, subcategory: 'Халуун ундааны аяга', lid_options: { 'Хар': true, 'Цагаан': false } };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [hotCup] }));
+  await page.goto(base + '/product/1');
+  await page.getByText('Таг сонгох', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Хар', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('button', { name: 'Цагаан', exact: true }).count(), 0);
+  const coldCup = { ...product, subcategory: 'Хүйтэн ундааны аяга', lid_options: null };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [coldCup] }));
+  await page.goto(base + '/product/1');
+  await page.getByText('Таг сонгох', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Хавтгай', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('button', { name: 'Бөмбгөр', exact: true }).count(), 1);
+  const soruul = { ...product, subcategory: 'Соруул', lid_options: null };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [soruul] }));
+  await page.goto(base + '/product/1');
+  await page.locator('main h1').waitFor();
+  assert.equal(await page.getByText('Таг сонгох', { exact: true }).count(), 0);
+  assert.deepEqual(errors, []);
+  console.log('PASS hot/cold cup lid selector reflects admin on/off toggles, hidden for non-cup products');
+
   const trainingDays = [
     { training_date: '2099-06-06', remaining_seats: 0 },
     { training_date: '2099-06-07', remaining_seats: 3 },

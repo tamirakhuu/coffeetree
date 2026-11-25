@@ -1186,6 +1186,8 @@ update public.products set box_stock = floor(coalesce(unit_stock,0)::numeric / b
   where unified_stock and coalesce(box_per_box,0) > 0
   and box_stock is distinct from floor(coalesce(unit_stock,0)::numeric / box_per_box);
 
+alter table public.products add column if not exists lid_options jsonb;
+
 notify pgrst, 'reload schema';
 commit;
 

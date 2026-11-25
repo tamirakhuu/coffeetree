@@ -798,3 +798,5 @@ revoke all on function public.register_scheduled_training(text,text,date,uuid) f
 grant execute on function public.register_scheduled_training(text,text,date,uuid) to anon, authenticated;
 revoke all on function public.reserve_training_seat() from public, anon, authenticated;
 revoke all on function public.restore_training_seat() from public, anon, authenticated;
+
+alter table public.products add column if not exists lid_options jsonb;

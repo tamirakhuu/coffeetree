@@ -35,6 +35,7 @@ export function shapeProduct(r) {
     id: r.id, name: r.name, brandId: r.brand_id, categoryId: r.category_id, sub: r.subcategory,
     origin: r.origin, size: r.size || null, tag: r.tag, color: r.color, desc: r.description, images: r.images || [],
     shelfLife: r.shelf_life || null,
+    lidOptions: r.lid_options || null,
     extraCategoryId: r.extra_category_id || null, extraSub: r.extra_subcategory || '',
     createdAt: r.created_at || null,
     discountEndsAt: r.discount_ends_at || null,

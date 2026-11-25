@@ -61,6 +61,11 @@ function cupAccessorySuggestions(product, categoryName, products) {
   return [...new Map(list.map((p) => [p.id, p])).values()];
 }
 
+const LID_OPTIONS_BY_SUB = {
+  "Халуун ундааны аяга": ["Хар", "Цагаан"],
+  "Хүйтэн ундааны аяга": ["Хавтгай", "Бөмбгөр"],
+};
+
 const BREW_METHODS = [
   { key: "espresso", name: "Espresso / Delonghi", grindMn: "Fine", compare: "0.260мм" },
   { key: "mokapot", name: "Mokapot", grindMn: "Medium-Fine", compare: "0.350мм" },
@@ -76,14 +81,14 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const [activeImg, setActiveImg] = useState(0);
   const [grindForm, setGrindForm] = useState("whole");
   const [brewMethod, setBrewMethod] = useState(null);
-  const [lidType, setLidType] = useState("Хавтгай");
+  const [lidType, setLidType] = useState(null);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const zoomWrapRef = useRef(null);
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType("Хавтгай"); setZoomed(false);
+    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType(null); setZoomed(false);
   }, [product?.id, product?.hasCoffeeSizes, product?.hasPowderSizes]);
   useEffect(() => {
     const el = zoomWrapRef.current;
@@ -120,7 +125,8 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const isOtherCategory = [productCategory?.name, product.sub]
     .some(name => name?.trim().toLowerCase() === "бусад");
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
-  const isColdCup = product.sub === "Хүйтний аяга";
+  const lidChoices = (LID_OPTIONS_BY_SUB[product.sub] || []).filter((label) => product.lidOptions?.[label] !== false);
+  const effectiveLidType = lidType && lidChoices.includes(lidType) ? lidType : lidChoices[0];
   const bulkPrice = product.hasPowderSizes ? option.bulkUnitPrice : getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? (product.hasPowderSizes ? option.bulkQty : product.bulkQty) : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
@@ -145,7 +151,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   ).values()]).slice(0, 8);
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
-  const lidNote = isColdCup ? `Таг: ${lidType}` : undefined;
+  const lidNote = lidChoices.length > 0 ? `Таг: ${effectiveLidType}` : undefined;
   const detailNote = grindNote || lidNote;
 
   return (
@@ -324,16 +330,16 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
             </div>
           )}
 
-          {isColdCup && (
+          {lidChoices.length > 0 && (
             <div style={{ marginTop: 26, paddingTop: 22, borderTop: `1px solid ${T.line}` }}>
               <div style={sideLabel}>Таг сонгох</div>
               <div style={{ display: "flex", gap: 10 }}>
-                {["Хавтгай", "Бөмбгөр"].map((lt) => (
+                {lidChoices.map((lt) => (
                   <button key={lt} onClick={() => setLidType(lt)} style={{
                     flex: 1, padding: "11px 16px", borderRadius: 999, cursor: "pointer",
-                    border: `1.5px solid ${lidType === lt ? T.cherry : T.line}`,
-                    background: lidType === lt ? T.cherry : "transparent",
-                    color: lidType === lt ? "#fff" : T.ink,
+                    border: `1.5px solid ${effectiveLidType === lt ? T.cherry : T.line}`,
+                    background: effectiveLidType === lt ? T.cherry : "transparent",
+                    color: effectiveLidType === lt ? "#fff" : T.ink,
                     fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
                   }}>{lt}</button>
                 ))}
