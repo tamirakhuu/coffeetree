@@ -9,7 +9,7 @@ import { DataContext } from "../context/DataContext.jsx";
 import { ProductArt } from "../components/ProductArt.jsx";
 import { ProductCard } from "../components/ProductCard.jsx";
 import { BackButton } from "../components/BackButton.jsx";
-import { availableOptionTypes, displayPrice, hasFreeSyrupPump } from "../utils/products.js";
+import { availableOptionTypes, displayPrice, hasFreeSyrupPump, lidChoicesFor } from "../utils/products.js";
 
 const detailImgArrowStyle = {
   position: "absolute", top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%",
@@ -61,11 +61,6 @@ function cupAccessorySuggestions(product, categoryName, products) {
   return [...new Map(list.map((p) => [p.id, p])).values()];
 }
 
-const LID_OPTIONS_BY_SUB = {
-  "Халуун ундааны аяга": ["Хар", "Цагаан"],
-  "Хүйтэн ундааны аяга": ["Хавтгай", "Бөмбгөр"],
-};
-
 const BREW_METHODS = [
   { key: "espresso", name: "Espresso / Delonghi", grindMn: "Fine", compare: "0.260мм" },
   { key: "mokapot", name: "Mokapot", grindMn: "Medium-Fine", compare: "0.350мм" },
@@ -81,14 +76,14 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const [activeImg, setActiveImg] = useState(0);
   const [grindForm, setGrindForm] = useState("whole");
   const [brewMethod, setBrewMethod] = useState(null);
-  const [lidType, setLidType] = useState(null);
+  const [lidPromptOpen, setLidPromptOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const zoomWrapRef = useRef(null);
 
   useEffect(() => {
     setOptionType(availableOptionTypes(product)[0] || "unit");
-    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidType(null); setZoomed(false);
+    setQty(1); setActiveImg(0); setGrindForm("whole"); setBrewMethod(null); setLidPromptOpen(false); setZoomed(false);
   }, [product?.id, product?.hasCoffeeSizes, product?.hasPowderSizes]);
   useEffect(() => {
     const el = zoomWrapRef.current;
@@ -125,8 +120,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   const isOtherCategory = [productCategory?.name, product.sub]
     .some(name => name?.trim().toLowerCase() === "бусад");
   const isCoffee = productCategory?.name === "Кофе" && product.sub !== "Капсул";
-  const lidChoices = (LID_OPTIONS_BY_SUB[product.sub] || []).filter((label) => product.lidOptions?.[label] !== false);
-  const effectiveLidType = lidType && lidChoices.includes(lidType) ? lidType : lidChoices[0];
+  const lidChoices = lidChoicesFor(product);
   const bulkPrice = product.hasPowderSizes ? option.bulkUnitPrice : getBulkUnitPrice(product);
   const bulkBoxQty = bulkPrice > 0 ? (product.hasPowderSizes ? option.bulkQty : product.bulkQty) : undefined;
   const pumpName = productCategory && PUMP_SUGGESTIONS[productCategory.name];
@@ -151,8 +145,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
   ).values()]).slice(0, 8);
   const selectedBrew = grindForm === "ground" ? BREW_METHODS.find((m) => m.key === brewMethod) : null;
   const grindNote = isCoffee ? (grindForm === "ground" ? (selectedBrew ? `Бутласан · ${selectedBrew.name}` : "Бутласан") : "Үрээр") : undefined;
-  const lidNote = lidChoices.length > 0 ? `Таг: ${effectiveLidType}` : undefined;
-  const detailNote = grindNote || lidNote;
+  const detailNote = grindNote;
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "30px 20px 90px" }}>
@@ -273,7 +266,7 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
                   <span style={{ width: 40, textAlign: "center", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600 }}>{qty}</span>
                   <button onClick={() => setQty(Math.min(option.stock, qty + 1))} style={stepBtn}><Plus size={14} /></button>
                 </div>
-                <button onClick={() => onAddToCart(product, optionType, qty, detailNote)} style={{
+                <button onClick={() => lidChoices.length > 0 ? setLidPromptOpen(true) : onAddToCart(product, optionType, qty, detailNote)} style={{
                   flex: 1, background: T.cherry, color: "#fff", border: "none", borderRadius: 999,
                   padding: "13px 20px", fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -330,23 +323,6 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
             </div>
           )}
 
-          {lidChoices.length > 0 && (
-            <div style={{ marginTop: 26, paddingTop: 22, borderTop: `1px solid ${T.line}` }}>
-              <div style={sideLabel}>Таг сонгох</div>
-              <div style={{ display: "flex", gap: 10 }}>
-                {lidChoices.map((lt) => (
-                  <button key={lt} onClick={() => setLidType(lt)} style={{
-                    flex: 1, padding: "11px 16px", borderRadius: 999, cursor: "pointer",
-                    border: `1.5px solid ${effectiveLidType === lt ? T.cherry : T.line}`,
-                    background: effectiveLidType === lt ? T.cherry : "transparent",
-                    color: effectiveLidType === lt ? "#fff" : T.ink,
-                    fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 13.5,
-                  }}>{lt}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {suggestions.length > 0 && (
             <div style={{ marginTop: 22, padding: 14, border: `1px solid ${T.line}`, borderRadius: 12, background: T.card }}>
               <div style={{ ...sideLabel, marginBottom: 10 }}>Санал болгох</div>
@@ -383,6 +359,32 @@ export default function ProductDetail({ product, onBack, onAddToCart, onQuickAdd
               <ProductCard key={p.id} product={p} onOpen={onOpen} onQuickAdd={onQuickAdd}
                 isWished={wishlist.includes(p.id)} onToggleWish={onToggleWish} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {lidPromptOpen && (
+        <div onClick={() => setLidPromptOpen(false)} style={{
+          position: "fixed", inset: 0, background: "rgba(36,28,20,.45)", zIndex: 200,
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: T.paper, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480,
+            padding: "22px 20px calc(22px + env(safe-area-inset-bottom))", boxShadow: "0 -10px 30px rgba(0,0,0,.2)",
+          }}>
+            <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 14 }}>Тагаа сонгоно уу</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              {lidChoices.map((lt) => (
+                <button key={lt} onClick={() => {
+                  onAddToCart(product, optionType, qty, detailNote ? `${detailNote} · Таг: ${lt}` : `Таг: ${lt}`);
+                  setLidPromptOpen(false);
+                }} style={{
+                  flex: 1, padding: "14px 16px", borderRadius: 999, cursor: "pointer",
+                  border: `1.5px solid ${T.line}`, background: "transparent", color: T.ink,
+                  fontFamily: "'Ubuntu', sans-serif", fontWeight: 600, fontSize: 14.5,
+                }}>{lt}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}

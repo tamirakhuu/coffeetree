@@ -2,6 +2,12 @@
 
 export const COFFEE_SIZES = { size_1kg: '1кг', size_250g: '250гр' };
 export const POWDER_SIZES = { powder_l: 'L', powder_m: 'M', powder_s: 'S' };
+export const LID_OPTIONS_BY_SUB = {
+  "Халуун ундааны аяга": ["Хар", "Цагаан"],
+  "Хүйтэн ундааны аяга": ["Хавтгай", "Бөмбгөр"],
+};
+export const lidChoicesFor = (product) =>
+  (LID_OPTIONS_BY_SUB[product.sub] || []).filter((label) => product.lidOptions?.[label] !== false);
 export const inCategory = (p, id) => p.categoryId === id || p.extraCategoryId === id;
 export const categorySubs = (p, id) => [p.categoryId === id ? p.sub : null, p.extraCategoryId === id ? p.extraSub : null].filter(Boolean).map(s => s.trim());
 export function freePumpProducts(cart, products, brands, categories) {

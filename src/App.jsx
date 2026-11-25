@@ -9,7 +9,7 @@ import { DataContext } from "./context/DataContext.jsx";
 import { Toast } from "./components/Toast.jsx";
 import { ScrollToTopButton } from "./components/ScrollToTopButton.jsx";
 import { Header } from "./components/Header.jsx";
-import { availableOptionTypes, freePumpProducts } from "./utils/products.js";
+import { availableOptionTypes, freePumpProducts, lidChoicesFor } from "./utils/products.js";
 import { CartDrawer } from "./components/CartDrawer.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { lazyPage, PageLoading } from "./components/LazyPage.jsx";
@@ -144,7 +144,7 @@ export default function App() {
     });
     flash(`Сагсанд нэмэгдлээ — ${product.name}`);
   };
-  const quickAdd = (product) => (product.hasCoffeeSizes || product.hasPowderSizes) ? openProduct(product) : addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
+  const quickAdd = (product) => (product.hasCoffeeSizes || product.hasPowderSizes || lidChoicesFor(product).length > 0) ? openProduct(product) : addToCart(product, availableOptionTypes(product)[0] || "unit", 1);
   const updateQty = (productId, optionType, note, qty) =>
     setCart((prev) => prev.map((i) => i.productId === productId && i.optionType === optionType && (i.note || "") === (note || "") ? { ...i, qty } : i));
   const removeItem = (productId, optionType, note) =>

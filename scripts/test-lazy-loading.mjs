@@ -175,25 +175,44 @@ try {
   assert.deepEqual(errors, []);
   console.log('PASS size selection, separate cart lines, checkout labels, RPC options and independent sold-out states');
 
-  const hotCup = { ...product, subcategory: 'Халуун ундааны аяга', lid_options: { 'Хар': true, 'Цагаан': false } };
+  const hotCup = { ...product, category_id: 99, subcategory: 'Халуун ундааны аяга', lid_options: { 'Хар': true, 'Цагаан': false } };
   await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [hotCup] }));
-  await page.goto(base + '/product/1');
-  await page.getByText('Таг сонгох', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Хар', exact: true }).count(), 1);
-  assert.equal(await page.getByRole('button', { name: 'Цагаан', exact: true }).count(), 0);
-  const coldCup = { ...product, subcategory: 'Хүйтэн ундааны аяга', lid_options: null };
-  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [coldCup] }));
-  await page.goto(base + '/product/1');
-  await page.getByText('Таг сонгох', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Хавтгай', exact: true }).count(), 1);
-  assert.equal(await page.getByRole('button', { name: 'Бөмбгөр', exact: true }).count(), 1);
-  const soruul = { ...product, subcategory: 'Соруул', lid_options: null };
-  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [soruul] }));
+  await page.evaluate(() => localStorage.setItem('cuppa:cart:guest', '[]'));
   await page.goto(base + '/product/1');
   await page.locator('main h1').waitFor();
-  assert.equal(await page.getByText('Таг сонгох', { exact: true }).count(), 0);
+  assert.equal(await page.getByText('Тагаа сонгоно уу', { exact: true }).count(), 0, 'prompt is not shown before clicking add-to-cart');
+  await page.getByRole('button', { name: /Сагслах/ }).click();
+  await page.getByText('Тагаа сонгоно уу', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Хар', exact: true }).count(), 1, 'only the enabled tag is offered');
+  assert.equal(await page.getByRole('button', { name: 'Цагаан', exact: true }).count(), 0, 'disabled tag is not offered');
+  await page.getByRole('button', { name: 'Хар', exact: true }).click();
+  assert.equal(await page.getByText('Тагаа сонгоно уу', { exact: true }).count(), 0, 'prompt closes after choosing a tag');
+  assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('cuppa:cart:guest')).map(i => i.note)), ['Таг: Хар']);
+  console.log('PASS hot cup: Сагслах opens a tag prompt instead of adding with a silent default, and only enabled tags are offered');
+
+  const coldCup = { ...product, category_id: 99, subcategory: 'Хүйтэн ундааны аяга', lid_options: null };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [coldCup] }));
+  await page.evaluate(() => localStorage.setItem('cuppa:cart:guest', '[]'));
+  await page.goto(base + '/product/1');
+  await page.locator('main h1').waitFor();
+  await page.getByRole('button', { name: /Сагслах/ }).click();
+  await page.getByText('Тагаа сонгоно уу', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Хавтгай', exact: true }).count(), 1);
+  assert.equal(await page.getByRole('button', { name: 'Бөмбгөр', exact: true }).count(), 1);
+  await page.getByRole('button', { name: 'Бөмбгөр', exact: true }).click();
+  assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('cuppa:cart:guest')).map(i => i.note)), ['Таг: Бөмбгөр']);
+  console.log('PASS cold cup: no lid_options set still defaults to both tags offered in the prompt');
+
+  const soruul = { ...product, category_id: 99, subcategory: 'Соруул', lid_options: null };
+  await page.route('**/rest/v1/products?*', route => route.fulfill({ json: [soruul] }));
+  await page.evaluate(() => localStorage.setItem('cuppa:cart:guest', '[]'));
+  await page.goto(base + '/product/1');
+  await page.locator('main h1').waitFor();
+  await page.getByRole('button', { name: /Сагслах/ }).click();
+  assert.equal(await page.getByText('Тагаа сонгоно уу', { exact: true }).count(), 0, 'non-cup product adds straight to cart, no prompt');
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('cuppa:cart:guest')).length), 1);
   assert.deepEqual(errors, []);
-  console.log('PASS hot/cold cup lid selector reflects admin on/off toggles, hidden for non-cup products');
+  console.log('PASS non-cup product: Сагслах adds directly with no tag prompt');
 
   const trainingDays = [
     { training_date: '2099-06-06', remaining_seats: 0 },
