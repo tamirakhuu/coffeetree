@@ -40,6 +40,7 @@ a{color:var(--accent-700)}
 .who{min-width:0;line-height:1.2;gap: 54px}
 .who b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who span{font-size:11.5px;color:var(--muted)}
+.topbar-logo{height:20px;width:auto;flex:none}
 .spacer{margin-left:auto}
 main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 28px)}
 .screen{display:flex;flex-direction:column;gap:14px; margin-top: 10px }
@@ -203,8 +204,7 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 <div id="app" hidden>
   <header class="topbar">
     <div class="wrap">
-      <div class="brand" id="avatar"><img src="cuppa-icon.png" alt="CUPPA"></div>
-      <div class="who"><b id="w-name">—</b><span id="w-phone">—</span></div>
+      <img class="topbar-logo" src="cuppa-logo-black.png" alt="CUPPA">
       <button class="btn btn-line spacer" id="logout">Гарах</button>
     </div>
   </header>
@@ -413,8 +413,6 @@ async function checkAuth(){
   }
   worker = { email: session.user.email };
   $('#login').hidden = true; $('#app').hidden = false;
-  $('#w-name').textContent = worker.email;
-  $('#w-phone').textContent = 'Агуулахын ажилтан';
   await loadAll();
   subscribeTransfers();
 }
