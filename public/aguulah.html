@@ -448,6 +448,7 @@ function subscribeTransfers(){
       loadAll();
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'store_requests' }, () => loadAll())
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'store_requests' }, () => loadAll())
     .subscribe();
 }
 
