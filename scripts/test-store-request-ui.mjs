@@ -36,9 +36,10 @@ try{
  await page.locator('[data-brand]').selectOption('7');
  assert.equal(await page.locator('[data-products] .sr-product').count(),1);
  await page.locator('[data-brand]').selectOption('');
- await page.locator('[data-instock]').check();
- assert.equal(await page.locator('[data-add="2"]').count(),0);
- await page.locator('[data-instock]').uncheck();
+ await page.locator('[data-soldout]').check();
+ assert.equal(await page.locator('[data-add="2"]').count(),1);
+ assert.equal(await page.locator('[data-add="1"]').count(),0);
+ await page.locator('[data-soldout]').uncheck();
  await page.locator('[data-search]').fill('Box product');
  assert.equal(await page.locator('[data-products] .sr-product').count(),1);
  await page.locator('[data-search]').fill('');
