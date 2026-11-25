@@ -198,9 +198,23 @@ export async function mountRequests(root,sb,mode='staff'){
     if(e.target.matches('[data-history-backdrop]')){historyOpen=false;render();}
     if(e.target.matches('[data-quick-edit-backdrop]')){quickEditOpen=false;render();}
   });
-  root.addEventListener('click',e=>{
+  root.addEventListener('click',async e=>{
     const btn=e.target.closest('[data-dismiss]');if(!btn)return;
-    dismissed.add(btn.dataset.dismiss);persistDismissed();render();
+    const id=btn.dataset.dismiss;
+    const r=requests.find(x=>x.id===id);
+    if(r&&(r.status==='cancelled'||r.status==='rejected')){
+      if(!confirm('Энэ захиалгыг бүр мөсөн устгах уу?'))return;
+      btn.disabled=true;
+      try{
+        const {error}=await sb.rpc('delete_store_request',{p_id:id});
+        if(error)throw error;
+        requests=requests.filter(x=>x.id!==id);
+        dismissed.delete(id);persistDismissed();
+      }catch(err){message(err.message,true);}
+      finally{render();}
+      return;
+    }
+    dismissed.add(id);persistDismissed();render();
   });
   root.addEventListener('toggle',e=>{
     if(!e.target.matches('[data-brand-group]'))return;

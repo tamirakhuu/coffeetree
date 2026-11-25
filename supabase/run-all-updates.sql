@@ -627,6 +627,22 @@ begin
 end $$;
 revoke all on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) from public,anon;
 grant execute on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) to authenticated;
+
+create or replace function public.delete_store_request(p_id uuid) returns void
+language plpgsql security definer set search_path=public as $$
+declare r public.store_requests;
+begin
+  if auth.uid() is null then raise exception 'Нэвтэрнэ үү.'; end if;
+  select * into r from public.store_requests where id=p_id for update;
+  if not found then return; end if;
+  if public.request_store() is null or public.request_store()<>r.store_name then raise exception 'Хандах эрхгүй.'; end if;
+  if r.status not in ('cancelled','rejected') then raise exception 'Энэ хүсэлтийг устгах боломжгүй.'; end if;
+  delete from public.store_request_items where request_id=p_id;
+  delete from public.store_requests where id=p_id;
+end $$;
+revoke all on function public.delete_store_request(uuid) from public,anon;
+grant execute on function public.delete_store_request(uuid) to authenticated;
+
 do $$ begin
   if exists(select 1 from pg_publication where pubname='supabase_realtime') and not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='store_requests') then
     alter publication supabase_realtime add table public.store_requests;
