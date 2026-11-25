@@ -628,6 +628,10 @@ end $$;
 revoke all on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) from public,anon;
 grant execute on function public.submit_store_request(uuid,jsonb,text),public.change_store_request(uuid,text) to authenticated;
 
+alter table public.store_request_items drop constraint if exists store_request_items_request_id_fkey;
+alter table public.store_request_items add constraint store_request_items_request_id_fkey
+  foreign key (request_id) references public.store_requests(id) on delete cascade;
+
 create or replace function public.delete_store_request(p_id uuid) returns void
 language plpgsql security definer set search_path=public as $$
 declare r public.store_requests;
