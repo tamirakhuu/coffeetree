@@ -42,7 +42,7 @@ a{color:var(--accent-700)}
 .who span{font-size:11.5px;color:var(--muted)}
 .topbar-logo{height:20px;width:auto;flex:none}
 .spacer{margin-left:auto}
-main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 16px + env(safe-area-inset-bottom) + 28px)}
+main.wrap{padding:16px 0 calc(var(--tabbar-h, 84px) + 16px + env(safe-area-inset-bottom) + 120px)}
 .screen{display:flex;flex-direction:column;gap:14px; margin-top: 10px }
 .head h2{font-size:26px}
 .head p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
@@ -177,7 +177,7 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
 @media (min-width:760px){
   body{font-size:16px}
-  main.wrap{padding:24px 0 124px}
+  main.wrap{padding:24px 0 210px}
   .head h2{font-size:34px}
   .stats{grid-template-columns:repeat(4,1fr)}
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
@@ -255,15 +255,16 @@ html.kb-open .bar{bottom:var(--kb-offset,0px)}
 
     <section class="screen" id="s-send" hidden>
       <div class="head"><h2>Дэлгүүрт илгээх</h2><p>Хүсэлт админ руу явж, дэлгүүр хүлээн авснаа баталгаажуулна.</p></div>
+      <button class="btn btn-ghost" id="send-add-toggle" style="width:100%">+ Бараа нэмэх</button>
+      <div id="send-add-panel" hidden>
+        <div class="row">
+          <input class="input" id="send-q" placeholder="Барааны нэр / брэндээр хайх" />
+        </div>
+        <div class="card" id="send-results" hidden style="padding:6px"></div>
+      </div>
       <div id="send-request-note" class="muted" style="font-size:12.5px;margin:-4px 0 6px"></div>
       <div class="row" style="justify-content:space-between"><h3 style="font-size:18px">Илгээх жагсаалт</h3><span class="muted" id="send-count" style="font-size:12px"></span></div>
       <div id="send-list" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div class="head" style="margin-top:6px"><h3 style="font-size:16px">Өөрөө бараа нэмэх</h3><p style="font-size:12.5px">Дэлгүүр дутуу захиалсан бол энд нэмж илгээнэ үү.</p></div>
-      <div class="chips" id="send-stores"></div>
-      <div class="row">
-        <input class="input" id="send-q" placeholder="Барааны нэр / брэндээр хайх" />
-      </div>
-      <div class="card" id="send-results" hidden style="padding:6px"></div>
       <div class="bar"><div class="in">
         <div><small>Нийт бэлдэх</small><strong id="send-sum">0 ширхэг</strong></div>
         <button class="btn" id="send-commit">Илгээх</button>
@@ -302,7 +303,7 @@ const SUPABASE_URL = "https://vbgqgwfcklkfecvocsyt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiZ3Fnd2Zja2xrZmVjdm9jc3l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODUyMDIsImV4cCI6MjA5Njc2MTIwMn0.kmFSbs2nDXCRbzaAck-yI5NN9rH2FL5r84bp8cCY3Ac";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const STORES = ['Саруул зах', 'Яармаг'];
+const DEFAULT_SEND_STORE = 'Саруул зах';
 const LOW = 20;
 const SEEN_KEY = 'cuppamn_aguulah_seen_v1';
 const DISMISSED_KEY = 'cuppamn_aguulah_dismissed_v1';
@@ -312,7 +313,7 @@ let products = [], brands = [];
 let stockTransfers = [];
 let storeRequests = [];
 const excludedRequestItems = new Set();
-let screen = 'home', sendStore = STORES[0];
+let screen = 'home', sendAddOpen = false;
 let addMode = 'add';
 let addDraft = [], sendDraft = [], nextK = 1;
 let stockBrandFilter = 'all', stockLowOnly = false, stockOutOnly = false;
@@ -592,10 +593,10 @@ $('#stock-q').addEventListener('input', () => render());
 function addToDraft(mode, product){
   if (!product) return;
   const list = mode === 'add' ? addDraft : sendDraft;
-  const hit = list.find(r => r.productId === product.id && !r.locked && r.storeName === (mode === 'send' ? sendStore : undefined));
+  const hit = list.find(r => r.productId === product.id && !r.locked);
   if (hit) { if (hasBox(product)) hit.cases++; else hit.extra++; return; }
   list.push({ k: nextK++, productId: product.id, name: product.name,
-    cases: hasBox(product) ? 1 : 0, extra: hasBox(product) ? 0 : 1, storeName: mode === 'send' ? sendStore : undefined });
+    cases: hasBox(product) ? 1 : 0, extra: hasBox(product) ? 0 : 1, storeName: mode === 'send' ? DEFAULT_SEND_STORE : undefined });
 }
 
 function syncRequestRows(){
@@ -621,10 +622,7 @@ document.addEventListener('click', e => {
   const m = e.target.closest('[data-add-mode]'); if (!m) return;
   addMode = m.dataset.addMode; addDraft = []; render();
 });
-document.addEventListener('click', e => {
-  const s = e.target.closest('[data-send-store]'); if (!s) return;
-  sendStore = s.dataset.sendStore; render();
-});
+$('#send-add-toggle').addEventListener('click', () => { sendAddOpen = !sendAddOpen; render(); });
 
 $('#add-commit').addEventListener('click', async () => {
   const rows = addDraft.filter(r => (Number(r.cases)||0) > 0 || (Number(r.extra)||0) > 0);
@@ -737,7 +735,8 @@ function render(){
   syncRequestRows();
   $('#send-list').innerHTML = sendDraft.map(r => draftRow(r)).join('')
     || `<div class="empty">Бэлдэх шаардлагатай бараа алга.</div>`;
-  $('#send-stores').innerHTML = STORES.map(s => `<button class="chip" data-send-store="${esc(s)}" aria-pressed="${sendStore===s}">${esc(s)}</button>`).join('');
+  $('#send-add-panel').hidden = !sendAddOpen;
+  $('#send-add-toggle').textContent = sendAddOpen ? '✕ Хаах' : '+ Бараа нэмэх';
   const sq = $('#send-q').value, sr = results(sq, 'send');
   $('#send-results').hidden = !sq; $('#send-results').innerHTML = sr;
 
