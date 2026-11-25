@@ -73,13 +73,22 @@ html,body{margin:0;padding:0;background:var(--bg)}
 .sr-quick-head h3{font-family:var(--font-h);font-size:16px;margin:0;font-weight:700}
 .sr-quick-head .sr-quick-edit-btn{min-height:32px;padding:0 14px;font-size:12.5px;background:var(--accent-100);color:var(--accent-700)}
 .sr-quick-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
-.sr-quick-row .sr-quick-item{flex:0 0 90px;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);border-radius:var(--r-sm);padding:10px 8px;min-height:auto}
+.sr-quick-row .sr-quick-item{flex:0 0 90px;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);color:var(--text);border-radius:var(--r-sm);padding:10px 8px;min-height:auto}
 .sr-quick-row .sr-quick-item:disabled{opacity:.5;cursor:not-allowed}
 .sr-quick-thumb{width:48px;height:48px;border-radius:12px;overflow:hidden;background:linear-gradient(155deg,#6B4226,var(--text));display:grid;place-items:center;color:rgba(255,255,255,.75);font-size:9px}
 .sr-quick-thumb img{width:100%;height:100%;object-fit:cover}
 .sr-quick-name{font-size:12px;line-height:1.25;max-height:30px;overflow:hidden;text-align:center;overflow-wrap:anywhere;font-family:var(--font-b);font-weight:600}
 .sr-quick-label{font-size:10.5px;color:var(--muted);font-weight:400}
 
+.sr-brand-group{border-top:1px solid rgba(32,36,43,.08);margin-top:6px;padding-top:2px}
+.sr-brand-group:first-of-type{border-top:0;margin-top:0}
+.sr-brand-summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;padding:10px 4px;font-family:var(--font-h);font-weight:700;font-size:15px;color:var(--text)}
+.sr-brand-summary::-webkit-details-marker{display:none}
+.sr-brand-summary::marker{content:''}
+.sr-brand-arrow{font-size:11px;color:var(--muted);flex:none;transition:transform .15s}
+details[open]>.sr-brand-summary .sr-brand-arrow{transform:rotate(90deg)}
+.sr-brand-name{flex:1;min-width:0;overflow-wrap:anywhere}
+.sr-brand-summary .muted{margin:0;flex:none}
 .sr-product{background:var(--surface);border-radius:var(--r);padding:14px;margin:10px 0;display:flex;gap:12px}
 .sr-product-heading{min-width:0;flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center}
 .sr-product-heading strong{display:block;overflow-wrap:anywhere;margin:2px 0;font-size:15px;font-weight:600}

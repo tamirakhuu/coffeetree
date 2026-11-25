@@ -27,6 +27,8 @@ try{
  })};` }));
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`http://127.0.0.1:${server.address().port}/employee.html`);
+ await page.locator('[data-products] .sr-brand-summary').first().waitFor();
+ await page.locator('[data-products] .sr-brand-summary').evaluateAll(els=>els.forEach(el=>el.click()));
  await page.locator('[data-add="1"]').waitFor();
  assert.equal(await page.locator('[data-add="2"]').isDisabled(),true);
  assert.equal(await page.locator('[data-add="3"][data-option="unit"]').count(),1);
