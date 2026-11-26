@@ -142,21 +142,13 @@ html {
 
   .cuppa-footer-logo { justify-content: center !important; }
 
-  .cuppa-training-marquee-item { width: 140px !important; }
 }
 
-.cuppa-training-marquee {
-  animation: cuppaTrainingMarquee 24s linear infinite;
-}
-.cuppa-training-marquee:hover {
-  animation-play-state: paused;
-}
-@keyframes cuppaTrainingMarquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+.cuppa-training-slide {
+  transition: opacity 1s ease;
 }
 @media (prefers-reduced-motion: reduce) {
-  .cuppa-training-marquee { animation: none; }
+  .cuppa-training-slide { transition: none; }
 }
 
 @media (max-width: 480px) {

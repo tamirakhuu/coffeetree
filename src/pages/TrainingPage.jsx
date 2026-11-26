@@ -30,7 +30,13 @@ export default function TrainingPage({ setView }) {
   const [phase, setPhase] = useState("form"); // form | payment | done
   const [payment, setPayment] = useState(null); // { registrationId, invoice }
   const [payError, setPayError] = useState("");
+  const [slideIndex, setSlideIndex] = useState(0);
   const bookingRequest = useRef(null);
+
+  useEffect(() => {
+    const id = setInterval(() => setSlideIndex((i) => (i + 1) % TRAINING_PHOTOS.length), 4000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -221,17 +227,27 @@ export default function TrainingPage({ setView }) {
           </p>
         </div>
 
-        <div style={{ overflow: "hidden", margin: "0 -20px" }}>
-          <div className="cuppa-training-marquee" style={{ display: "flex", width: "max-content", gap: 18, padding: "0 20px" }}>
-            {[...TRAINING_PHOTOS, ...TRAINING_PHOTOS].map((p, i) => (
-              <div key={i} className="cuppa-training-marquee-item" style={{ flex: "none", width: 180 }}>
-                <div style={{ borderRadius: 18, overflow: "hidden", boxShadow: "0 14px 30px rgba(36,28,20,.16)", border: `1px solid ${T.line}` }}>
-                  <img src={p.src} alt={p.alt} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" }} />
-                </div>
-                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, lineHeight: 1.5, marginTop: 10, textAlign: "center" }}>
-                  {p.caption}
-                </p>
-              </div>
+        <div style={{ maxWidth: 340, margin: "0 auto" }}>
+          <div style={{
+            position: "relative", aspectRatio: "1 / 1", borderRadius: 24, overflow: "hidden",
+            boxShadow: "0 18px 40px rgba(36,28,20,.18)", border: `1px solid ${T.line}`,
+          }}>
+            {TRAINING_PHOTOS.map((p, i) => (
+              <img key={p.src} src={p.src} alt={p.alt} className="cuppa-training-slide" style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+                opacity: i === slideIndex ? 1 : 0,
+              }} />
+            ))}
+          </div>
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center", minHeight: 42 }}>
+            {TRAINING_PHOTOS[slideIndex].caption}
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 6 }}>
+            {TRAINING_PHOTOS.map((p, i) => (
+              <button key={p.src} type="button" onClick={() => setSlideIndex(i)} aria-label={`${i + 1}-р зураг харах`} style={{
+                width: i === slideIndex ? 20 : 8, height: 8, borderRadius: 999, border: "none", padding: 0, cursor: "pointer",
+                background: i === slideIndex ? T.cherry : T.line, transition: "width .3s ease, background .3s ease",
+              }} />
             ))}
           </div>
         </div>
