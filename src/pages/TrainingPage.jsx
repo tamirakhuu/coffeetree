@@ -6,6 +6,11 @@ import { money, formatMnDate } from "../utils/format.js";
 
 const TRAINING_FEE = 50000;
 
+const TRAINING_PHOTOS = [
+  { src: "/training-hero-latte.jpg", alt: "Цэсний сургалтын өдөр", caption: "CUPPA-гийн цэсний жор, орц найрлагыг гараар дадлагажуулан сурна." },
+  { src: "/training-hero-class.jpg", alt: "Ундааны дадлага сургалт", caption: "Өнгө өнгийн меню, смүүтийг мэргэжлийн орцоор хэрхэн хийхийг сурна." },
+];
+
 function PageWash() {
   return (
     <div style={{
@@ -202,22 +207,9 @@ export default function TrainingPage({ setView }) {
     <div>
       <PageWash />
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px", position: "relative" }}>
-      <div className="cuppa-training-hero" style={{
-        display: "grid", gridTemplateColumns: "1fr 1.3fr 1fr", gap: 30, alignItems: "center",
-        paddingTop: 44, paddingBottom: 40,
-      }}>
-        <div>
-          <div style={{ borderRadius: 24, overflow: "hidden", boxShadow: "0 18px 40px rgba(36,28,20,.18)", border: `1px solid ${T.line}` }}>
-            <img src="/training-hero-latte.jpg" alt="Цэсний сургалтын өдөр" className="cuppa-training-hero-media" style={{
-              width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block",
-            }} />
-          </div>
-          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
-            CUPPA-гийн цэсний жор, орц найрлагыг гараар дадлагажуулан сурна.
-          </p>
-        </div>
-        <div className="cuppa-training-hero-title" style={{ textAlign: "center" }}>
-          <div style={{ ...sideLabel, textAlign: "center", marginBottom: 12 }}>CUPPA АКАДЕМИ</div>
+      <div style={{ paddingTop: 44, paddingBottom: 10 }}>
+        <div className="cuppa-training-hero-title" style={{ textAlign: "center", marginBottom: 34 }}>
+          <div style={{ ...sideLabel, textAlign: "center", marginBottom: 12 }}>CUPPA</div>
           <h1 style={{
             fontFamily: "'Ubuntu', sans-serif", fontSize: 36, fontWeight: 700, color: T.ink, marginBottom: 14,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
@@ -228,15 +220,20 @@ export default function TrainingPage({ setView }) {
             Нэг өдрийн BASIC меню сургалт
           </p>
         </div>
-        <div>
-          <div style={{ borderRadius: 24, overflow: "hidden", boxShadow: "0 18px 40px rgba(36,28,20,.18)", border: `1px solid ${T.line}` }}>
-            <img src="/training-hero-class.jpg" alt="Ундааны дадлага сургалт" className="cuppa-training-hero-media" style={{
-              width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block",
-            }} />
+
+        <div style={{ overflow: "hidden", margin: "0 -20px" }}>
+          <div className="cuppa-training-marquee" style={{ display: "flex", width: "max-content", gap: 18, padding: "0 20px" }}>
+            {[...TRAINING_PHOTOS, ...TRAINING_PHOTOS].map((p, i) => (
+              <div key={i} className="cuppa-training-marquee-item" style={{ flex: "none", width: 180 }}>
+                <div style={{ borderRadius: 18, overflow: "hidden", boxShadow: "0 14px 30px rgba(36,28,20,.16)", border: `1px solid ${T.line}` }}>
+                  <img src={p.src} alt={p.alt} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" }} />
+                </div>
+                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 11.5, color: T.inkSoft, lineHeight: 1.5, marginTop: 10, textAlign: "center" }}>
+                  {p.caption}
+                </p>
+              </div>
+            ))}
           </div>
-          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6, marginTop: 14, textAlign: "center" }}>
-            Өнгө өнгийн меню, смүүтийг мэргэжлийн орцоор хэрхэн хийхийг сурна.
-          </p>
         </div>
       </div>
 
