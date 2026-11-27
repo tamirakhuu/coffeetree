@@ -311,8 +311,7 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
     end if;
   end;
   $$ language plpgsql security definer set search_path = public;
-  revoke all on function public.decrement_warehouse_stock(bigint, text, int) from public, anon;
-  grant execute on function public.decrement_warehouse_stock(bigint, text, int) to authenticated;
+  revoke execute on function public.decrement_warehouse_stock(bigint, text, int) from public, anon, authenticated;
 
   create or replace function public.restore_warehouse_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
@@ -354,8 +353,7 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
     end if;
   end;
   $$ language plpgsql security definer set search_path = public;
-  revoke all on function public.restore_warehouse_stock(bigint, text, int) from public, anon;
-  grant execute on function public.restore_warehouse_stock(bigint, text, int) to authenticated;
+  revoke execute on function public.restore_warehouse_stock(bigint, text, int) from public, anon, authenticated;
 
   -- Website checkout only (submit_order / expire_stale_orders): moves warehouse_unit_stock/warehouse_box_stock
   -- (ground truth, since units physically leave for the customer) together with web_unit_stock/web_box_stock
