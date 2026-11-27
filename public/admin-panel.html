@@ -1011,7 +1011,7 @@ function populateProductFilters() {
   const catSel = document.getElementById('productCategoryFilter');
   if (brandSel) {
     const prev = brandSel.value;
-    brandSel.innerHTML = '<option value="">Бүх брэнд</option>' + brandOptions(null).replace(/ selected/g, '');
+    brandSel.innerHTML = '<option value="">Бүх брэнд</option>' + brands.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
     brandSel.value = prev;
   }
   if (catSel) {
@@ -1109,9 +1109,20 @@ function renderProductPagination(totalPages) {
 function categoryOptions(selectedId) {
   return categories.map(c => `<option value="${c.id}" ${String(c.id)===String(selectedId)?'selected':''}>${ICON_EMOJI[c.icon]||'☕'} ${c.name}</option>`).join('');
 }
-function brandOptions(selectedId) {
-  const none = `<option value="" ${!selectedId ? 'selected' : ''}>Брэндгүй</option>`;
-  return none + brands.map(b => `<option value="${b.id}" ${String(b.id)===String(selectedId)?'selected':''}>${b.name}</option>`).join('');
+function brandNameDatalist() {
+  return brands.map(b => `<option value="${escapeHtml(b.name)}">`).join('');
+}
+async function resolveBrandId(name) {
+  if (!name) return null;
+  const existing = brands.find(b => b.name.trim().toLowerCase() === name.toLowerCase());
+  if (existing) return existing.id;
+  const { data, error } = await sb.from('brands').insert({ name }).select().single();
+  if (!error) { brands.push(data); return data.id; }
+  if (error.code === '23505') {
+    const { data: found } = await sb.from('brands').select('*').eq('name', name).maybeSingle();
+    if (found) { brands.push(found); return found.id; }
+  }
+  throw new Error(error.message);
 }
 function subOptionsDatalist(categoryId) {
   const cat = categories.find(c => String(c.id) === String(categoryId));
@@ -1170,7 +1181,7 @@ function productFormHtml(p) {
   return `
     <div class="form-grid form-grid-2">
       <div class="fg full"><label>Барааны нэр</label><input id="pf-name" value="${p.name||''}" oninput="toggleCoffeeSizes()"></div>
-      <div class="fg"><label>Брэнд</label><select id="pf-brand" onchange="toggleCoffeeSizes()">${brandOptions(p.brand_id)}</select></div>
+      <div class="fg"><label>Брэнд</label><input id="pf-brand" list="brand-dl" placeholder="Жишээ: Nescafé" value="${escapeHtml(brands.find(b => b.id === p.brand_id)?.name || '')}" oninput="toggleCoffeeSizes()"><datalist id="brand-dl">${brandNameDatalist()}</datalist></div>
       <div class="fg"><label>Ангилал</label><select id="pf-category" onchange="refreshSubDatalist();toggleCoffeeSizes()">${categoryOptions(p.category_id)}</select></div>
       <div class="fg"><label>Дэд ангилал</label><input id="pf-subcategory" list="sub-dl" value="${p.subcategory||''}" oninput="toggleLidOptions()"><datalist id="sub-dl">${subOptionsDatalist(p.category_id)}</datalist></div>
       <div class="fg"><label for="pf-extra-category">Өөр ангилалд мөн харуулах</label><select id="pf-extra-category" onchange="document.getElementById('pf-extra-sub').value='';document.getElementById('extra-sub-dl').innerHTML=subOptionsDatalist(this.value)"><option value="">Нэмэлт ангилалгүй</option>${categoryOptions(p.extra_category_id)}</select></div>
@@ -1267,7 +1278,7 @@ function productFormHtml(p) {
     </div></div>`;
 }
 function coffeeSizesEligible() {
-  const brand = document.getElementById('pf-brand').selectedOptions[0]?.textContent || '';
+  const brand = document.getElementById('pf-brand').value || '';
   const category = document.getElementById('pf-category').selectedOptions[0]?.textContent || '';
   return /^jack['’]s\s+coffee$/i.test(brand.trim()) && category.includes('Кофе');
 }
@@ -1404,7 +1415,7 @@ function toggleLidOptions() {
 }
 
 function openAddProduct() {
-  if (!brands.length || !categories.length) { toast('Эхлээд дор хаяж нэг брэнд, ангилал үүсгэнэ үү', 'err'); return; }
+  if (!categories.length) { toast('Эхлээд дор хаяж нэг ангилал үүсгэнэ үү', 'err'); return; }
   openModal('Бараа нэмэх', productFormHtml(), `<button class="btn btn-outline" onclick="closeModal()">Болих</button><button class="btn btn-primary" onclick="saveProduct(null)">Нэмэх</button>`, true);
   recalcBoxSmart();
   toggleCoffeeSizes();
@@ -1504,6 +1515,13 @@ async function saveProduct(id) {
   const saveBtn = document.querySelector('#modalFoot .btn-primary');
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Хадгалж байна…'; }
   try {
+    let brandId;
+    try {
+      brandId = await resolveBrandId(document.getElementById('pf-brand').value.trim());
+    } catch (err) {
+      toast('Брэнд үүсгэхэд алдаа гарлаа: ' + err.message, 'err');
+      return;
+    }
     const images = [];
     for (const img of productImages) {
       if (img.file) {
@@ -1524,7 +1542,7 @@ async function saveProduct(id) {
       ...(powderEnabled ? { powder_sizes: powderSizes } : {}),
       name,
       lid_options: lidOptions,
-      brand_id: document.getElementById('pf-brand').value ? parseInt(document.getElementById('pf-brand').value, 10) : null,
+      brand_id: brandId,
       category_id: parseInt(document.getElementById('pf-category').value, 10),
       subcategory: document.getElementById('pf-subcategory').value.trim(),
       extra_category_id: Number(document.getElementById('pf-extra-category').value) || null,
