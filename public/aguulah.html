@@ -330,6 +330,13 @@ const hasBox = (p) => !p.coffee_sizes && !!(p.box_price || p.warehouse_box_stock
 const canSend = (p) => (hasUnit(p) && (p.warehouse_unit_stock||0) > 0) || (hasBox(p) && (p.warehouse_box_stock||0) > 0);
 const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();
 const unitWord = (label, fallback) => String(label || '').replace(/^\d+\s+/, '').trim() || fallback;
+const fmt = (n) => Math.round(n||0).toLocaleString('mn-MN') + '₮';
+const priceLabel = (p) => {
+  const parts = [];
+  if (hasUnit(p) && p.unit_price) parts.push(`${fmt(p.unit_price)}/${unitWord(p.unit_label,'ш')}`);
+  if (hasBox(p) && p.box_price) parts.push(`${fmt(p.box_price)}/${unitWord(p.box_label,'хайрцаг')}`);
+  return parts.join(' · ');
+};
 const productThumb = (p, size=40) => p.images && p.images[0]
   ? `<img src="${p.images[0]}" style="width:${size}px;height:${size}px;border-radius:10px;object-fit:cover;flex-shrink:0">`
   : `<div style="width:${size}px;height:${size}px;border-radius:10px;flex-shrink:0;background:linear-gradient(155deg, ${p.color||'#6B4226'}, var(--text))"></div>`;
@@ -499,7 +506,7 @@ function go(s){
 function draftRow(r){
   const p = prod(r.productId);
   const meta = p
-    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}`
+    ? `${brandName(p)} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}${priceLabel(p) ? ' · ' + priceLabel(p) : ''}`
     : '';
   const thumbImg = p && p.images && p.images[0]
     ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;display:block">`
@@ -579,7 +586,7 @@ function results(q, mode){
     ${productThumb(p, 36)}
     <div style="flex:1;min-width:0">
       <div class="n" style="font-weight:600">${esc(p.name)}</div>
-      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}</div>
+      <div class="m">${esc(brandName(p))} · агуулахад: ${p.warehouse_unit_stock||0} ${unitWord(p.unit_label,'ш')}${hasBox(p) ? ' буюу ' + (p.warehouse_box_stock||0) + ' ' + unitWord(p.box_label,'хайрцаг') : ''}${priceLabel(p) ? ' · ' + esc(priceLabel(p)) : ''}</div>
     </div><div class="plus">+</div></button>`).join('');
 }
 document.addEventListener('click', e => {
