@@ -11,6 +11,7 @@ const CONFIG_ERROR = !DEMO_MODE && !Deno.env.get("QPAY_BASE_URL")
   ? "QPAY_CLIENT_ID/SECRET тохируулсан ч QPAY_BASE_URL тохируулаагүй байна. Sandbox руу чимээгүй унахаас сэргийлж энд зогсоов — жинхэнэ мерчант хаягаа (QPAY_BASE_URL) тодорхой тохируулна уу."
   : "";
 const DEMO_AUTO_PAY_MS = 15000;
+const TRAINING_FEE = 50000; // qpay-create-invoice доторх утгатай ижил байх ёстой
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +63,22 @@ serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+    // АЮУЛГҮЙ БАЙДАЛ: Хөтчөөс ирсэн invoiceId-д итгэхгүй. Тухайн захиалга/бүртгэлд
+    // өгөгдлийн санд хадгалагдсан invoice-ийг л шалгана. Эс бөгөөс өөр (хямд)
+    // төлөгдсөн invoice-ийн дугаараар үнэтэй захиалгыг "төлөгдсөн" болгож болно.
+    const { data: record, error: recErr } = isTraining
+      ? await admin.from("training_registrations").select("qpay_invoice_id").eq("id", registrationId).single()
+      : await admin.from("orders").select("qpay_invoice_id, subtotal, delivery_fee").eq("order_number", orderNumber).single();
+    if (recErr || !record || !record.qpay_invoice_id || record.qpay_invoice_id !== String(invoiceId)) {
+      return new Response(JSON.stringify({ error: "Нэхэмжлэл энэ захиалгад хамаарахгүй байна." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const expectedAmount = isTraining
+      ? TRAINING_FEE
+      : Number(record.subtotal || 0) + Number(record.delivery_fee || 0);
+
     if (String(invoiceId).startsWith("DEMO-")) {
       const createdAt = Number(String(invoiceId).split("-")[1] || 0);
       const paid = DEMO_MODE && createdAt > 0 && Date.now() - createdAt >= DEMO_AUTO_PAY_MS;
@@ -81,7 +98,9 @@ serve(async (req) => {
     if (!checkRes.ok) throw new Error(`QPay payment/check амжилтгүй (${checkRes.status}): ${await checkRes.text()}`);
     const check = await checkRes.json();
     const rows = check.rows || [];
-    const paid = rows.some((r: { payment_status?: string }) => r.payment_status === "PAID") || (check.count > 0 && Number(check.paid_amount) > 0);
+    // Төлсөн дүн захиалгын дүнгээс бага бол төлөгдсөнд тооцохгүй.
+    const paid = Number(check.paid_amount || 0) >= expectedAmount &&
+      rows.some((r: { payment_status?: string }) => r.payment_status === "PAID");
     if (paid) await markPaid(admin, isTraining, orderNumber, registrationId);
 
     return new Response(JSON.stringify({ paid, paidAmount: check.paid_amount || 0, demo: false }), {
