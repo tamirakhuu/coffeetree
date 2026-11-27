@@ -2203,52 +2203,66 @@ function renderPendingTransfers() {
   if (!tb) return;
   if (!pending.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">Хүлээгдэж буй бараа алга байна</td></tr>`; return; }
 
-  const groups = [];
-  const byBatch = new Map();
-  pending.forEach(t => {
-    const key = t.batch_id || ('__single_' + t.id);
-    if (!byBatch.has(key)) { const g = { items: [] }; byBatch.set(key, g); groups.push(g); }
-    byBatch.get(key).items.push(t);
-  });
-
-  tb.innerHTML = groups.map(g => {
-    const first = g.items[0];
-    const batchKey = first.batch_id || ('__single_' + first.id);
-    const linkedRequests = first.batch_id ? sentStoreRequests.filter(r => r.batch_id === first.batch_id) : [];
-    const linkNote = linkedRequests.length ? ` · Дэлгүүрийн захиалгатай хамт (${linkedRequests.map(r => r.store_name).join(', ')})` : '';
-    const header = `<tr class="pt-batch-header"><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
-      <span>📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа${linkNote}</span>
-      <button type="button" class="btn-line" style="float:right;padding:2px 10px;font-size:11px" onclick="printPendingBatch('${batchKey}')">Хэвлэх</button>
-    </td></tr>`;
-    const rows = g.items.map(t => {
-      const p = products.find(x => x.id === t.product_id);
-      const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-      const dirBadge = directionBadge(t.direction);
-      return `<tr>
-        <td data-th="${t.direction === 'writeoff' ? 'Устгах уу?' : 'Хүлээн авах уу?'}"><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
-        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
-        <td data-th="Бараа">${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
-        <td data-th="Брэнд">${brandName}</td>
-        <td data-th="Чиглэл">${dirBadge}</td>
-        <td class="mono" data-th="Тоо">${t.qty}</td>
-        <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
-      </tr>`;
+  const renderRows = (items) => {
+    const groups = [];
+    const byBatch = new Map();
+    items.forEach(t => {
+      const key = t.batch_id || ('__single_' + t.id);
+      if (!byBatch.has(key)) { const g = { items: [] }; byBatch.set(key, g); groups.push(g); }
+      byBatch.get(key).items.push(t);
+    });
+    return groups.map(g => {
+      const first = g.items[0];
+      const batchKey = first.batch_id || ('__single_' + first.id);
+      const linkedRequests = first.batch_id ? sentStoreRequests.filter(r => r.batch_id === first.batch_id) : [];
+      const linkNote = linkedRequests.length ? ` · Дэлгүүрийн захиалгатай хамт (${linkedRequests.map(r => r.store_name).join(', ')})` : '';
+      const header = `<tr class="pt-batch-header"><td colspan="7" style="background:var(--paper);font-size:11px;color:var(--ink-soft);padding:8px 12px;font-weight:600">
+        <span>📦 ${new Date(first.created_at).toLocaleString('mn-MN')} · ${first.admin_email || '-'}${first.store_name ? ' · ' + first.store_name : ''} · ${g.items.length} бараа${linkNote}</span>
+        <button type="button" class="btn-line" style="float:right;padding:2px 10px;font-size:11px" onclick="printPendingBatch('${batchKey}')">Хэвлэх</button>
+      </td></tr>`;
+      const rows = g.items.map(t => {
+        const p = products.find(x => x.id === t.product_id);
+        const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+        const dirBadge = directionBadge(t.direction);
+        return `<tr>
+          <td data-th="${t.direction === 'writeoff' ? 'Устгах уу?' : 'Хүлээн авах уу?'}"><input type="checkbox" class="pending-check" data-id="${t.id}" checked></td>
+          <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(t.created_at).toLocaleString('mn-MN')}</td>
+          <td data-th="Бараа">${t.product_name} <span style="color:var(--ink-soft);font-size:11px">(${t.option_type === 'box' ? 'хайрцаг' : 'ширхэг'})</span></td>
+          <td data-th="Брэнд">${brandName}</td>
+          <td data-th="Чиглэл">${dirBadge}</td>
+          <td class="mono" data-th="Тоо">${t.qty}</td>
+          <td style="font-size:12px" data-th="Илгээсэн">${t.admin_email || '-'}</td>
+        </tr>`;
+      }).join('');
+      const linkedRows = linkedRequests.flatMap(r => (r.store_request_items || []).filter(i => i.approved).map(i => {
+        const p = products.find(x => x.id === i.product_id);
+        const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
+        return `<tr style="background:var(--paper)">
+          <td data-th="Захиалгаас"><input type="checkbox" checked disabled title="Дэлгүүрийн захиалгаар аль хэдийн бэлдэгдсэн (нөөц хасагдсан) тул дахин баталгаажуулах шаардлагагүй"> <span class="badge" style="background:var(--gold);color:#fff;font-size:10.5px">Захиалгаас</span></td>
+          <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
+          <td data-th="Бараа">${i.product_name} <span style="color:var(--ink-soft);font-size:11px">(${i.option_label})</span></td>
+          <td data-th="Брэнд">${brandName}</td>
+          <td data-th="Чиглэл">${directionBadge('to_store')}</td>
+          <td class="mono" data-th="Тоо">${i.qty}</td>
+          <td style="font-size:12px" data-th="Илгээсэн">${r.store_name}</td>
+        </tr>`;
+      })).join('');
+      return header + rows + linkedRows;
     }).join('');
-    const linkedRows = linkedRequests.flatMap(r => (r.store_request_items || []).filter(i => i.approved).map(i => {
-      const p = products.find(x => x.id === i.product_id);
-      const brandName = p ? (brands.find(b => b.id === p.brand_id)?.name || '-') : '-';
-      return `<tr style="background:var(--paper)">
-        <td data-th="Захиалгаас"><input type="checkbox" checked disabled title="Дэлгүүрийн захиалгаар аль хэдийн бэлдэгдсэн (нөөц хасагдсан) тул дахин баталгаажуулах шаардлагагүй"> <span class="badge" style="background:var(--gold);color:#fff;font-size:10.5px">Захиалгаас</span></td>
-        <td class="mono" style="font-size:11px" data-th="Огноо">${new Date(r.created_at).toLocaleString('mn-MN')}</td>
-        <td data-th="Бараа">${i.product_name} <span style="color:var(--ink-soft);font-size:11px">(${i.option_label})</span></td>
-        <td data-th="Брэнд">${brandName}</td>
-        <td data-th="Чиглэл">${directionBadge('to_store')}</td>
-        <td class="mono" data-th="Тоо">${i.qty}</td>
-        <td style="font-size:12px" data-th="Илгээсэн">${r.store_name}</td>
-      </tr>`;
-    })).join('');
-    return header + rows + linkedRows;
-  }).join('');
+  };
+
+  const warehouseOnly = pending.filter(t => t.direction === 'restock' || t.direction === 'writeoff');
+  const storeRelated = pending.filter(t => t.direction === 'to_store' || t.direction === 'to_warehouse');
+
+  const section = (label, color, items) => {
+    if (!items.length) return '';
+    return `<tr><td colspan="7" style="background:${color};color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:9px 12px">${label}</td></tr>`
+      + renderRows(items);
+  };
+
+  tb.innerHTML =
+    section('🏬 Агуулахын дотоод нөөц — дэлгүүртэй холбоогүй', 'var(--cherry)', warehouseOnly) +
+    section('🏪 Дэлгүүртэй холбоотой шилжилт', '#2F6A3F', storeRelated);
 }
 
 async function receivePendingBatch() {
