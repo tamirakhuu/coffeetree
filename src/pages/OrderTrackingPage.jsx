@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { lookupOrdersByPhone } from "../api.js";
 import { T, inputStyle } from "../theme.js";
-import { money } from "../utils/format.js";
 import { BackButton } from "../components/BackButton.jsx";
 
 const ORDER_STATUS_LABELS = {
@@ -76,30 +75,10 @@ export default function OrderTrackingPage({ setView }) {
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{order.orderNumber}</div>
                   <div style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: 12, color: T.inkSoft, marginTop: 2 }}>
                     {new Date(order.createdAt).toLocaleDateString("mn-MN")}
-                    {order.receiptType === "company" && <> · Байгууллага ({order.registerNumber})</>}
                     {" · "}{order.deliveryMethod === "delivery" ? "Хүргүүлэх/Орон нутгийн унаанд" : "Очиж авах(Саруул зах)"}
-                    {order.boxCount > 0 && <> · 📦 {order.boxCount} хайрцаг</>}
                   </div>
                 </div>
                 <OrderStatusBadge status={order.status} />
-              </div>
-              <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                {order.items.map((it, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
-                    <span>{it.productName} ({it.optionLabel}) × {it.qty}</span>
-                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(it.lineTotal)}</span>
-                  </div>
-                ))}
-                {order.deliveryFee > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'Ubuntu', sans-serif", fontSize: 13, color: T.ink }}>
-                    <span>Хүргэлтийн хураамж</span>
-                    <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>{money(order.deliveryFee)}</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-                <span style={{ fontFamily: "'Ubuntu', sans-serif" }}>Нийт</span>
-                <span style={{ fontFamily: "'Ubuntu', sans-serif", color: T.cherry }}>{money(order.subtotal + (order.deliveryFee || 0))}</span>
               </div>
             </div>
           ))}

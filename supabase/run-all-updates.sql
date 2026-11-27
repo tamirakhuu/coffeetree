@@ -1281,6 +1281,8 @@ $$;
 revoke all on function public.expire_stale_orders() from public, anon;
 grant execute on function public.expire_stale_orders() to authenticated;
 
+-- Утасны дугаараар хэн ч эрхийн шалгалтгүй дуудна (anon): энд хувийн мэдээлэл бүү нэм
+-- (бараа, дүн, хаяг, байгууллагын регистрийн дугаар зэрэг) — зөвхөн захиалгын төлөв харуулна.
 create or replace function public.lookup_orders_by_phone(p_phone text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare result jsonb;
@@ -1288,15 +1290,8 @@ begin
   perform expire_stale_orders();
   select coalesce(jsonb_agg(order_json order by created_at desc), '[]'::jsonb) into result from (
     select o.created_at, jsonb_build_object(
-      'orderNumber', o.order_number, 'status', o.status, 'subtotal', o.subtotal,
-      'deliveryMethod', o.delivery_method, 'deliveryFee', o.delivery_fee,
-      'receiptType', o.receipt_type, 'registerNumber', o.register_number,
-      'boxCount', o.box_count, 'createdAt', o.created_at,
-      'items', coalesce((
-        select jsonb_agg(jsonb_build_object(
-          'productName', i.product_name, 'optionLabel', i.option_label, 'qty', i.qty, 'lineTotal', i.line_total
-        )) from order_items i where i.order_number = o.order_number
-      ), '[]'::jsonb)
+      'orderNumber', o.order_number, 'status', o.status,
+      'deliveryMethod', o.delivery_method, 'createdAt', o.created_at
     ) as order_json
     from orders o
     where o.phone = p_phone and o.status not in ('handed_over', 'done')
