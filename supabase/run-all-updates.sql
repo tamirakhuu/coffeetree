@@ -299,13 +299,17 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
           returning warehouse_unit_stock into v_new_unit;
       end if;
       if v_new_unit is null then return false; end if;
-      update products set warehouse_box_stock = v_new_unit / v_per_box where id = p_product_id;
+      update products set warehouse_box_stock = v_new_unit / v_per_box,
+        web_unit_stock = least(web_unit_stock, v_new_unit), web_box_stock = least(web_box_stock, v_new_unit / v_per_box)
+        where id = p_product_id;
       return true;
     else
       if p_option_type = 'box' then
-        update products set warehouse_box_stock = warehouse_box_stock - p_qty where id = p_product_id and warehouse_box_stock >= p_qty;
+        update products set warehouse_box_stock = warehouse_box_stock - p_qty, web_box_stock = least(web_box_stock, warehouse_box_stock - p_qty)
+          where id = p_product_id and warehouse_box_stock >= p_qty;
       else
-        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty where id = p_product_id and warehouse_unit_stock >= p_qty;
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty, web_unit_stock = least(web_unit_stock, warehouse_unit_stock - p_qty)
+          where id = p_product_id and warehouse_unit_stock >= p_qty;
       end if;
       return found;
     end if;
@@ -1040,6 +1044,10 @@ begin
         raise exception 'Агуулахын нөөцөөс их тоо хасах/татах гэж байна';
       end if;
     end if;
+    -- physical units just left the warehouse for a store/write-off: cap the website's own
+    -- reserve so it never shows more than what's actually still sitting in the warehouse
+    update products set web_unit_stock = least(web_unit_stock, warehouse_unit_stock),
+      web_box_stock = least(web_box_stock, warehouse_box_stock) where id = p_product_id;
   end if;
 
   insert into stock_transfers (product_id, product_name, option_type, direction, qty, admin_email, status, store_name, batch_id)
@@ -1329,6 +1337,14 @@ update public.products set box_stock = floor(coalesce(unit_stock,0)::numeric / b
 update public.products set web_box_stock = floor(coalesce(web_unit_stock,0)::numeric / box_per_box)
   where unified_stock and coalesce(box_per_box,0) > 0
   and web_box_stock is distinct from floor(coalesce(web_unit_stock,0)::numeric / box_per_box);
+
+-- Self-heal: web_unit_stock/web_box_stock must never exceed the warehouse's own count (fixes any
+-- product left over-credited before decrement_warehouse_stock/warehouse_create_transfer started
+-- capping it on every outgoing-to-store/write-off movement).
+update public.products set web_unit_stock = least(web_unit_stock, warehouse_unit_stock)
+  where web_unit_stock > warehouse_unit_stock;
+update public.products set web_box_stock = least(web_box_stock, warehouse_box_stock)
+  where web_box_stock > warehouse_box_stock;
 
 alter table public.products add column if not exists lid_options jsonb;
 
