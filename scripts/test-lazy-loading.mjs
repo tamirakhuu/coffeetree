@@ -20,7 +20,7 @@ try {
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const product = { id: 1, name: 'Test Coffee', category_id: 1, brand_id: 1, subcategory: 'Beans', origin: 'Mongolia', tag: 'бестселлэр', images: [], unit_label: '250g', unit_price: 20000, warehouse_unit_stock: 10, box_label: 'Box', box_price: 100000, box_per_box: 6, warehouse_box_stock: 5 };
+  const product = { id: 1, name: 'Test Coffee', category_id: 1, brand_id: 1, subcategory: 'Beans', origin: 'Mongolia', tag: 'бестселлэр', images: [], unit_label: '250g', unit_price: 20000, warehouse_unit_stock: 10, web_unit_stock: 10, box_label: 'Box', box_price: 100000, box_per_box: 6, warehouse_box_stock: 5, web_box_stock: 5 };
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin === base) return route.continue();

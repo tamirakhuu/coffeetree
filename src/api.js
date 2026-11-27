@@ -39,8 +39,8 @@ export function shapeProduct(r) {
     extraCategoryId: r.extra_category_id || null, extraSub: r.extra_subcategory || '',
     createdAt: r.created_at || null,
     discountEndsAt: r.discount_ends_at || null,
-    unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.warehouse_unit_stock },
-    box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.warehouse_box_stock },
+    unit: { label: r.unit_label, price: r.unit_price, originalPrice: r.unit_original_price, stock: r.web_unit_stock },
+    box: { label: r.box_label, price: r.box_price, originalPrice: r.box_original_price, perBox: r.box_per_box, stock: r.web_box_stock },
     bulkQty: r.bulk_qty || null,
     bulkUnitPrice: r.bulk_unit_price == null ? null : Number(r.bulk_unit_price),
   });

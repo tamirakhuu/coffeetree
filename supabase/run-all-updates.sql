@@ -107,6 +107,13 @@ end $$;
 alter table products add column if not exists warehouse_unit_stock int default 0;
 alter table products add column if not exists warehouse_box_stock int default 0;
 
+-- Separate from warehouse_unit_stock/warehouse_box_stock: web_unit_stock/web_box_stock is what the
+-- website itself shows/sells against (src/api.js). It only moves on genuine web orders (decrement_stock/
+-- restore_stock) and on warehouse inflows (restock received, store returns); sending stock out to a
+-- physical store (warehouse_create_transfer / prepare_store_request) never touches it.
+alter table products add column if not exists web_unit_stock int default 0;
+alter table products add column if not exists web_box_stock int default 0;
+
 alter table products add column if not exists bulk_qty int;
 
 alter table products add column if not exists unified_stock boolean default false;
@@ -255,7 +262,11 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
 
 
 
-  create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
+  -- Warehouse-only movement: used for internal store-request fulfillment (prepare_store_request /
+  -- change_store_request). Touches only warehouse_unit_stock/warehouse_box_stock so that sending stock
+  -- to a store never changes what the website shows as orderable (see decrement_stock/restore_stock below,
+  -- which are reserved for genuine web-order checkout and additionally move web_unit_stock/web_box_stock).
+  create or replace function public.decrement_warehouse_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns boolean as $$
   declare
     v_unified boolean;
@@ -300,9 +311,10 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
     end if;
   end;
   $$ language plpgsql security definer set search_path = public;
-  revoke execute on function decrement_stock(bigint, text, int) from public, anon, authenticated;
+  revoke all on function public.decrement_warehouse_stock(bigint, text, int) from public, anon;
+  grant execute on function public.decrement_warehouse_stock(bigint, text, int) to authenticated;
 
-  create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
+  create or replace function public.restore_warehouse_stock(p_product_id bigint, p_option_type text, p_qty int)
   returns void as $$
   declare
     v_unified boolean;
@@ -338,6 +350,109 @@ revoke all on function public.validate_powder_sizes() from public, anon, authent
         update products set warehouse_box_stock = warehouse_box_stock + p_qty where id = p_product_id;
       else
         update products set warehouse_unit_stock = warehouse_unit_stock + p_qty where id = p_product_id;
+      end if;
+    end if;
+  end;
+  $$ language plpgsql security definer set search_path = public;
+  revoke all on function public.restore_warehouse_stock(bigint, text, int) from public, anon;
+  grant execute on function public.restore_warehouse_stock(bigint, text, int) to authenticated;
+
+  -- Website checkout only (submit_order / expire_stale_orders): moves warehouse_unit_stock/warehouse_box_stock
+  -- (ground truth, since units physically leave for the customer) together with web_unit_stock/web_box_stock
+  -- (what the website itself displays/validates against), kept as a separate pool from store-request fulfillment.
+  create or replace function decrement_stock(p_product_id bigint, p_option_type text, p_qty int)
+  returns boolean as $$
+  declare
+    v_unified boolean;
+    v_per_box int;
+    v_new_unit int;
+    v_new_web_unit int;
+  begin
+    if p_qty is null or p_qty <= 0 then return false; end if;
+    if p_option_type ~ '^(powder_[lms]|variant_[a-z0-9]+)$' then
+      update public.products set powder_sizes = jsonb_set(powder_sizes, array[p_option_type,'stock'],
+        to_jsonb((powder_sizes->p_option_type->>'stock')::int - p_qty))
+      where id = p_product_id and (powder_sizes->p_option_type->>'stock')::int >= p_qty;
+      return found;
+    end if;
+    if p_option_type in ('size_1kg', 'size_250g') then
+      update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
+        to_jsonb((coffee_sizes->p_option_type->>'stock')::int - p_qty))
+      where id = p_product_id and (coffee_sizes->p_option_type->>'stock')::int >= p_qty;
+      return found;
+    end if;
+    if p_option_type is null or p_option_type not in ('unit', 'box') then return false; end if;
+    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
+    if v_unified and coalesce(v_per_box, 0) > 0 then
+      if p_option_type = 'box' then
+        update products set warehouse_unit_stock = warehouse_unit_stock - (p_qty * v_per_box),
+          web_unit_stock = web_unit_stock - (p_qty * v_per_box)
+          where id = p_product_id and warehouse_unit_stock >= p_qty * v_per_box and web_unit_stock >= p_qty * v_per_box
+          returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty,
+          web_unit_stock = web_unit_stock - p_qty
+          where id = p_product_id and warehouse_unit_stock >= p_qty and web_unit_stock >= p_qty
+          returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
+      end if;
+      if v_new_unit is null then return false; end if;
+      update products set warehouse_box_stock = v_new_unit / v_per_box, web_box_stock = v_new_web_unit / v_per_box where id = p_product_id;
+      return true;
+    else
+      if p_option_type = 'box' then
+        update products set warehouse_box_stock = warehouse_box_stock - p_qty, web_box_stock = web_box_stock - p_qty
+          where id = p_product_id and warehouse_box_stock >= p_qty and web_box_stock >= p_qty;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock - p_qty, web_unit_stock = web_unit_stock - p_qty
+          where id = p_product_id and warehouse_unit_stock >= p_qty and web_unit_stock >= p_qty;
+      end if;
+      return found;
+    end if;
+  end;
+  $$ language plpgsql security definer set search_path = public;
+  revoke execute on function decrement_stock(bigint, text, int) from public, anon, authenticated;
+
+  create or replace function restore_stock(p_product_id bigint, p_option_type text, p_qty int)
+  returns void as $$
+  declare
+    v_unified boolean;
+    v_per_box int;
+    v_new_unit int;
+    v_new_web_unit int;
+  begin
+    if p_qty is null or p_qty <= 0 then raise exception 'Invalid stock quantity'; end if;
+    if p_option_type ~ '^(powder_[lms]|variant_[a-z0-9]+)$' then
+      update public.products set powder_sizes = jsonb_set(powder_sizes, array[p_option_type,'stock'],
+        to_jsonb((powder_sizes->p_option_type->>'stock')::int + p_qty))
+      where id = p_product_id and powder_sizes ? p_option_type;
+      if not found then raise exception 'Powder size not found'; end if;
+      return;
+    end if;
+    if p_option_type in ('size_1kg', 'size_250g') then
+      update public.products set coffee_sizes = jsonb_set(coffee_sizes, array[p_option_type, 'stock'],
+        to_jsonb((coffee_sizes->p_option_type->>'stock')::int + p_qty))
+      where id = p_product_id and coffee_sizes ? p_option_type;
+      if not found then raise exception 'Coffee size not found'; end if;
+      return;
+    end if;
+    if p_option_type is null or p_option_type not in ('unit', 'box') then raise exception 'Invalid stock option'; end if;
+    select unified_stock, box_per_box into v_unified, v_per_box from products where id = p_product_id for update;
+    if v_unified and coalesce(v_per_box, 0) > 0 then
+      if p_option_type = 'box' then
+        update products set warehouse_unit_stock = warehouse_unit_stock + (p_qty * v_per_box),
+          web_unit_stock = web_unit_stock + (p_qty * v_per_box)
+          where id = p_product_id returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock + p_qty,
+          web_unit_stock = web_unit_stock + p_qty
+          where id = p_product_id returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
+      end if;
+      update products set warehouse_box_stock = v_new_unit / v_per_box, web_box_stock = v_new_web_unit / v_per_box where id = p_product_id;
+    else
+      if p_option_type = 'box' then
+        update products set warehouse_box_stock = warehouse_box_stock + p_qty, web_box_stock = web_box_stock + p_qty where id = p_product_id;
+      else
+        update products set warehouse_unit_stock = warehouse_unit_stock + p_qty, web_unit_stock = web_unit_stock + p_qty where id = p_product_id;
       end if;
     end if;
   end;
@@ -594,7 +709,7 @@ begin
   for item in select * from public.store_request_items i where request_id=p_id and exists
     (select 1 from jsonb_array_elements(p_items) s where (s->>'product_id')::bigint=i.product_id and s->>'option_type'=i.option_type)
     order by product_id,option_type loop
-    if not public.decrement_stock(item.product_id,item.option_type,item.qty) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Сонголтоо шинэчилнэ үү.',item.product_name; end if;
+    if not public.decrement_warehouse_stock(item.product_id,item.option_type,item.qty) then raise exception '"%" үлдэгдэл хүрэлцэхгүй. Сонголтоо шинэчилнэ үү.',item.product_name; end if;
     update public.store_request_items set approved=true where request_id=p_id and product_id=item.product_id and option_type=item.option_type;
   end loop;
   update public.store_requests set status='sent',stock_reserved=true,updated_at=now(),batch_id=coalesce(p_batch_id,batch_id) where id=p_id;
@@ -620,7 +735,7 @@ begin
   ),false) then raise exception 'Төлөвийн шилжилт зөвшөөрөгдөхгүй.'; end if;
   if p_status in ('rejected','cancelled') and r.stock_reserved then
     for item in select * from public.store_request_items where request_id=p_id and approved order by product_id,option_type loop
-      perform public.restore_stock(item.product_id,item.option_type,item.qty);
+      perform public.restore_warehouse_stock(item.product_id,item.option_type,item.qty);
     end loop;
   end if;
   update public.store_requests set status=p_status,stock_reserved=case when p_status in ('rejected','cancelled') then false else stock_reserved end,updated_at=now() where id=p_id;
@@ -948,6 +1063,7 @@ declare
   v_need_unit int;
   v_cur_unit int;
   v_new_unit int;
+  v_new_web_unit int;
 begin
   if not is_admin() then
     raise exception 'Зөвхөн админ энэ үйлдлийг хийх эрхтэй';
@@ -1008,32 +1124,39 @@ begin
 
     if v_unified then
       v_need_unit := case when v_transfer.option_type = 'box' then v_transfer.qty * v_per_box else v_transfer.qty end;
-      update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_need_unit
-        where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
-      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+      update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_need_unit,
+        web_unit_stock = coalesce(web_unit_stock, 0) + v_need_unit
+        where id = v_transfer.product_id returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
+      update products set warehouse_box_stock = v_new_unit / v_per_box, web_box_stock = v_new_web_unit / v_per_box where id = v_transfer.product_id;
     else
       if v_transfer.option_type = 'box' then
-        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty,
+          web_box_stock = coalesce(web_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
       else
-        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty,
+          web_unit_stock = coalesce(web_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
       end if;
     end if;
 
   elsif v_transfer.direction = 'restock' then
     if v_unified then
       if v_transfer.option_type = 'box' then
-        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + (v_transfer.qty * v_per_box)
-          where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + (v_transfer.qty * v_per_box),
+          web_unit_stock = coalesce(web_unit_stock, 0) + (v_transfer.qty * v_per_box)
+          where id = v_transfer.product_id returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
       else
-        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty
-          where id = v_transfer.product_id returning warehouse_unit_stock into v_new_unit;
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty,
+          web_unit_stock = coalesce(web_unit_stock, 0) + v_transfer.qty
+          where id = v_transfer.product_id returning warehouse_unit_stock, web_unit_stock into v_new_unit, v_new_web_unit;
       end if;
-      update products set warehouse_box_stock = v_new_unit / v_per_box where id = v_transfer.product_id;
+      update products set warehouse_box_stock = v_new_unit / v_per_box, web_box_stock = v_new_web_unit / v_per_box where id = v_transfer.product_id;
     else
       if v_transfer.option_type = 'box' then
-        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+        update products set warehouse_box_stock = coalesce(warehouse_box_stock, 0) + v_transfer.qty,
+          web_box_stock = coalesce(web_box_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
       else
-        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
+        update products set warehouse_unit_stock = coalesce(warehouse_unit_stock, 0) + v_transfer.qty,
+          web_unit_stock = coalesce(web_unit_stock, 0) + v_transfer.qty where id = v_transfer.product_id;
       end if;
     end if;
 
@@ -1205,8 +1328,23 @@ update public.products set warehouse_box_stock = floor(coalesce(warehouse_unit_s
 update public.products set box_stock = floor(coalesce(unit_stock,0)::numeric / box_per_box)
   where unified_stock and coalesce(box_per_box,0) > 0
   and box_stock is distinct from floor(coalesce(unit_stock,0)::numeric / box_per_box);
+update public.products set web_box_stock = floor(coalesce(web_unit_stock,0)::numeric / box_per_box)
+  where unified_stock and coalesce(box_per_box,0) > 0
+  and web_box_stock is distinct from floor(coalesce(web_unit_stock,0)::numeric / box_per_box);
 
 alter table public.products add column if not exists lid_options jsonb;
+
+-- One-time: seed the new web_unit_stock/web_box_stock pool from each product's current warehouse
+-- stock, so the website's displayed availability doesn't drop to 0 the moment this split goes live.
+-- Guarded by stock_topup_runs so later re-runs of this file never reset web stock back in sync.
+do $$
+begin
+  insert into public.stock_topup_runs(operation) values ('web-stock-split-2026-11-27') on conflict do nothing;
+  if not found then return; end if;
+  update public.products set web_unit_stock = coalesce(warehouse_unit_stock, 0), web_box_stock = coalesce(warehouse_box_stock, 0);
+  update public.stock_topup_runs set changed_products = (select count(*) from public.products)
+    where operation = 'web-stock-split-2026-11-27';
+end $$;
 
 notify pgrst, 'reload schema';
 commit;
